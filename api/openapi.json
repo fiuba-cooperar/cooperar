@@ -1,0 +1,70 @@
+{
+  "openapi" : "3.1.0",
+  "info" : {
+    "description" : "Open observatory of worker-recovered companies and worker cooperatives",
+    "title" : "CooperAR API",
+    "version" : "v1"
+  },
+  "servers" : [ {
+    "url" : "/"
+  } ],
+  "paths" : {
+    "/api/health" : {
+      "get" : {
+        "operationId" : "getHealth",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/HealthResponse"
+                }
+              }
+            },
+            "description" : "The application and its database are up"
+          },
+          "503" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/HealthResponse"
+                }
+              }
+            },
+            "description" : "A dependency is down"
+          }
+        },
+        "summary" : "Application and database health",
+        "tags" : [ "health" ]
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "HealthResponse" : {
+        "type" : "object",
+        "description" : "Application health and the state of its dependencies",
+        "properties" : {
+          "database" : {
+            "$ref" : "#/components/schemas/HealthStatus"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/HealthStatus"
+          }
+        },
+        "required" : [ "database", "status" ]
+      },
+      "HealthStatus" : {
+        "type" : "string",
+        "enum" : [ "UP", "DOWN" ]
+      }
+    },
+    "securitySchemes" : {
+      "bearerAuth" : {
+        "bearerFormat" : "JWT",
+        "scheme" : "bearer",
+        "type" : "http"
+      }
+    }
+  }
+}

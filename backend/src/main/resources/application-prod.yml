@@ -1,0 +1,11 @@
+# Production: structured (ECS) logs and no API docs exposed. JWT_SECRET is mandatory.
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+logging:
+  structured:
+    format:
+      console: ecs

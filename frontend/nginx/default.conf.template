@@ -1,0 +1,33 @@
+# Rendered with envsubst when the container starts (official nginx image): ${BACKEND_URL}.
+server {
+    listen 80;
+    server_name _;
+    root /usr/share/nginx/html;
+
+    # Locations that set their own add_header do not inherit the server ones, so every location includes this.
+    include /etc/nginx/snippets/security-headers.conf;
+
+    gzip on;
+    gzip_types text/css application/javascript application/json image/svg+xml;
+
+    location /api/ {
+        proxy_pass ${BACKEND_URL};
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Asset file names are content-hashed, so they can be cached forever.
+    location /assets/ {
+        include /etc/nginx/snippets/security-headers.conf;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # SPA routes: any other path serves index.html.
+    location / {
+        include /etc/nginx/snippets/security-headers.conf;
+        try_files $uri $uri/ /index.html;
+        add_header Cache-Control "no-cache";
+    }
+}

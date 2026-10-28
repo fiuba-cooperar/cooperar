@@ -1,0 +1,57 @@
+name: Backend
+
+on:
+  pull_request:
+    paths:
+      - 'backend/**'
+      - 'api/openapi.json'
+      - '.github/workflows/backend.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'api/openapi.json'
+      - '.github/workflows/backend.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: backend
+
+jobs:
+  # Single job: setup and compilation happen once; each stage is its own step so failures stay visible.
+  # `test` already compiles everything; packaging the jar is left to the image workflow on main.
+  ci:
+    name: lint and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 25
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Lint
+        run: ./gradlew spotlessCheck
+
+      # Testcontainers uses the Docker daemon that ships with the runner.
+      - name: Test
+        run: ./gradlew test
+      - name: Committed contract matches the API
+        run: |
+          diff -u ../api/openapi.json build/openapi/openapi.json || {
+            echo "::error file=api/openapi.json::The OpenAPI spec changed. Run 'make api' and commit api/openapi.json and frontend/src/api/generated."
+            exit 1
+          }
+      - if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: backend-test-report
+          path: backend/build/reports/tests/test

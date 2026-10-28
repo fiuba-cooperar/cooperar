@@ -1,0 +1,48 @@
+# Full development environment: `docker compose up --build`.
+# Every variable has a default; to override them copy .env.example to .env.
+name: cooperar
+
+services:
+  db:
+    # Keep in sync with TestcontainersConfiguration so tests run on the same database as compose.
+    image: postgis/postgis:18-3.6-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-cooperar}
+      POSTGRES_USER: ${POSTGRES_USER:-cooperar}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cooperar}
+    volumes:
+      - db-data:/var/lib/postgresql
+    ports:
+      - '${DB_PORT:-5432}:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build: ./backend
+    image: cooperar-backend
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-cooperar}
+      DB_USER: ${POSTGRES_USER:-cooperar}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-cooperar}
+      JWT_SECRET: ${JWT_SECRET:-dev-only-secret-change-me-0123456789abcdef}
+    ports:
+      - '${BACKEND_PORT:-8080}:8080'
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    image: cooperar-frontend
+    ports:
+      - '${FRONTEND_PORT:-5173}:80'
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  db-data:

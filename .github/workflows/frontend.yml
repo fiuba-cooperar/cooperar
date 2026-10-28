@@ -1,0 +1,60 @@
+name: Frontend
+
+on:
+  pull_request:
+    paths:
+      - 'frontend/**'
+      - 'api/openapi.json'
+      - '.github/workflows/frontend.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - 'api/openapi.json'
+      - '.github/workflows/frontend.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: frontend
+
+jobs:
+  # Single job: dependencies are installed once; each stage is its own step so failures stay visible.
+  # Container images are built and deployed by a separate workflow on main, not here.
+  ci:
+    name: lint, test and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+
+      - name: Lint
+        run: |
+          npm run lint
+          npm run format:check
+          npm run typecheck
+      - name: Generated client is up to date with api/openapi.json
+        run: |
+          npm run api:generate
+          if [ -n "$(git status --porcelain -- src/api/generated)" ]; then
+            git status --short -- src/api/generated
+            echo "::error::The generated client is out of date. Run 'make api' and commit the changes."
+            exit 1
+          fi
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build

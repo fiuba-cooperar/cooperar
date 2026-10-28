@@ -1,0 +1,74 @@
+:root {
+  --color-text: #1d1b20;
+  --color-text-muted: #4a4652;
+  --color-bg: #ffffff;
+  --color-surface: #f5f3f7;
+  --color-border: #d9d5de;
+  --color-accent: #7a1f3d;
+  --color-success: #1b6b3a;
+  --color-danger: #a1261b;
+  --color-focus: #1a5fb4;
+
+  --font-sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 1rem;
+  --space-4: 1.5rem;
+  --space-5: 2.5rem;
+  --radius: 0.5rem;
+  --content-width: 72rem;
+
+  color-scheme: light dark;
+  font: 1rem/1.5 var(--font-sans);
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-text: #f2eff5;
+    --color-text-muted: #c4bfcb;
+    --color-bg: #151317;
+    --color-surface: #221f25;
+    --color-border: #3b3640;
+    --color-accent: #f0a3bd;
+    --color-success: #7fd49b;
+    --color-danger: #ffaba3;
+    --color-focus: #8ab4f8;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.2;
+}
+
+a {
+  color: var(--color-accent);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

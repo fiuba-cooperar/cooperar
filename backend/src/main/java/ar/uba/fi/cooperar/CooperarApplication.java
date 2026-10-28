@@ -1,0 +1,12 @@
+package ar.uba.fi.cooperar;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class CooperarApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(CooperarApplication.class, args);
+    }
+}

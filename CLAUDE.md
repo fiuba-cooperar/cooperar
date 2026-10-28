@@ -57,7 +57,7 @@ Los términos del dominio se traducen siempre igual en el código: ficha → `pr
 | | Cliente de API generado con orval desde `api/openapi.json` |
 | | ESLint 10 (typescript-eslint strict type-checked) + Prettier, Vitest 5 + Testing Library + axe-core |
 | Infra | Docker Compose; imágenes `eclipse-temurin:25-jre-alpine` y `nginx:1.30-alpine` |
-| CI | GitHub Actions: un workflow por parte (filtrado por ruta) con un solo job y steps de lint, test y build hechos con `gradlew` y `npm`, sin Docker salvo el que usa Testcontainers. La imagen y el deploy van en un workflow aparte sobre `main` (#9). |
+| CI | GitHub Actions: un workflow por parte (filtrado por ruta) con un solo job: lint y test en el backend (`gradlew`), y lint, test y build en el frontend (`npm`), sin Docker salvo el que usa Testcontainers. La imagen y el deploy van en un workflow aparte sobre `main` (#9). |
 
 Restricción de producción: va a correr en servidores de la Facultad con hardware limitado. Hay que priorizar imágenes livianas y pocos servicios, y no usar servicios propietarios de un cloud (nada de S3, Cloud SQL, colas gestionadas, etc.). Todo tiene que poder autohospedarse.
 

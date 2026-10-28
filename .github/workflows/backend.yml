@@ -28,9 +28,9 @@ defaults:
 
 jobs:
   # Single job: setup and compilation happen once; each stage is its own step so failures stay visible.
-  # Container images are built and deployed by a separate workflow on main, not here.
+  # `test` already compiles everything; packaging the jar is left to the image workflow on main.
   ci:
-    name: lint, test and build
+    name: lint and test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -57,6 +57,3 @@ jobs:
         with:
           name: backend-test-report
           path: backend/build/reports/tests/test
-
-      - name: Build
-        run: ./gradlew bootJar

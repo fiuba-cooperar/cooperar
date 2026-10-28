@@ -6,6 +6,21 @@ Reemplaza registros burocráticos y desactualizados por una plataforma de uso co
 
 Lo específico de cada parte está en [`backend/CLAUDE.md`](backend/CLAUDE.md) y [`frontend/CLAUDE.md`](frontend/CLAUDE.md).
 
+## Idioma (regla obligatoria)
+
+Esta regla vale en todas las sesiones y para todo el equipo:
+
+| Va en **inglés** | Va en **español** |
+|---|---|
+| Todo el código: identificadores, paquetes, clases, archivos, rutas de la API, tablas y columnas | Documentación: `*.md`, `docs/`, incluidos los `CLAUDE.md` |
+| Comentarios y Javadoc/JSDoc | Mensajes de commit (Conventional Commits con la descripción en español) |
+| Mensajes de log y mensajes de error de la API | Título y descripción de los PRs |
+| Nombres y descripciones de tests | Issues y comentarios en GitHub |
+| Comentarios y mensajes en Dockerfiles, workflows de CI, `docker-compose.yml`, `Makefile`, `.env.example` y archivos de configuración | Textos de la interfaz que ve el usuario, en voseo rioplatense ("Buscá", "Volver al inicio") |
+| | Las respuestas de Claude en la conversación |
+
+Los términos del dominio se traducen siempre igual en el código: ficha → `profile`, consulta → `inquiry`, feria → `fair`, hito → `milestone`, relevamiento → `survey`, necesidad → `need`, cooperativa → `cooperative`. ERT y MIA se mantienen como siglas: `Ert`, `Mia`. Si aparece un término nuevo, se agrega a esta lista.
+
 ## Perfiles
 
 | Perfil | Login | Qué hace |
@@ -118,12 +133,6 @@ Requisitos: Docker con Compose v2. Para trabajar fuera de Docker: JDK 25 y Node 
 Los comandos de cada parte están en su `CLAUDE.md`.
 
 ## Convenciones
-
-### Idioma
-
-- **Código en inglés**: identificadores, paquetes, rutas de la API, tablas y columnas, comentarios, mensajes de log, mensajes de error de la API, nombres de tests, y también los comentarios en Dockerfiles, workflows y configuración.
-- **En español**: documentación (`*.md`, `docs/`), commits, PRs, issues y todos los textos de la interfaz que ve el usuario.
-- Los términos del dominio se traducen de forma consistente: ficha → `profile`, consulta → `inquiry`, feria → `fair`, hito → `milestone`, relevamiento → `survey`, necesidad → `need`. ERT y MIA se mantienen como siglas: `Ert`, `Mia`.
 
 ### Código
 

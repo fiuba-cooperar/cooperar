@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/branding/logo-transparent.png" alt="cooperAR" width="220">
+</p>
+
 # CooperAR
 
 Observatorio digital abierto de empresas recuperadas por sus trabajadores (ERT) y cooperativas de trabajo.
@@ -59,6 +63,8 @@ Si cambiás la API, corré `make api` y commiteá los archivos generados. Si no 
 - [`CLAUDE.md`](CLAUDE.md): contexto del producto, glosario, arquitectura, convenciones, reglas de privacidad y decisiones pendientes.
 - [`backend/CLAUDE.md`](backend/CLAUDE.md) y [`frontend/CLAUDE.md`](frontend/CLAUDE.md): lo específico de cada parte.
 - [`docs/`](docs/): modelo de datos, minutas, relevamientos y evaluaciones.
+- [Mocks de la interfaz](https://claude.ai/artifact/DH9ySxA2a2y2RThpqBQ4Cz): pantallas del Sprint 1 agrupadas por rol (visitante, login, cooperativa y admin). Cada issue con pantalla lo enlaza en su sección "Mock".
+- [`docs/branding/`](docs/branding/): logos y colores.
 - Backlog: [issues](https://github.com/fiuba-cooperar/cooperar/issues) y [milestones](https://github.com/fiuba-cooperar/cooperar/milestones).
 
 ## Contribuir

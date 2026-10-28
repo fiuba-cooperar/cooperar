@@ -4,14 +4,12 @@ on:
   pull_request:
     paths:
       - 'backend/**'
-      - 'infra/db/**'
       - 'api/openapi.json'
       - '.github/workflows/backend.yml'
   push:
     branches: [main]
     paths:
       - 'backend/**'
-      - 'infra/db/**'
       - 'api/openapi.json'
       - '.github/workflows/backend.yml'
 

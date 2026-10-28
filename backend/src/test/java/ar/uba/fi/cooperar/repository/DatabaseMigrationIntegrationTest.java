@@ -21,6 +21,6 @@ class DatabaseMigrationIntegrationTest {
                 .query(String.class)
                 .list();
 
-        assertThat(extensions).contains("postgis", "vector", "unaccent");
+        assertThat(extensions).contains("postgis", "unaccent");
     }
 }

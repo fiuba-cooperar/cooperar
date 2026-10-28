@@ -52,7 +52,7 @@ Los términos del dominio se traducen siempre igual en el código: ficha → `pr
 | | Spring Web MVC, Spring Security (resource server JWT HS256), Spring Data JPA, Flyway, Bean Validation, Actuator, springdoc-openapi 3.2.0 |
 | | Tests: JUnit 5, AssertJ, Mockito, MockMvcTester, Testcontainers |
 | | Formato: Spotless + palantir-java-format |
-| Base de datos | PostgreSQL 18 + PostGIS 3.6 + pgvector 0.8.7 (imagen propia en `infra/db`), `unaccent` |
+| Base de datos | PostgreSQL 18 + PostGIS 3.6 (imagen oficial `postgis/postgis:18-3.6-alpine`), `unaccent`. pgvector se suma con la búsqueda semántica (#45). |
 | Frontend | Node 24 LTS, React 19, TypeScript 6.0 (estricto), Vite 8, React Router 8, TanStack Query 5 |
 | | Cliente de API generado con orval desde `api/openapi.json` |
 | | ESLint 10 (typescript-eslint strict type-checked) + Prettier, Vitest 5 + Testing Library + axe-core |
@@ -67,7 +67,6 @@ Restricción de producción: va a correr en servidores de la Facultad con hardwa
 api/openapi.json        Contrato de la API (lo exporta el backend; de acá se genera el cliente del front)
 backend/                Spring Boot (ver backend/CLAUDE.md)
 frontend/               React + Vite (ver frontend/CLAUDE.md)
-infra/db/               Imagen de PostgreSQL + PostGIS + pgvector
 docs/                   Modelo de datos, minutas, relevamientos, evaluaciones
 .github/                CI, plantillas de PR e issues
 docker-compose.yml      Entorno completo de desarrollo
@@ -79,7 +78,7 @@ Makefile                Atajos: up, down, test, lint, api
 ### Vista general
 
 ```
-navegador ──► nginx (frontend) ──/api/──► Spring Boot ──► PostgreSQL (PostGIS, pgvector)
+navegador ──► nginx (frontend) ──/api/──► Spring Boot ──► PostgreSQL (PostGIS)
 ```
 
 - El front y la API comparten un mismo origen: nginx, o el proxy de Vite en desarrollo, reenvía `/api`. Así no hace falta configurar CORS.
@@ -109,7 +108,8 @@ Estructura por features (`src/features/<module>`) con componentes compartidos en
 
 La búsqueda semántica (#45), las consultas en lenguaje natural (#46), la demanda insatisfecha (#47), el asistente de línea de tiempo con LLM (#49) y el grafo intercooperativo (#52, #53) todavía **no** están implementados. La base que ya está preparada:
 
-- **pgvector y PostGIS** quedan habilitados desde la primera migración. Los embeddings van a ser columnas `vector(n)` en las tablas del dominio, con índice HNSW, para que la búsqueda híbrida sea una sola consulta SQL que combina full-text y similitud.
+- **PostGIS** queda habilitado desde la primera migración, porque lo necesitan issues Must cercanas (#13, #17, #24, #27).
+- **pgvector todavía no está instalado**, porque nada lo usa hasta la #45. Cuando llegue, hay que hacer dos cosas: (1) cambiar a una imagen que traiga PostGIS y pgvector juntos (ninguna oficial los trae, así que habrá que construirla compilando pgvector sobre `postgis/postgis`), usando la misma imagen en `docker-compose.yml` y en `TestcontainersConfiguration`; (2) agregar una migración que haga `CREATE EXTENSION vector`. Los embeddings van a ser columnas `vector(n)` en las tablas del dominio, con índice HNSW, para que la búsqueda híbrida sea una sola consulta SQL que combina full-text y similitud.
 - **Proveedores intercambiables.** Toda dependencia de un modelo (embeddings, LLM) se define como una interfaz en `service/<module>`, por ejemplo `EmbeddingProvider` o `TimelineExtractor`. Las implementaciones van en una capa `integration/<provider>` y se eligen por configuración (`cooperar.ai.*`). La lógica de negocio nunca importa el SDK de un proveedor. Se prefieren los modelos locales por la restricción de hardware y de cloud.
 - **Trabajo pesado fuera del request.** El cálculo de embeddings y de recomendaciones se dispara con eventos de dominio (`@TransactionalEventListener` + `@Async`) y no bloquea el guardado.
 - **Registro de búsquedas.** El buscador (#15) registra cada búsqueda con su texto, filtros, cantidad de resultados y zona aproximada. Ese registro es el insumo de la demanda insatisfecha y de las métricas.

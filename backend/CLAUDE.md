@@ -15,7 +15,7 @@ Spring Boot 4.1.2 sobre Java 25, con Gradle 9.8.2 (wrapper). El contexto del pro
 | Correr contra la base de `docker compose` | `docker compose up -d db` y luego `./gradlew bootRun` |
 | Exportar el OpenAPI y regenerar el cliente del front | `make api` (desde la raíz) |
 
-Los tests de integración necesitan Docker: construyen la imagen de `../infra/db` la primera vez y después usan la caché de Docker.
+Los tests de integración necesitan Docker: Testcontainers levanta un Postgres temporal con la imagen `postgis/postgis:18-3.6-alpine` (la misma que `docker compose`) y lo borra al terminar.
 
 ## Paquetes
 
@@ -61,7 +61,7 @@ Hoy existen el módulo `health` (en `web`, `service`, `domain` y `repository`) y
 - El esquema lo maneja **solo Flyway** (`src/main/resources/db/migration`). Hibernate corre con `ddl-auto: validate`.
 - Nombres: `V<n>__<description_in_english>.sql`, por ejemplo `V2__create_organizations.sql`. **Una migración aplicada no se edita nunca**: los cambios van en una migración nueva.
 - Tablas y columnas en inglés y snake_case, con nombres de tabla en plural.
-- `V1` habilita `postgis`, `vector` y `unaccent`. En producción el usuario que corre las migraciones necesita permiso para crear extensiones, o un DBA las crea antes.
+- `V1` habilita `postgis` y `unaccent`. pgvector se agrega con la #45 (ver el `CLAUDE.md` de la raíz). En producción el usuario que corre las migraciones necesita permiso para crear extensiones, o un DBA las crea antes.
 - Geometrías: `geometry(Point, 4326)`. Búsqueda full-text: `tsvector` con configuración `spanish` + `unaccent` e índices GIN.
 
 ## Seguridad
@@ -87,7 +87,7 @@ La conexión se configura con `DB_URL`, `DB_USER` y `DB_PASSWORD` (ver `.env.exa
 |---|---|---|
 | Unitario | JUnit + Mockito, sin Spring | `HealthServiceTest` |
 | Slice web | `@WebMvcTest` + `@Import(SecurityConfig, ProblemDetailSecurityHandler)` + `@MockitoBean` del service | `HealthControllerTest` |
-| Integración | `@IntegrationTest` (contexto completo, MockMvc y Postgres real con PostGIS y pgvector) | `HealthIntegrationTest`, `SecurityIntegrationTest` |
+| Integración | `@IntegrationTest` (contexto completo, MockMvc y Postgres real con PostGIS) | `HealthIntegrationTest`, `SecurityIntegrationTest` |
 
 - Las aserciones se escriben con AssertJ y `MockMvcTester`.
 - `OpenApiSpecExportTest` exporta `build/openapi/openapi.json`. El CI lo compara con `../api/openapi.json`, así que si cambiás la API corré `make api` y commiteá el resultado.

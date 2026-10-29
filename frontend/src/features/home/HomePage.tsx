@@ -1,14 +1,19 @@
+import { Stack, Text, Title } from '@mantine/core';
 import { SystemStatus } from '@/features/health/components/SystemStatus';
-import styles from './HomePage.module.css';
 
 export function HomePage() {
   return (
-    <div className={styles.page}>
-      <h1>CooperAR</h1>
-      <p className={styles.lead}>
-        Observatorio abierto de empresas recuperadas por sus trabajadores y cooperativas de trabajo.
-      </p>
+    <Stack gap="xl">
+      <Stack gap="sm">
+        <Title order={1} fz={{ base: 32, sm: 48 }}>
+          CooperAR
+        </Title>
+        <Text size="lg" c="dimmed" maw={600}>
+          Observatorio abierto de empresas recuperadas por sus trabajadores y cooperativas de
+          trabajo.
+        </Text>
+      </Stack>
       <SystemStatus />
-    </div>
+    </Stack>
   );
 }

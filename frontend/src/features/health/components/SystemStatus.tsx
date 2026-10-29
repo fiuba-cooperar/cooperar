@@ -1,3 +1,4 @@
+import { Paper, Text, Title } from '@mantine/core';
 import { HealthStatus } from '@/api/generated/model';
 import { useSystemHealth } from '../api/useSystemHealth';
 import styles from './SystemStatus.module.css';
@@ -6,11 +7,11 @@ export function SystemStatus() {
   const { data, isPending, isError } = useSystemHealth();
 
   return (
-    <section className={styles.card} aria-labelledby="system-status-title">
-      <h2 id="system-status-title" className={styles.title}>
+    <Paper component="section" withBorder radius="lg" p="lg" aria-labelledby="system-status-title">
+      <Title order={2} size="h4" id="system-status-title" mb="xs">
         Estado del sistema
-      </h2>
-      <p role="status" className={styles.message}>
+      </Title>
+      <Text role="status">
         {isPending && 'Consultando el estado del servidor…'}
         {isError && <span className={styles.down}>No pudimos conectarnos con el servidor.</span>}
         {data?.status === HealthStatus.UP && (
@@ -21,7 +22,7 @@ export function SystemStatus() {
             El servidor responde, pero la base de datos no está disponible.
           </span>
         )}
-      </p>
-    </section>
+      </Text>
+    </Paper>
   );
 }

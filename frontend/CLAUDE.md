@@ -1,6 +1,6 @@
 # Frontend: CooperAR web
 
-React 19 + TypeScript 6 (estricto) sobre Vite 8, con React Router 8 y TanStack Query 5. El contexto del producto, el glosario y las reglas de privacidad están en el [`CLAUDE.md` de la raíz](../CLAUDE.md).
+React 19 + TypeScript 6 (estricto) sobre Vite 8, con React Router 8, TanStack Query 5 y Mantine 9 como librería de componentes. El contexto del producto, el glosario y las reglas de privacidad están en el [`CLAUDE.md` de la raíz](../CLAUDE.md).
 
 ## Comandos (desde `frontend/`)
 
@@ -20,11 +20,10 @@ React 19 + TypeScript 6 (estricto) sobre Vite 8, con React Router 8 y TanStack Q
 src/
 ├── main.tsx                 Punto de entrada
 ├── index.css                Tokens de diseño (variables CSS), reset, foco visible, modo oscuro
-├── app/                     Composición: App (providers), routes, queryClient
+├── app/                     Composición: App (providers), routes, queryClient, theme (tema de Mantine)
 ├── api/generated/           Cliente generado por orval. NO se edita a mano; está excluido de lint y formato
 ├── components/
 │   ├── layout/              AppLayout (header, main, footer, skip link)
-│   └── ui/                  Componentes de UI reutilizables y sin lógica de dominio (se crea con el primero)
 ├── features/<module>/       Una carpeta por módulo de dominio, alineada con el backend
 │   ├── api/                 Hooks de datos que envuelven al cliente generado (useXxx)
 │   ├── components/          Componentes propios del módulo
@@ -32,7 +31,7 @@ src/
 └── test/                    Helpers de test: renderRoute, stubFetchJson, expectNoA11yViolations
 ```
 
-Las features actuales son `home` (pantalla inicial), `health` (estado del backend) y `errors` (404).
+Las features actuales son `home` (pantalla inicial), `health` (estado del backend), `auth` (login, sesión y guardas de ruta), `admin` y `cooperative` (secciones por rol, hoy solo la portada) y `errors` (404 y acceso denegado).
 
 ## Reglas
 
@@ -40,10 +39,16 @@ Las features actuales son `home` (pantalla inicial), `health` (estado del backen
 - **Los componentes no usan los hooks generados directamente.** Cada feature expone hooks propios en `features/<module>/api/` que envuelven al generado y fijan las opciones (`select`, `refetchInterval`, invalidaciones). Así un cambio de contrato se absorbe en un solo lugar.
 - **Estado del servidor en TanStack Query**, y estado de UI local con `useState`/`useReducer`. No se agrega una librería de estado global sin una decisión con issue.
 - **Imports absolutos con `@/`** (`@/features/health/...`). Los relativos solo dentro de la misma feature.
-- **Rutas.** Se declaran en `app/routes.tsx`. Las rutas protegidas por rol llegan con la #7.
-- **Estilos.** CSS Modules por componente (`Xxx.module.css`) y tokens de `index.css` (`var(--color-*)`, `var(--space-*)`). No se usan colores sueltos. La librería de componentes es una decisión pendiente (#7).
+- **Rutas.** Se declaran en `app/routes.tsx`. Las rutas por rol cuelgan de `RequireRole` (`features/auth`): sin sesión redirige a `/login` y con otro rol muestra «Acceso denegado».
+- **Estilos y componentes.** Se usa Mantine (`@mantine/core`) para los componentes (`Button`, `TextInput`, `Paper`, `Alert`, etc.). El tema (colores del logo, tipografía Inter/Poppins, radio, modo claro/oscuro automático) está en `app/theme.ts` y se aplica con `MantineProvider`. Lo que Mantine no cubre se escribe con CSS Modules (`Xxx.module.css`) usando las variables de Mantine (`var(--mantine-color-brand-6)`, `var(--mantine-spacing-md)`); no se usan colores sueltos. Si un componente hace falta en más de una feature, se arma sobre los de Mantine en `src/components/`.
 - **Idioma.** Código, nombres de archivos, identificadores y tests en inglés. **Todo texto visible para el usuario va en español** rioplatense, en voseo ("Buscá", "Volver al inicio").
 - **TypeScript estricto** (`strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`). Nada de `any` ni de `!` para silenciar el compilador.
+
+## Sesión
+
+- Los tokens viven en `localStorage` (`src/api/session.ts`). `AuthProvider` expone `useAuth()` con `status`, `user`, `login` y `logout`.
+- Todas las llamadas generadas pasan por `src/api/apiFetch.ts` (mutator de orval): agrega el `Authorization`, y ante un 401 renueva el par de tokens una sola vez (aunque haya varias llamadas en paralelo) y reintenta. Si el refresh es rechazado limpia la sesión y avisa a la UI.
+- Es la única excepción a «sin `fetch` a mano»: el propio refresh no puede pasar por el cliente generado.
 
 ## Accesibilidad y responsive (WCAG 2.1 AA)
 
@@ -58,6 +63,8 @@ Muchas personas del sector usan la plataforma desde el celular y sin experiencia
 - Cada página nueva tiene un test con `expectNoA11yViolations` (axe-core). `eslint-plugin-jsx-a11y` no se usa porque no soporta ESLint 10 y no se actualiza desde 2024.
 
 ## Tests
+
+- Los tests montan `MantineProvider` (con `env="test"`) dentro de `renderRoute`, y `test/setup.ts` simula `matchMedia` y `ResizeObserver`, que jsdom no trae.
 
 - Vitest + Testing Library en `jsdom`. Los tests van junto al código (`Xxx.test.tsx`).
 - Se consulta por rol y por texto visible (`getByRole`, `findByText`), no por clases ni test ids.

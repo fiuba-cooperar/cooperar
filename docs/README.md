@@ -8,6 +8,6 @@ Acá va la documentación que no es código ni guía de uso del repo:
 - Relevamiento de fuentes de datos públicas (#4)
 - Evaluaciones de la búsqueda (#48) y del asistente de línea de tiempo (#51)
 - Documentación de operación y traspaso (#60) y manuales de uso (#61)
-- Identidad visual: logos y colores (`branding/`)
+- Identidad visual: logos y colores (`identidad-visual.md`)
 
 Los diagramas se guardan en un formato de texto versionable (Mermaid o PlantUML) siempre que se pueda.

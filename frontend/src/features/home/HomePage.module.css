@@ -1,0 +1,234 @@
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.hero {
+  background: var(--color-hero);
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+/* Flex bases from the mock: the text column takes about 55% of the width and wraps under 908px. */
+.heroGrid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 48px;
+}
+
+.heroGrid > * {
+  flex: 1 1 380px;
+  min-width: 0;
+}
+
+.heroGrid > .heroText {
+  flex-basis: 480px;
+}
+
+.heroTitle {
+  font-size: clamp(2.25rem, 6vw, 3.25rem);
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+}
+
+.heroLead {
+  color: var(--color-hero-lead);
+}
+
+/* Same border as the form fields in the theme, dark enough for the 3:1 contrast of WCAG 1.4.11. */
+.search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 4px 4px 14px;
+  border: 1px solid light-dark(#7c8b9a, #5e7186);
+  border-radius: 12px;
+  background: var(--mantine-color-default);
+  box-shadow: var(--mantine-shadow-md);
+}
+
+.search:focus-within {
+  outline: 2px solid var(--mantine-color-brand-6);
+  outline-offset: 2px;
+}
+
+.searchIcon {
+  flex: none;
+  color: var(--mantine-color-dimmed);
+}
+
+.searchInput {
+  flex: 1 1 200px;
+  min-width: 0;
+  min-height: 52px;
+  padding: 0 14px;
+  border: 0;
+  background: transparent;
+  color: var(--mantine-color-text);
+  font: inherit;
+}
+
+.searchInput:focus {
+  outline: none;
+}
+
+.searchInput::placeholder {
+  color: var(--mantine-color-dimmed);
+  opacity: 1;
+}
+
+/* Keeps the look of the mock while disabled; the badge below says why it does not work yet. */
+.searchButton:disabled {
+  flex: none;
+  border-radius: 9px;
+  background: var(--mantine-color-brand-filled);
+  color: var(--mantine-color-white);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: 999px;
+  background: var(--mantine-color-default);
+  color: var(--mantine-color-text);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.chip:hover {
+  border-color: var(--mantine-color-anchor);
+}
+
+.mapCard {
+  box-shadow: var(--mantine-shadow-lg);
+}
+
+.mapBox {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 340px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: var(--color-map);
+}
+
+.mapLabel {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--mantine-color-default);
+  color: light-dark(var(--mantine-color-brand-8), var(--mantine-color-brand-3));
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.mapSoon {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+}
+
+.pin,
+.pinAccent {
+  position: absolute;
+  color: var(--mantine-color-brand-6);
+}
+
+.pinAccent {
+  color: var(--color-accent);
+}
+
+.figures {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 16px;
+}
+
+/* The mock sizes these cards without their padding, so the base is 220px plus 50px. */
+.figureCard {
+  flex: 1 1 270px;
+}
+
+.figure {
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  color: light-dark(var(--mantine-color-brand-8), var(--mantine-color-brand-3));
+}
+
+.source {
+  flex: 1 1 280px;
+  align-self: center;
+}
+
+.entries {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.entry {
+  display: flex;
+  flex: 1 1 260px;
+  flex-direction: column;
+  gap: 10px;
+  color: var(--mantine-color-text);
+  text-decoration: none;
+}
+
+.entry:hover {
+  border-color: var(--mantine-color-anchor);
+}
+
+.entryIcon {
+  color: var(--mantine-color-anchor);
+}
+
+.placeholder {
+  border: 1px dashed var(--mantine-color-default-border);
+  background: transparent;
+}
+
+.band {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 36px 40px;
+  border-top: 4px solid var(--mantine-color-brand-4);
+  border-radius: 16px;
+  background: var(--color-band);
+
+  @media (max-width: $mantine-breakpoint-xs) {
+    padding: 28px 24px;
+  }
+}
+
+.bandTitle {
+  color: var(--mantine-color-white);
+}
+
+.bandText {
+  color: var(--color-band-text);
+}
+
+.bandButton {
+  font-weight: 700;
+}

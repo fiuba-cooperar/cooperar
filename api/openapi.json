@@ -9,6 +9,86 @@
     "url" : "/"
   } ],
   "paths" : {
+    "/api/auth/login" : {
+      "post" : {
+        "operationId" : "login",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TokenResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Sign in with email and password",
+        "tags" : [ "auth" ]
+      }
+    },
+    "/api/auth/logout" : {
+      "post" : {
+        "operationId" : "logout",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RefreshTokenRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "summary" : "Revoke a refresh token",
+        "tags" : [ "auth" ]
+      }
+    },
+    "/api/auth/refresh" : {
+      "post" : {
+        "operationId" : "refreshSession",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RefreshTokenRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TokenResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Exchange a refresh token for a new token pair",
+        "tags" : [ "auth" ]
+      }
+    },
     "/api/health" : {
       "get" : {
         "operationId" : "getHealth",
@@ -37,10 +117,64 @@
         "summary" : "Application and database health",
         "tags" : [ "health" ]
       }
+    },
+    "/api/me" : {
+      "get" : {
+        "operationId" : "getCurrentUser",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CurrentUserResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "The signed-in account, its role and its cooperatives",
+        "tags" : [ "auth" ]
+      }
     }
   },
   "components" : {
     "schemas" : {
+      "CooperativeSummary" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "id", "name" ]
+      },
+      "CurrentUserResponse" : {
+        "type" : "object",
+        "properties" : {
+          "cooperatives" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CooperativeSummary"
+            }
+          },
+          "email" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "role" : {
+            "$ref" : "#/components/schemas/Role"
+          }
+        },
+        "required" : [ "cooperatives", "email", "id", "role" ]
+      },
       "HealthResponse" : {
         "type" : "object",
         "description" : "Application health and the state of its dependencies",
@@ -57,6 +191,51 @@
       "HealthStatus" : {
         "type" : "string",
         "enum" : [ "UP", "DOWN" ]
+      },
+      "LoginRequest" : {
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "password" : {
+            "type" : "string",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "email", "password" ]
+      },
+      "RefreshTokenRequest" : {
+        "type" : "object",
+        "properties" : {
+          "refreshToken" : {
+            "type" : "string",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "refreshToken" ]
+      },
+      "Role" : {
+        "type" : "string",
+        "enum" : [ "ADMIN", "COOPERATIVE" ]
+      },
+      "TokenResponse" : {
+        "type" : "object",
+        "properties" : {
+          "accessToken" : {
+            "type" : "string"
+          },
+          "expiresIn" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Seconds until the access token expires"
+          },
+          "refreshToken" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "accessToken", "expiresIn", "refreshToken" ]
       }
     },
     "securitySchemes" : {

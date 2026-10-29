@@ -1,8 +1,11 @@
-# Local development: human-readable logs, Swagger UI at /swagger-ui.html and a throwaway JWT secret.
+# Local development: human-readable logs, Swagger UI at /swagger-ui.html and a throwaway JWT secret and admin.
 cooperar:
   security:
     jwt:
       secret: ${JWT_SECRET:dev-only-secret-change-me-0123456789abcdef}
+  admin:
+    email: ${ADMIN_EMAIL:admin@cooperar.local}
+    password: ${ADMIN_PASSWORD:dev-admin-password}
 
 logging:
   level:

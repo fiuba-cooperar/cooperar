@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/branding/logo-transparent.png" alt="cooperAR" width="220">
+  <img src="frontend/public/brand/logo-transparent.png" alt="cooperAR" width="220">
 </p>
 
 # CooperAR
@@ -64,7 +64,7 @@ Si cambiás la API, corré `make api` y commiteá los archivos generados. Si no 
 - [`backend/CLAUDE.md`](backend/CLAUDE.md) y [`frontend/CLAUDE.md`](frontend/CLAUDE.md): lo específico de cada parte.
 - [`docs/`](docs/): modelo de datos, minutas, relevamientos y evaluaciones.
 - [Mocks de la interfaz](https://claude.ai/artifact/DH9ySxA2a2y2RThpqBQ4Cz): pantallas del Sprint 1 agrupadas por rol (visitante, login, cooperativa y admin). Cada issue con pantalla lo enlaza en su sección "Mock".
-- [`docs/branding/`](docs/branding/): logos y colores.
+- [`docs/identidad-visual.md`](docs/identidad-visual.md): logos y colores.
 - Backlog: [issues](https://github.com/fiuba-cooperar/cooperar/issues) y [milestones](https://github.com/fiuba-cooperar/cooperar/milestones).
 
 ## Contribuir

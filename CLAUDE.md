@@ -53,7 +53,7 @@ Los términos del dominio se traducen siempre igual en el código: ficha → `pr
 | | Tests: JUnit 5, AssertJ, Mockito, MockMvcTester, Testcontainers |
 | | Formato: Spotless + palantir-java-format |
 | Base de datos | PostgreSQL 18 + PostGIS 3.6 (imagen oficial `postgis/postgis:18-3.6-alpine`), `unaccent`. pgvector se suma con la búsqueda semántica (#45). |
-| Frontend | Node 24 LTS, React 19, TypeScript 6.0 (estricto), Vite 8, React Router 8, TanStack Query 5 |
+| Frontend | Node 24 LTS, React 19, TypeScript 6.0 (estricto), Vite 8, React Router 8, TanStack Query 5, Mantine 9 (componentes de UI) |
 | | Cliente de API generado con orval desde `api/openapi.json` |
 | | ESLint 10 (typescript-eslint strict type-checked) + Prettier, Vitest 5 + Testing Library + axe-core |
 | Infra | Docker Compose; imágenes `eclipse-temurin:25-jre-alpine` y `nginx:1.30-alpine` |
@@ -98,7 +98,7 @@ ar.uba.fi.cooperar
 └── shared/               Transversal: error (ProblemDetail), security, config
 ```
 
-Módulos previstos según las issues: `organizations` (fichas, privacidad), `catalog`, `inquiries`, `users`, `fairs`, `spaces`, `history`, `network` (necesidades, MIA, grafo), `surveys`, `metrics`, `search` y `content`. Hoy solo existe `health`. Cada módulo se crea con su primera issue: no se dejan paquetes vacíos. Detalle en `backend/CLAUDE.md`.
+Módulos previstos según las issues: `organizations` (fichas, privacidad), `catalog`, `inquiries`, `users`, `fairs`, `spaces`, `history`, `network` (necesidades, MIA, grafo), `surveys`, `metrics`, `search` y `content`. Hoy existen `health` y `user` (login y sesión), más la entidad mínima `Cooperative` de `organizations`. Cada módulo se crea con su primera issue: no se dejan paquetes vacíos. Detalle en `backend/CLAUDE.md`.
 
 ### Frontend (resumen)
 
@@ -147,6 +147,9 @@ Los comandos de cada parte están en su `CLAUDE.md`.
 - [Conventional Commits](https://www.conventionalcommits.org/es/) con la descripción en español: `feat(catalog): alta de productos con fotos`, `fix(security): ...`, `chore`, `docs`, `test`, `refactor`, `ci`, `build`.
 - El scope es el módulo o la parte: `backend`, `frontend`, `infra`, `ci` o el nombre de un módulo.
 - Ramas `<tipo>/<descripcion-corta>`, por ejemplo `feat/registro-cooperativas`. PR contra `main` con `Closes #N`. No se pushea directo a `main`.
+- **No se commitea ni se pushea cada cambio.** Se agrupa el trabajo en pocos commits que tengan sentido por sí solos (por ejemplo, uno por parte o por funcionalidad), y se pushea en pocas tandas. Claude no commitea ni pushea por iniciativa propia: espera a que se lo pidan.
+- **Por qué:** los minutos de GitHub Actions de la organización son limitados, y cada push a un PR abierto corre todo el CI (los commits locales no gastan nada). Un push por cada ajuste los consume sin necesidad.
+- **Antes de pushear, se corre lo mismo que el CI** en la máquina de cada uno: `make lint`, `make test` y `make diff-cover` (cobertura global del backend ≥ 80 % y de las líneas cambiadas ≥ 85 %). No se pushea «para probar» el CI.
 
 ## Privacidad de los datos
 
@@ -171,8 +174,6 @@ La plataforma guarda datos de cooperativas y de personas (contactos, quienes env
 | Modelo de dominio y diagrama ER | #1 |
 | Campos de la ficha y su nivel de privacidad | #3 |
 | Fuente de los datos semilla | #4 |
-| Login: emisión de access y refresh token, dónde guarda la sesión el front, admin inicial | #6 |
-| Librería de componentes de UI | #7 |
 | Staging: la #9 propone Render, que choca con la regla de no usar cloud propietario. Hay que decidir si staging va en Render (aceptado solo para staging) o en la Facultad. | #9, #59 |
 | Envío de emails (SMTP de la Facultad u otro autohospedado) | #12, #23 |
 | Almacenamiento de imágenes (disco local o compatible con S3 autohospedado, como MinIO) | #13 |

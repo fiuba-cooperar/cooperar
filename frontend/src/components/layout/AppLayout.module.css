@@ -4,42 +4,64 @@
   min-height: 100dvh;
 }
 
-.inner {
-  width: 100%;
-  max-width: var(--content-width);
-  margin: 0 auto;
-  padding: 0 var(--space-3);
-}
-
 .skipLink {
   position: absolute;
-  left: var(--space-2);
+  left: var(--mantine-spacing-xs);
   top: -100%;
-  padding: var(--space-2) var(--space-3);
-  background: var(--color-bg);
-  border: 2px solid var(--color-focus);
-  border-radius: var(--radius);
   z-index: 10;
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-md);
+  background: var(--mantine-color-body);
+  border: 2px solid var(--mantine-color-brand-6);
+  border-radius: var(--mantine-radius-md);
 }
 
 .skipLink:focus {
-  top: var(--space-2);
+  top: var(--mantine-spacing-xs);
 }
 
 .header {
-  border-bottom: 1px solid var(--color-border);
-  padding: var(--space-3) 0;
+  border-top: 4px solid var(--mantine-color-brand-4);
+  border-bottom: 1px solid var(--mantine-color-default-border);
+  background: var(--mantine-color-default);
 }
 
 .brand {
-  font-size: 1.25rem;
-  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   text-decoration: none;
+  color: var(--mantine-color-brand-9);
+  font-family: 'Poppins', 'Inter Variable', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.01em;
+
+  @mixin dark {
+    color: var(--mantine-color-white);
+  }
+}
+
+.brand img {
+  height: 36px;
+  width: auto;
 }
 
 .main {
   flex: 1;
-  padding: var(--space-4) 0 var(--space-5);
+  padding: var(--mantine-spacing-xl) 0 calc(var(--mantine-spacing-xl) * 1.5);
+}
+
+/* The login card sits in the vertical middle of the free space, as in the mock. */
+.mainCentered {
+  padding-block: var(--mantine-spacing-xl);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.mainCentered > * {
+  width: 100%;
 }
 
 .main:focus {
@@ -47,7 +69,6 @@
 }
 
 .footer {
-  border-top: 1px solid var(--color-border);
-  color: var(--color-text-muted);
-  font-size: 0.875rem;
+  border-top: 1px solid var(--mantine-color-default-border);
+  background: var(--mantine-color-default);
 }

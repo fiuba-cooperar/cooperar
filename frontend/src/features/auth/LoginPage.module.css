@@ -1,0 +1,38 @@
+.alert {
+  --alert-color: var(--color-danger);
+  --alert-bg: color-mix(in srgb, var(--color-danger) 10%, transparent);
+}
+
+.alert [class*='message'] {
+  color: var(--color-danger);
+}
+
+.passwordField {
+  position: relative;
+}
+
+/* Visually on the label row; in the DOM after the field so the label keeps a clean accessible name. */
+.forgot {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: auto;
+  font-size: var(--mantine-font-size-sm);
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--mantine-color-anchor);
+  text-decoration: underline;
+}
+
+/* Disabled until #66, but it should still read as a link, not as a greyed-out button. */
+.forgot:disabled {
+  background: transparent;
+  color: var(--mantine-color-anchor);
+  opacity: 0.75;
+  cursor: default;
+}
+
+/* Moves the show/hide eye away from the field edge. */
+.visibilityToggle {
+  margin-inline-end: 8px;
+}

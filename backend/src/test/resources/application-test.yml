@@ -2,3 +2,6 @@ cooperar:
   security:
     jwt:
       secret: test-only-secret-0123456789abcdef0123
+  admin:
+    email: admin@test.local
+    password: test-admin-password

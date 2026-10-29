@@ -25,6 +25,9 @@ cooperar:
   security:
     jwt:
       secret: ${JWT_SECRET}
+  admin:
+    email: ${ADMIN_EMAIL:}
+    password: ${ADMIN_PASSWORD:}
 
 management:
   endpoints:

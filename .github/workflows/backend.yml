@@ -32,6 +32,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          # diff-cover needs the base branch history to know which lines the PR changed.
+          fetch-depth: 0
       - uses: actions/setup-java@v6
         with:
           distribution: temurin
@@ -42,8 +45,18 @@ jobs:
         run: ./gradlew spotlessCheck
 
       # Testcontainers uses the Docker daemon that ships with the runner.
-      - name: Test
-        run: ./gradlew test
+      - name: Test and coverage (minimum 80% of lines)
+        run: ./gradlew test jacocoTestCoverageVerification
+      # Paths in the diff are relative to the repo root, so this step runs from there.
+      - name: Coverage of the lines changed by the PR (minimum 85%)
+        if: github.event_name == 'pull_request'
+        working-directory: .
+        run: |
+          pip install diff-cover
+          diff-cover backend/build/reports/jacoco/test/jacocoTestReport.xml \
+            --src-roots backend/src/main/java \
+            --compare-branch=origin/${{ github.base_ref }} \
+            --fail-under=85
       - name: Committed contract matches the API
         run: |
           diff -u ../api/openapi.json build/openapi/openapi.json || {
@@ -54,4 +67,6 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: backend-test-report
-          path: backend/build/reports/tests/test
+          path: |
+            backend/build/reports/tests/test
+            backend/build/reports/jacoco/test/html

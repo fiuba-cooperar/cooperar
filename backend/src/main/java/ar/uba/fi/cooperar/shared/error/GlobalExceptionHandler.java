@@ -1,5 +1,8 @@
 package ar.uba.fi.cooperar.shared.error;
 
+import ar.uba.fi.cooperar.service.user.AccountNotFoundException;
+import ar.uba.fi.cooperar.service.user.InvalidCredentialsException;
+import ar.uba.fi.cooperar.service.user.InvalidRefreshTokenException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -16,6 +19,15 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    @ExceptionHandler({
+        InvalidCredentialsException.class,
+        InvalidRefreshTokenException.class,
+        AccountNotFoundException.class
+    })
+    public ProblemDetail handleAuthenticationFailure(RuntimeException exception) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, exception.getMessage());
+    }
 
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleUnexpected(Exception exception) {

@@ -1,6 +1,7 @@
 package ar.uba.fi.cooperar.shared.security;
 
 import ar.uba.fi.cooperar.domain.user.Role;
+import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import java.nio.charset.StandardCharsets;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -10,9 +11,13 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
@@ -22,7 +27,7 @@ import org.springframework.security.web.SecurityFilterChain;
  * Public endpoints need no token; admin and cooperative areas are split by path prefix.
  */
 @Configuration
-@EnableConfigurationProperties(JwtProperties.class)
+@EnableConfigurationProperties({JwtProperties.class, SessionProperties.class, AdminProperties.class})
 public class SecurityConfig {
 
     public static final String ROLES_CLAIM = "roles";
@@ -35,6 +40,8 @@ public class SecurityConfig {
                         .hasRole(Role.ADMIN.name())
                         .requestMatchers("/api/cooperative/**")
                         .hasRole(Role.COOPERATIVE.name())
+                        .requestMatchers("/api/me")
+                        .authenticated()
                         .requestMatchers("/api/**", "/error")
                         .permitAll()
                         .requestMatchers("/actuator/health/**", "/actuator/info")
@@ -57,6 +64,16 @@ public class SecurityConfig {
         return NimbusJwtDecoder.withSecretKey(signingKey(properties))
                 .macAlgorithm(MacAlgorithm.HS256)
                 .build();
+    }
+
+    @Bean
+    JwtEncoder jwtEncoder(JwtProperties properties) {
+        return new NimbusJwtEncoder(new ImmutableSecret<>(signingKey(properties)));
+    }
+
+    @Bean
+    PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 
     static SecretKey signingKey(JwtProperties properties) {

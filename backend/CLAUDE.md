@@ -10,6 +10,7 @@ Spring Boot 4.1.2 sobre Java 25, con Gradle 9.8.2 (wrapper). El contexto del pro
 | Un test | `./gradlew test --tests '*HealthControllerTest'` |
 | Formatear | `./gradlew spotlessApply` |
 | Chequear formato (CI) | `./gradlew spotlessCheck` |
+| Cobertura: global ≥ 80 % y líneas cambiadas ≥ 85 % (CI) | `make diff-cover` desde la raíz (necesita `pip install diff-cover`) |
 | Jar ejecutable | `./gradlew bootJar` |
 | Correr contra un Postgres efímero (Testcontainers) | `./gradlew bootTestRun` |
 | Correr contra la base de `docker compose` | `docker compose up -d db` y luego `./gradlew bootRun` |
@@ -35,7 +36,7 @@ ar.uba.fi.cooperar
     └── config/            OpenApiConfig y otra configuración transversal
 ```
 
-Hoy existen el módulo `health` (en `web`, `service`, `domain` y `repository`) y `domain/user/Role`.
+Hoy existen los módulos `health` y `user` (cuentas, login y sesión; en `web`, `service`, `domain` y `repository`) y, de `organizations`, solo la entidad mínima `Cooperative` (el resto llega con las fichas, #3 y #14).
 
 ### Reglas entre capas
 
@@ -67,7 +68,10 @@ Hoy existen el módulo `health` (en `web`, `service`, `domain` y `repository`) y
 ## Seguridad
 
 - Resource server JWT con HS256 y clave en `JWT_SECRET` (mínimo 32 caracteres; se valida al arrancar). Los roles viajan en el claim `roles` (`["ADMIN"]`, `["COOPERATIVE"]`) y se mapean a `ROLE_*`.
-- La emisión de tokens (login y refresh) es la #6 y todavía no existe.
+- **Login** (`/api/auth/login`, `/refresh`, `/logout`, públicos): el access token es un JWT de 15 minutos (`cooperar.security.session.access-token-ttl`) y el refresh token es opaco, de 7 días, y se guarda en la base solo como hash SHA-256. Cada `/refresh` lo rota (el anterior queda revocado) y `/logout` lo revoca. Las contraseñas van con BCrypt.
+- `GET /api/me` devuelve la cuenta, su rol y sus cooperativas.
+- **Admin inicial**: al arrancar, si no existe ningún admin y están `ADMIN_EMAIL` y `ADMIN_PASSWORD`, se crea. En `prod` no hay valores por defecto.
+- Pendiente: limitar los intentos de login (rate limiting, #22).
 - Las reglas por ruta están en `SecurityConfig`. Lo que no matchea ninguna regla se deniega (`denyAll`).
 - Actuator expone solo `health` (con probes `liveness` y `readiness`) e `info`.
 

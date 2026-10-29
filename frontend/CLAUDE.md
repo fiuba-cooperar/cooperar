@@ -23,7 +23,7 @@ src/
 ├── app/                     Composición: App (providers), routes, queryClient, theme (tema de Mantine)
 ├── api/generated/           Cliente generado por orval. NO se edita a mano; está excluido de lint y formato
 ├── components/
-│   ├── layout/              AppLayout (header, main, footer, skip link)
+│   ├── layout/              AppLayout (header con el menú, main, footer, skip link) y publicSections (secciones del menú)
 ├── features/<module>/       Una carpeta por módulo de dominio, alineada con el backend
 │   ├── api/                 Hooks de datos que envuelven al cliente generado (useXxx)
 │   ├── components/          Componentes propios del módulo
@@ -31,14 +31,14 @@ src/
 └── test/                    Helpers de test: renderRoute, stubFetchJson, expectNoA11yViolations
 ```
 
-Las features actuales son `home` (pantalla inicial), `health` (estado del backend), `auth` (login, sesión y guardas de ruta), `admin` y `cooperative` (secciones por rol, hoy solo la portada) y `errors` (404 y acceso denegado).
+Las features actuales son `home` (portada y páginas «Próximamente» de las secciones que todavía no existen), `auth` (login, sesión y guardas de ruta), `admin` y `cooperative` (secciones por rol, hoy solo la portada) y `errors` (404 y acceso denegado).
 
 ## Reglas
 
 - **Acceso a datos solo por el cliente generado.** Nada de `fetch` a mano contra la API. Si falta un endpoint, primero se agrega en el backend y después se corre `make api`. El CI falla si `src/api/generated` no coincide con `api/openapi.json`.
 - **Los componentes no usan los hooks generados directamente.** Cada feature expone hooks propios en `features/<module>/api/` que envuelven al generado y fijan las opciones (`select`, `refetchInterval`, invalidaciones). Así un cambio de contrato se absorbe en un solo lugar.
 - **Estado del servidor en TanStack Query**, y estado de UI local con `useState`/`useReducer`. No se agrega una librería de estado global sin una decisión con issue.
-- **Imports absolutos con `@/`** (`@/features/health/...`). Los relativos solo dentro de la misma feature.
+- **Imports absolutos con `@/`** (`@/features/auth/...`). Los relativos solo dentro de la misma feature.
 - **Rutas.** Se declaran en `app/routes.tsx`. Las rutas por rol cuelgan de `RequireRole` (`features/auth`): sin sesión redirige a `/login` y con otro rol muestra «Acceso denegado».
 - **Estilos y componentes.** Se usa Mantine (`@mantine/core`) para los componentes (`Button`, `TextInput`, `Paper`, `Alert`, etc.). El tema (colores del logo, tipografía Inter/Poppins, radio, modo claro/oscuro automático) está en `app/theme.ts` y se aplica con `MantineProvider`. Lo que Mantine no cubre se escribe con CSS Modules (`Xxx.module.css`) usando las variables de Mantine (`var(--mantine-color-brand-6)`, `var(--mantine-spacing-md)`); no se usan colores sueltos. Si un componente hace falta en más de una feature, se arma sobre los de Mantine en `src/components/`.
 - **Idioma.** Código, nombres de archivos, identificadores y tests en inglés. **Todo texto visible para el usuario va en español** rioplatense, en voseo ("Buscá", "Volver al inicio").

@@ -1,9 +1,12 @@
 package ar.uba.fi.cooperar.shared.error;
 
-import ar.uba.fi.cooperar.service.organizations.CooperativeNotFoundException;
+import ar.uba.fi.cooperar.domain.organizations.InvalidCuitException;
+import ar.uba.fi.cooperar.service.organizations.OrganizationNotFoundException;
 import ar.uba.fi.cooperar.service.user.AccountNotFoundException;
 import ar.uba.fi.cooperar.service.user.InvalidCredentialsException;
 import ar.uba.fi.cooperar.service.user.InvalidRefreshTokenException;
+import ar.uba.fi.cooperar.service.user.PasswordTooLongException;
+import ar.uba.fi.cooperar.service.user.RegistrationConflictException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -30,9 +33,24 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, exception.getMessage());
     }
 
-    @ExceptionHandler(CooperativeNotFoundException.class)
+    @ExceptionHandler(OrganizationNotFoundException.class)
     public ProblemDetail handleNotFound(RuntimeException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());
+    }
+
+    @ExceptionHandler({InvalidCuitException.class, PasswordTooLongException.class})
+    public ProblemDetail handleInvalidInput(RuntimeException exception) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, exception.getMessage());
+    }
+
+    /** Lists the conflicting fields so the client can point at them. */
+    @ExceptionHandler(RegistrationConflictException.class)
+    public ProblemDetail handleRegistrationConflict(RegistrationConflictException exception) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
+        problem.setProperty(
+                "conflicts",
+                exception.getFields().stream().map(Enum::name).sorted().toList());
+        return problem;
     }
 
     @ExceptionHandler(Exception.class)

@@ -11,8 +11,10 @@ public interface UserAccountRepository extends JpaRepository<UserAccount, UUID> 
 
     Optional<UserAccount> findByEmail(String email);
 
-    @EntityGraph(attributePaths = "cooperatives")
-    Optional<UserAccount> findWithCooperativesById(UUID id);
+    boolean existsByEmail(String email);
+
+    @EntityGraph(attributePaths = "organizations")
+    Optional<UserAccount> findWithOrganizationsById(UUID id);
 
     boolean existsByRole(Role role);
 }

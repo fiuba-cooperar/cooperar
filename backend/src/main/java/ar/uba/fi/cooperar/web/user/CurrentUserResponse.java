@@ -1,6 +1,6 @@
 package ar.uba.fi.cooperar.web.user;
 
-import ar.uba.fi.cooperar.domain.organizations.Cooperative;
+import ar.uba.fi.cooperar.domain.organizations.Organization;
 import ar.uba.fi.cooperar.domain.user.Role;
 import ar.uba.fi.cooperar.domain.user.UserAccount;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -11,10 +11,17 @@ import java.util.UUID;
 public record CurrentUserResponse(
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) UUID id,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String email,
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Role role,
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) List<CooperativeSummary> cooperatives) {
 
-    public record CooperativeSummary(
+        @Schema(description = "Missing for the initial admin when it was created without a name")
+        String firstName,
+
+        @Schema(description = "Missing for the initial admin when it was created without a name")
+        String lastName,
+
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Role role,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) List<OrganizationSummary> organizations) {
+
+    public record OrganizationSummary(
             @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
             UUID id,
 
@@ -22,10 +29,11 @@ public record CurrentUserResponse(
             String name) {}
 
     static CurrentUserResponse from(UserAccount user) {
-        List<CooperativeSummary> cooperatives = user.getCooperatives().stream()
-                .sorted(Comparator.comparing(Cooperative::getName))
-                .map(cooperative -> new CooperativeSummary(cooperative.getId(), cooperative.getName()))
+        List<OrganizationSummary> organizations = user.getOrganizations().stream()
+                .sorted(Comparator.comparing(Organization::getName))
+                .map(organization -> new OrganizationSummary(organization.getId(), organization.getName()))
                 .toList();
-        return new CurrentUserResponse(user.getId(), user.getEmail(), user.getRole(), cooperatives);
+        return new CurrentUserResponse(
+                user.getId(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getRole(), organizations);
     }
 }

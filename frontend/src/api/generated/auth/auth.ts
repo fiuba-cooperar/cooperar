@@ -25,6 +25,8 @@ import type {
   CurrentUserResponse,
   LoginRequest,
   RefreshTokenRequest,
+  RegistrationRequest,
+  RegistrationResponse,
   TokenResponse,
 } from '../model';
 
@@ -376,6 +378,117 @@ export const useRefreshSession = <TError = unknown, TContext = unknown>(
 > => {
   return useMutation(getRefreshSessionMutationOptions(options), queryClient);
 };
+export type registerResponse201 = {
+  data: RegistrationResponse;
+  status: 201;
+};
+
+export type registerResponseSuccess = registerResponse201 & {
+  headers: Headers;
+};
+export type registerResponse = registerResponseSuccess;
+
+export const getRegisterUrl = () => {
+  return `/api/auth/register`;
+};
+
+/**
+ * Answers 409 with a `conflicts` list (`EMAIL`, `CUIT`) when either is already registered.
+ * @summary Create an account together with its first organization
+ */
+export const register = async (
+  registrationRequest: RegistrationRequest,
+  options?: Parameters<typeof apiFetch>[1],
+): Promise<registerResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return apiFetch<registerResponse>(getRegisterUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(registrationRequest),
+  });
+};
+
+export const getRegisterMutationKey = () => ['register'] as const;
+
+export const getRegisterMutationOptions = <TError = unknown, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof register>>,
+    TError,
+    RegisterMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof apiFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof register>>,
+  TError,
+  RegisterMutationVariables,
+  TContext
+> => {
+  const mutationKey = getRegisterMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof register>>,
+    RegisterMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return register(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RegisterMutationResult = NonNullable<Awaited<ReturnType<typeof register>>>;
+export type RegisterMutationBody = RegistrationRequest;
+export type RegisterMutationError = unknown;
+export type RegisterMutationVariables = { data: RegistrationRequest };
+
+/**
+ * @summary Create an account together with its first organization
+ */
+export const useRegister = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof register>>,
+      TError,
+      RegisterMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof register>>,
+  TError,
+  RegisterMutationVariables,
+  TContext
+> => {
+  return useMutation(getRegisterMutationOptions(options), queryClient);
+};
 export type getCurrentUserResponse200 = {
   data: CurrentUserResponse;
   status: 200;
@@ -391,7 +504,7 @@ export const getGetCurrentUserUrl = () => {
 };
 
 /**
- * @summary The signed-in account, its role and its cooperatives
+ * @summary The signed-in account, its role and its organizations
  */
 export const getCurrentUser = async (
   options?: Parameters<typeof apiFetch>[1],
@@ -477,7 +590,7 @@ export function useGetCurrentUser<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
- * @summary The signed-in account, its role and its cooperatives
+ * @summary The signed-in account, its role and its organizations
  */
 
 export function useGetCurrentUser<

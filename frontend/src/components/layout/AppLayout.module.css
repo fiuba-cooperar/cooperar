@@ -4,47 +4,46 @@
   min-height: 100dvh;
 }
 
-.skipLink {
-  position: absolute;
-  left: var(--mantine-spacing-xs);
-  top: -100%;
-  z-index: 10;
-  padding: var(--mantine-spacing-xs) var(--mantine-spacing-md);
-  background: var(--mantine-color-body);
-  border: 2px solid var(--mantine-color-brand-6);
-  border-radius: var(--mantine-radius-md);
-}
-
-.skipLink:focus {
-  top: var(--mantine-spacing-xs);
-}
-
 .header {
   border-top: 4px solid var(--mantine-color-brand-4);
   border-bottom: 1px solid var(--mantine-color-default-border);
   background: var(--mantine-color-default);
 }
 
-.brand {
-  display: inline-flex;
+.headerBar {
+  display: flex;
   align-items: center;
-  gap: 10px;
-  text-decoration: none;
-  color: var(--mantine-color-brand-9);
-  font-family: 'Poppins', 'Inter Variable', sans-serif;
-  font-size: 1.6rem;
-  font-weight: 500;
-  line-height: 1;
-  letter-spacing: -0.01em;
-
-  @mixin dark {
-    color: var(--mantine-color-white);
-  }
+  gap: 16px;
+  /* As tall as the 44px buttons even where only the logo and the burger show. */
+  min-height: calc(44px + 2 * var(--mantine-spacing-md));
 }
 
-.brand img {
-  height: 36px;
-  width: auto;
+/* Both sides grow alike so the menu stays centered on the page. */
+.headerSide {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  min-width: max-content;
+}
+
+.headerEnd {
+  display: flex;
+  justify-content: flex-end;
+  margin-inline-start: auto;
+}
+
+.navLink {
+  padding: 8px 2px;
+  border-bottom: 2px solid transparent;
+  color: var(--mantine-color-text);
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.navLink:hover,
+.navLink[aria-current='page'] {
+  border-bottom-color: var(--mantine-color-anchor);
 }
 
 .main {
@@ -62,6 +61,14 @@
 
 .mainCentered > * {
   width: 100%;
+}
+
+.mainForm {
+  padding-block: 48px;
+}
+
+.mainFlush {
+  padding: 0;
 }
 
 .main:focus {

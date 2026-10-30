@@ -6,7 +6,7 @@ import java.util.Locale;
 /** URL-safe identifiers derived from names, so a profile can be shared with a readable link. */
 public final class Slugs {
 
-    private static final String FALLBACK = "cooperativa";
+    private static final String FALLBACK = "organizacion";
 
     private Slugs() {}
 

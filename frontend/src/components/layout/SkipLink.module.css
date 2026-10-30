@@ -1,0 +1,14 @@
+.skipLink {
+  position: absolute;
+  left: var(--mantine-spacing-xs);
+  top: -100%;
+  z-index: 10;
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-md);
+  background: var(--mantine-color-body);
+  border: 2px solid var(--mantine-color-brand-6);
+  border-radius: var(--mantine-radius-md);
+}
+
+.skipLink:focus {
+  top: var(--mantine-spacing-xs);
+}

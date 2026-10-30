@@ -1,0 +1,69 @@
+.header {
+  border-top: 4px solid var(--mantine-color-brand-4);
+  background: var(--mantine-color-default);
+}
+
+/* Navy in both color schemes, as in the mock. */
+.navbar {
+  background: var(--color-band);
+  border-inline-end: none;
+}
+
+.navLink {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 8px;
+  color: var(--color-panel-nav-text);
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.navLink:hover {
+  background: var(--color-panel-nav-hover);
+  color: var(--mantine-color-white);
+}
+
+.navLink[aria-current='page'] {
+  background: var(--color-panel-nav-active);
+  color: var(--mantine-color-white);
+  font-weight: 600;
+}
+
+.navLink:focus-visible {
+  outline: 2px solid var(--mantine-color-white);
+  outline-offset: 2px;
+}
+
+/* Pinned to the bottom of the menu: it leaves the panel. */
+.publicSiteLink {
+  margin-top: auto;
+  color: var(--color-panel-nav-muted);
+}
+
+/* On phones the account sits at the bottom of the opened menu, since the header has no room for it. */
+.navbarAccount {
+  margin-top: var(--mantine-spacing-md);
+  padding: var(--mantine-spacing-sm);
+  border-radius: 8px;
+  background: var(--mantine-color-default);
+
+  @media (min-width: $mantine-breakpoint-sm) {
+    display: none;
+  }
+}
+
+.content {
+  padding: var(--mantine-spacing-xl) var(--mantine-spacing-md);
+
+  @media (min-width: $mantine-breakpoint-sm) {
+    padding: 36px 40px;
+  }
+}
+
+.main:focus {
+  outline: none;
+}

@@ -36,7 +36,7 @@ ar.uba.fi.cooperar
     └── config/            OpenApiConfig y otra configuración transversal
 ```
 
-Hoy existen los módulos `health` y `user` (cuentas, login y sesión; en `web`, `service`, `domain` y `repository`) y `organizations`, con la ficha pública de la cooperativa (`GET /api/cooperatives/{slug}`) y los rubros. Con el perfil `dev` se cargan al arrancar tres cooperativas ficticias de ejemplo.
+Hoy existen los módulos `health` y `user` (cuentas, registro, login y sesión; en `web`, `service`, `domain` y `repository`) y, de `organizations`, la entidad `Organization` (tabla `organizations`) con los datos del alta, los value objects `Cuit` y `Address` (embebido; por ahora se escribe a mano salvo la provincia, y la geocodificación llega con la #13) y los enums `OrganizationType` (cooperativa, ERT o ambas), `Sector` y `Province`. También tiene la ficha pública (`GET /api/organizations/{slug}`, sin el CUIT ni las referencias de la dirección); el resto llega con #3 y #14. Con el perfil `dev` se cargan al arrancar tres organizaciones ficticias de ejemplo.
 
 ### Reglas entre capas
 
@@ -69,7 +69,8 @@ Hoy existen los módulos `health` y `user` (cuentas, login y sesión; en `web`, 
 
 - Resource server JWT con HS256 y clave en `JWT_SECRET` (mínimo 32 caracteres; se valida al arrancar). Los roles viajan en el claim `roles` (`["ADMIN"]`, `["COOPERATIVE"]`) y se mapean a `ROLE_*`.
 - **Login** (`/api/auth/login`, `/refresh`, `/logout`, públicos): el access token es un JWT de 15 minutos (`cooperar.security.session.access-token-ttl`) y el refresh token es opaco, de 7 días, y se guarda en la base solo como hash SHA-256. Cada `/refresh` lo rota (el anterior queda revocado) y `/logout` lo revoca. Las contraseñas van con BCrypt.
-- `GET /api/me` devuelve la cuenta, su rol y sus cooperativas.
+- `GET /api/me` devuelve la cuenta, su rol y sus organizaciones.
+- **Registro** (`/api/auth/register`, público): crea en una transacción la cuenta con rol `COOPERATIVE` y su primera organización (cooperativa, ERT o ambas). El email y el CUIT son únicos (el CUIT se guarda como 11 dígitos y se valida el dígito verificador); si alguno ya existe responde 409 con la lista `conflicts` (`EMAIL`, `CUIT`). Hasta la #12 la organización queda pública apenas se registra.
 - **Admin inicial**: al arrancar, si no existe ningún admin y están `ADMIN_EMAIL` y `ADMIN_PASSWORD`, se crea. En `prod` no hay valores por defecto.
 - Pendiente: limitar los intentos de login (rate limiting, #22).
 - Las reglas por ruta están en `SecurityConfig`. Lo que no matchea ninguna regla se deniega (`denyAll`).

@@ -1,0 +1,38 @@
+.steps {
+  display: flex;
+  gap: 8px;
+}
+
+.step {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--mantine-color-default-border);
+}
+
+.step[data-active] {
+  background: var(--mantine-color-brand-6);
+}
+
+.heading:focus {
+  outline: none;
+}
+
+.alert {
+  --alert-color: var(--color-danger);
+  --alert-bg: color-mix(in srgb, var(--color-danger) 10%, transparent);
+}
+
+.alert [class*='message'] {
+  color: var(--color-danger);
+}
+
+.notice {
+  font-size: var(--mantine-font-size-sm);
+  line-height: 1.5;
+}
+
+/* Same border as the fields, as in the mock. */
+.back {
+  --button-bd: 1px solid var(--color-field-border);
+}

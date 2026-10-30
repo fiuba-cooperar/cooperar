@@ -1,0 +1,16 @@
+.tools {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Dashed and without a link: the tool does not exist yet. */
+.tool {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 22px;
+  border: 1px dashed var(--color-field-border);
+  border-radius: 14px;
+  background: var(--mantine-color-default);
+}

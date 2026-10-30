@@ -12,7 +12,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Creates the first admin from {@code ADMIN_EMAIL}/{@code ADMIN_PASSWORD} when the database has no admin yet. */
+/**
+ * Creates the first admin from {@code ADMIN_EMAIL}/{@code ADMIN_PASSWORD} (and the optional {@code ADMIN_FIRST_NAME}/
+ * {@code ADMIN_LAST_NAME}) when the database has no admin yet.
+ */
 @Component
 public class AdminBootstrap implements ApplicationRunner {
 
@@ -38,8 +41,16 @@ public class AdminBootstrap implements ApplicationRunner {
         if (users.existsByRole(Role.ADMIN)) {
             return;
         }
-        UserAccount admin = users.save(
-                new UserAccount(properties.email(), passwordEncoder.encode(properties.password()), Role.ADMIN));
+        UserAccount admin = users.save(new UserAccount(
+                blankToNull(properties.firstName()),
+                blankToNull(properties.lastName()),
+                properties.email(),
+                passwordEncoder.encode(properties.password()),
+                Role.ADMIN));
         log.info("Created the initial admin account {}", admin.getId());
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 }

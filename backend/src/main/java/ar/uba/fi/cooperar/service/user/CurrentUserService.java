@@ -15,9 +15,9 @@ public class CurrentUserService {
         this.users = users;
     }
 
-    /** Loads the account with its cooperatives; the account may have been deleted after the token was issued. */
+    /** Loads the account with its organizations; the account may have been deleted after the token was issued. */
     @Transactional(readOnly = true)
     public UserAccount get(UUID userId) {
-        return users.findWithCooperativesById(userId).orElseThrow(AccountNotFoundException::new);
+        return users.findWithOrganizationsById(userId).orElseThrow(AccountNotFoundException::new);
     }
 }

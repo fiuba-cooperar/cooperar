@@ -40,7 +40,7 @@ public class SecurityConfig {
                         .hasRole(Role.ADMIN.name())
                         .requestMatchers("/api/cooperative/**")
                         .hasRole(Role.COOPERATIVE.name())
-                        .requestMatchers("/api/me")
+                        .requestMatchers("/api/me", "/api/me/**")
                         .authenticated()
                         .requestMatchers("/api/**", "/error")
                         .permitAll()

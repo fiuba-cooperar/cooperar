@@ -11,6 +11,9 @@ import ar.uba.fi.cooperar.domain.user.Role;
 import ar.uba.fi.cooperar.domain.user.UserAccount;
 import ar.uba.fi.cooperar.repository.user.UserAccountRepository;
 import ar.uba.fi.cooperar.shared.security.AdminProperties;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
@@ -18,10 +21,11 @@ class AdminBootstrapTest {
 
     private final UserAccountRepository users = mock(UserAccountRepository.class);
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+    private final Clock clock = Clock.fixed(Instant.parse("2026-10-30T12:00:00Z"), ZoneOffset.UTC);
 
     @Test
     void createsNothingWhenTheCredentialsAreNotConfigured() {
-        new AdminBootstrap(new AdminProperties("", "", null, null), users, encoder).run(null);
+        new AdminBootstrap(new AdminProperties("", "", null, null), users, encoder, clock).run(null);
 
         verify(users, never()).save(any());
     }
@@ -30,7 +34,8 @@ class AdminBootstrapTest {
     void createsNothingWhenAnAdminAlreadyExists() {
         when(users.existsByRole(Role.ADMIN)).thenReturn(true);
 
-        new AdminBootstrap(new AdminProperties("admin@test.local", "secret", null, null), users, encoder).run(null);
+        new AdminBootstrap(new AdminProperties("admin@test.local", "secret", null, null), users, encoder, clock)
+                .run(null);
 
         verify(users, never()).save(any());
     }
@@ -39,21 +44,23 @@ class AdminBootstrapTest {
     void createsAnAdminWithAHashedPassword() {
         when(users.save(any(UserAccount.class))).thenAnswer(call -> call.getArgument(0));
 
-        new AdminBootstrap(new AdminProperties("Admin@Test.local", "secret", " ", null), users, encoder).run(null);
+        new AdminBootstrap(new AdminProperties("Admin@Test.local", "secret", " ", null), users, encoder, clock)
+                .run(null);
 
         verify(users)
                 .save(argThat(user -> user.getRole() == Role.ADMIN
                         && user.getEmail().equals("admin@test.local")
                         && encoder.matches("secret", user.getPasswordHash())
                         && user.getFirstName() == null
-                        && user.getLastName() == null));
+                        && user.getLastName() == null
+                        && user.isEmailVerified()));
     }
 
     @Test
     void givesTheAdminTheConfiguredName() {
         when(users.save(any(UserAccount.class))).thenAnswer(call -> call.getArgument(0));
 
-        new AdminBootstrap(new AdminProperties("admin@test.local", "secret", " Ana ", "Pérez"), users, encoder)
+        new AdminBootstrap(new AdminProperties("admin@test.local", "secret", " Ana ", "Pérez"), users, encoder, clock)
                 .run(null);
 
         verify(users).save(argThat(user -> "Ana".equals(user.getFirstName()) && "Pérez".equals(user.getLastName())));

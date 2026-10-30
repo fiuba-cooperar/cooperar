@@ -33,11 +33,23 @@ services:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-dev-admin-password}
       ADMIN_FIRST_NAME: ${ADMIN_FIRST_NAME:-Admin}
       ADMIN_LAST_NAME: ${ADMIN_LAST_NAME:-Observatorio}
+      # Development emails go to Mailpit instead of real inboxes.
+      MAIL_HOST: mailpit
+      MAIL_PORT: 1025
+      PUBLIC_URL: ${PUBLIC_URL:-http://localhost:5173}
     ports:
       - '${BACKEND_PORT:-8080}:8080'
     depends_on:
       db:
         condition: service_healthy
+      mailpit:
+        condition: service_started
+
+  # Catches every email the backend sends; read them at http://localhost:8025. Development only.
+  mailpit:
+    image: axllent/mailpit:v1.31
+    ports:
+      - '${MAILPIT_PORT:-8025}:8025'
 
   frontend:
     build: ./frontend

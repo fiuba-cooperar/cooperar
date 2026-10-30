@@ -8,6 +8,7 @@ import ar.uba.fi.cooperar.repository.organizations.OrganizationRepository;
 import ar.uba.fi.cooperar.repository.user.UserAccountRepository;
 import ar.uba.fi.cooperar.service.user.RegistrationConflictException.Field;
 import java.nio.charset.StandardCharsets;
+import java.time.Clock;
 import java.util.EnumSet;
 import java.util.Set;
 import org.slf4j.Logger;
@@ -18,8 +19,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Self-service sign-up: creates the account and its first organization together. Until approval arrives (#12), the
- * organization is public as soon as it is registered.
+ * Self-service sign-up: creates the account and its first organization together, and emails the link to confirm the
+ * account. The organization stays pending until the observatory reviews it.
  */
 @Service
 public class RegistrationService {
@@ -32,12 +33,20 @@ public class RegistrationService {
     private final UserAccountRepository users;
     private final OrganizationRepository organizations;
     private final PasswordEncoder passwordEncoder;
+    private final EmailVerificationService emailVerification;
+    private final Clock clock;
 
     public RegistrationService(
-            UserAccountRepository users, OrganizationRepository organizations, PasswordEncoder passwordEncoder) {
+            UserAccountRepository users,
+            OrganizationRepository organizations,
+            PasswordEncoder passwordEncoder,
+            EmailVerificationService emailVerification,
+            Clock clock) {
         this.users = users;
         this.organizations = organizations;
         this.passwordEncoder = passwordEncoder;
+        this.emailVerification = emailVerification;
+        this.clock = clock;
     }
 
     @Transactional
@@ -59,26 +68,31 @@ public class RegistrationService {
             throw new RegistrationConflictException(conflicts);
         }
 
-        Organization organization = new Organization(
-                newOrganization.name().trim(),
-                newOrganization.type(),
-                cuit,
-                newOrganization.sector(),
-                newOrganization.address());
         UserAccount account = new UserAccount(
                 newAccount.firstName().trim(),
                 newAccount.lastName().trim(),
                 email,
                 passwordEncoder.encode(newAccount.password()),
                 Role.COOPERATIVE);
-        account.getOrganizations().add(organization);
+        Organization organization = new Organization(
+                newOrganization.name().trim(),
+                newOrganization.type(),
+                cuit,
+                newOrganization.sector(),
+                newOrganization.address(),
+                account,
+                clock.instant());
         try {
-            organizations.saveAndFlush(organization);
-            users.saveAndFlush(account);
+            // The organization references the account that registered it, and the link between both needs the two
+            // rows, so the account goes first and the link last. Entities with an assigned id are merged, so the
+            // link goes on the managed copies that save returns.
+            UserAccount savedAccount = users.saveAndFlush(account);
+            savedAccount.getOrganizations().add(organizations.saveAndFlush(organization));
         } catch (DataIntegrityViolationException e) {
             // A concurrent registration took the email or the CUIT between the checks above and the insert.
             throw new RegistrationConflictException(conflictsOf(e));
         }
+        emailVerification.sendLink(account);
 
         log.info("Registered account {} with organization {}", account.getId(), organization.getId());
         return new Registration(account.getId(), organization.getId());

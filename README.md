@@ -27,6 +27,7 @@ La primera vez tarda unos minutos porque construye las imágenes. Cuando termina
 | Aplicación web | http://localhost:5173 |
 | API: estado | http://localhost:8080/api/health |
 | API: documentación (Swagger UI) | http://localhost:8080/swagger-ui.html |
+| Emails de desarrollo (Mailpit) | http://localhost:8025 |
 | PostgreSQL | `localhost:5432` (usuario, contraseña y base `cooperar`) |
 
 La pantalla inicial muestra si el backend y la base de datos responden.

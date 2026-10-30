@@ -15,6 +15,7 @@ import ar.uba.fi.cooperar.repository.organizations.OrganizationRepository;
 import ar.uba.fi.cooperar.repository.user.UserAccountRepository;
 import com.jayway.jsonpath.JsonPath;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -101,9 +102,10 @@ class AuthIntegrationTest {
 
         var me = mvc.get().uri("/api/me").header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken);
         assertThat(me).hasStatusOk().bodyJson().isLenientlyEqualTo("""
-                        {"email": "coop@test.local", "role": "COOPERATIVE"}
+                        {"email": "coop@test.local", "role": "COOPERATIVE", "emailVerified": false}
                         """);
         assertThat(me).bodyJson().extractingPath("$.organizations[*].name").isEqualTo(List.of("Alfa", "Zeta"));
+        assertThat(me).bodyJson().extractingPath("$.organizations[*].status").isEqualTo(List.of("PENDING", "PENDING"));
     }
 
     @Test
@@ -177,10 +179,10 @@ class AuthIntegrationTest {
         String admin = field(login(ADMIN_EMAIL, ADMIN_PASSWORD), "accessToken");
         String organization = field(login("coop@test.local", "coop-password"), "accessToken");
 
-        // No handler exists behind /api/admin yet, so getting past security means a 404.
-        assertThat(mvc.get().uri("/api/admin/any").header(HttpHeaders.AUTHORIZATION, "Bearer " + admin))
-                .hasStatus(HttpStatus.NOT_FOUND);
-        assertThat(mvc.get().uri("/api/admin/any").header(HttpHeaders.AUTHORIZATION, "Bearer " + organization))
+        String pending = "/api/admin/organizations/pending";
+        assertThat(mvc.get().uri(pending).header(HttpHeaders.AUTHORIZATION, "Bearer " + admin))
+                .hasStatusOk();
+        assertThat(mvc.get().uri(pending).header(HttpHeaders.AUTHORIZATION, "Bearer " + organization))
                 .hasStatus(HttpStatus.FORBIDDEN);
     }
 
@@ -190,7 +192,9 @@ class AuthIntegrationTest {
                 OrganizationType.COOPERATIVE,
                 Cuit.parse(cuit),
                 Sector.OTHER,
-                new Address(Province.SANTA_FE, "Rosario", "Centro", "Rivadavia 100", null));
+                new Address(Province.SANTA_FE, "Rosario", "Centro", "Rivadavia 100", null),
+                null,
+                Instant.now());
     }
 
     private MvcTestResult login(String email, String password) {

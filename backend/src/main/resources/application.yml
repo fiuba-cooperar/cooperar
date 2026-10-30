@@ -16,6 +16,19 @@ spring:
   threads:
     virtual:
       enabled: true
+  # Any SMTP server works (the Faculty's or a self-hosted one). MAIL_HOST is mandatory outside dev.
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: ${MAIL_SMTP_AUTH:true}
+      mail.smtp.starttls.enable: ${MAIL_SMTP_STARTTLS:true}
+      # Emails go out while the request is still open, so a slow server must not hold it for long.
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 5000
+      mail.smtp.writetimeout: 5000
 
 server:
   shutdown: graceful
@@ -30,8 +43,16 @@ cooperar:
     password: ${ADMIN_PASSWORD:}
     first-name: ${ADMIN_FIRST_NAME:}
     last-name: ${ADMIN_LAST_NAME:}
+  notifications:
+    # Where people open the frontend; the links in the emails point here.
+    public-url: ${PUBLIC_URL}
+    from: ${MAIL_FROM}
 
 management:
+  # An unreachable SMTP server must not take the API out of the load balancer: emails are best effort.
+  health:
+    mail:
+      enabled: false
   endpoints:
     web:
       exposure:

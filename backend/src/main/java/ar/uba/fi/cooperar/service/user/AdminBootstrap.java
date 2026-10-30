@@ -4,6 +4,7 @@ import ar.uba.fi.cooperar.domain.user.Role;
 import ar.uba.fi.cooperar.domain.user.UserAccount;
 import ar.uba.fi.cooperar.repository.user.UserAccountRepository;
 import ar.uba.fi.cooperar.shared.security.AdminProperties;
+import java.time.Clock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
@@ -24,11 +25,14 @@ public class AdminBootstrap implements ApplicationRunner {
     private final AdminProperties properties;
     private final UserAccountRepository users;
     private final PasswordEncoder passwordEncoder;
+    private final Clock clock;
 
-    public AdminBootstrap(AdminProperties properties, UserAccountRepository users, PasswordEncoder passwordEncoder) {
+    public AdminBootstrap(
+            AdminProperties properties, UserAccountRepository users, PasswordEncoder passwordEncoder, Clock clock) {
         this.properties = properties;
         this.users = users;
         this.passwordEncoder = passwordEncoder;
+        this.clock = clock;
     }
 
     @Override
@@ -41,12 +45,15 @@ public class AdminBootstrap implements ApplicationRunner {
         if (users.existsByRole(Role.ADMIN)) {
             return;
         }
-        UserAccount admin = users.save(new UserAccount(
+        UserAccount admin = new UserAccount(
                 blankToNull(properties.firstName()),
                 blankToNull(properties.lastName()),
                 properties.email(),
                 passwordEncoder.encode(properties.password()),
-                Role.ADMIN));
+                Role.ADMIN);
+        // Whoever deploys the platform chose this address, so there is nothing to confirm.
+        admin.verifyEmail(clock.instant());
+        admin = users.save(admin);
         log.info("Created the initial admin account {}", admin.getId());
     }
 

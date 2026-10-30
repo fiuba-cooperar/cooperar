@@ -36,7 +36,7 @@ ar.uba.fi.cooperar
     └── config/            OpenApiConfig y otra configuración transversal
 ```
 
-Hoy existen los módulos `health` y `user` (cuentas, login y sesión; en `web`, `service`, `domain` y `repository`) y, de `organizations`, solo la entidad mínima `Cooperative` (el resto llega con las fichas, #3 y #14).
+Hoy existen los módulos `health` y `user` (cuentas, login y sesión; en `web`, `service`, `domain` y `repository`) y `organizations`, con la ficha pública de la cooperativa (`GET /api/cooperatives/{slug}`) y los rubros. Con el perfil `dev` se cargan al arrancar tres cooperativas ficticias de ejemplo.
 
 ### Reglas entre capas
 

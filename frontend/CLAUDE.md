@@ -24,6 +24,7 @@ src/
 ├── api/generated/           Cliente generado por orval. NO se edita a mano; está excluido de lint y formato
 ├── components/
 │   ├── layout/              AppLayout (header, main, footer, skip link)
+│   ├── map/                 LocationMap (Leaflet, se carga de forma diferida)
 ├── features/<module>/       Una carpeta por módulo de dominio, alineada con el backend
 │   ├── api/                 Hooks de datos que envuelven al cliente generado (useXxx)
 │   ├── components/          Componentes propios del módulo
@@ -31,7 +32,9 @@ src/
 └── test/                    Helpers de test: renderRoute, stubFetchJson, expectNoA11yViolations
 ```
 
-Las features actuales son `home` (pantalla inicial), `health` (estado del backend), `auth` (login, sesión y guardas de ruta), `admin` y `cooperative` (secciones por rol, hoy solo la portada) y `errors` (404 y acceso denegado).
+Las features actuales son `home` (pantalla inicial), `health` (estado del backend), `auth` (login, sesión y guardas de ruta), `admin` y `cooperative` (secciones por rol, hoy solo la portada), `organizations` (ficha pública de la cooperativa en `/cooperativas/:slug`) y `errors` (404 y acceso denegado).
+
+Los mapas usan las teselas públicas de OpenStreetMap. Para usar otro servidor de teselas, se define `VITE_MAP_TILE_URL` (una plantilla de URL de Leaflet) al hacer el build.
 
 ## Reglas
 

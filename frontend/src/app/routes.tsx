@@ -7,6 +7,7 @@ import { CooperativeHomePage } from '@/features/cooperative/CooperativeHomePage'
 import { ForbiddenPage } from '@/features/errors/ForbiddenPage';
 import { NotFoundPage } from '@/features/errors/NotFoundPage';
 import { HomePage } from '@/features/home/HomePage';
+import { CooperativeProfilePage } from '@/features/organizations/CooperativeProfilePage';
 import { AppLayout } from '@/components/layout/AppLayout';
 
 export const routes: RouteObject[] = [
@@ -16,6 +17,7 @@ export const routes: RouteObject[] = [
       { index: true, element: <HomePage /> },
       { path: 'login', element: <LoginPage /> },
       { path: 'forbidden', element: <ForbiddenPage /> },
+      { path: 'cooperativas/:slug', element: <CooperativeProfilePage /> },
       {
         element: <RequireRole role={Role.ADMIN} />,
         children: [{ path: 'admin', element: <AdminHomePage /> }],

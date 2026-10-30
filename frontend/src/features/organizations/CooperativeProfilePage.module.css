@@ -1,0 +1,40 @@
+.description {
+  white-space: pre-line;
+  line-height: 1.65;
+}
+
+.contact {
+  margin: 0;
+
+  dt {
+    font-size: var(--mantine-font-size-sm);
+    font-weight: 600;
+    color: var(--mantine-color-dimmed);
+  }
+
+  dd {
+    margin: 2px 0 var(--mantine-spacing-sm);
+    overflow-wrap: anywhere;
+  }
+
+  dd:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.summary {
+  overflow: hidden;
+}
+
+.cover {
+  height: clamp(120px, 25vw, 240px);
+  background: var(--mantine-color-default-border);
+}
+
+.logo {
+  flex: none;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--mantine-color-default-border);
+}

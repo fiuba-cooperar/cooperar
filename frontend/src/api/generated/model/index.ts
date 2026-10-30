@@ -6,8 +6,10 @@
  * OpenAPI spec version: v1
  */
 
+export * from './cooperativeProfileResponse';
 export * from './cooperativeSummary';
 export * from './currentUserResponse';
+export * from './geoPoint';
 export * from './healthResponse';
 export * from './healthStatus';
 export * from './loginRequest';

@@ -19,7 +19,7 @@ Esta regla vale en todas las sesiones y para todo el equipo:
 | Comentarios y mensajes en Dockerfiles, workflows de CI, `docker-compose.yml`, `Makefile`, `.env.example` y archivos de configuración | Textos de la interfaz que ve el usuario, en voseo rioplatense ("Buscá", "Volver al inicio") |
 | | Las respuestas de Claude en la conversación |
 
-Los términos del dominio se traducen siempre igual en el código: ficha → `profile`, consulta → `inquiry`, feria → `fair`, hito → `milestone`, relevamiento → `survey`, necesidad → `need`, cooperativa → `cooperative`. ERT y MIA se mantienen como siglas: `Ert`, `Mia`. Si aparece un término nuevo, se agrega a esta lista.
+Los términos del dominio se traducen siempre igual en el código: ficha → `profile`, consulta → `inquiry`, feria → `fair`, hito → `milestone`, relevamiento → `survey`, necesidad → `need`, cooperativa → `cooperative`, rubro → `industry`. ERT y MIA se mantienen como siglas: `Ert`, `Mia`. Si aparece un término nuevo, se agrega a esta lista.
 
 ## Perfiles
 
@@ -40,6 +40,7 @@ Los términos del dominio se traducen siempre igual en el código: ficha → `pr
 - **Reconversión de espacios**: uso social de la infraestructura excedente de una ERT, como bachilleratos populares, centros culturales, guarderías o alquiler de salones.
 - **Toma / recuperación**: ocupación de la planta por los trabajadores para defender la fuente de trabajo, normalmente seguida de una expropiación o una cesión judicial.
 - **Ficha**: perfil público de una cooperativa o ERT (datos, ubicación, contacto, productos, historia).
+- **Rubro**: actividad principal de una cooperativa (alimentos, textil, metalúrgica, etc.). Sale de una lista cerrada que mantiene el observatorio, para poder filtrar por rubro. No confundir con «el sector», que es el conjunto de las ERT y cooperativas.
 - **Hito**: evento de la historia de una empresa, con una fecha que puede ser imprecisa (año, mes o rango).
 - **Relevamiento**: cuestionario que el observatorio asigna a las cooperativas para recolectar datos del sector.
 - **Fuentes de datos**: INAES (padrón de cooperativas), RENACER (registro de ERT), programa Facultad Abierta de la UBA (informes sobre ERT) y Recoop (comercializadora de la red).

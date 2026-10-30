@@ -1,5 +1,6 @@
 package ar.uba.fi.cooperar.shared.error;
 
+import ar.uba.fi.cooperar.service.organizations.CooperativeNotFoundException;
 import ar.uba.fi.cooperar.service.user.AccountNotFoundException;
 import ar.uba.fi.cooperar.service.user.InvalidCredentialsException;
 import ar.uba.fi.cooperar.service.user.InvalidRefreshTokenException;
@@ -27,6 +28,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     })
     public ProblemDetail handleAuthenticationFailure(RuntimeException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, exception.getMessage());
+    }
+
+    @ExceptionHandler(CooperativeNotFoundException.class)
+    public ProblemDetail handleNotFound(RuntimeException exception) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());
     }
 
     @ExceptionHandler(Exception.class)

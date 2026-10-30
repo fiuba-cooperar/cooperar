@@ -89,6 +89,33 @@
         "tags" : [ "auth" ]
       }
     },
+    "/api/cooperatives/{slug}" : {
+      "get" : {
+        "operationId" : "getCooperativeProfile",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CooperativeProfileResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Public profile of a cooperative",
+        "tags" : [ "cooperatives" ]
+      }
+    },
     "/api/health" : {
       "get" : {
         "operationId" : "getHealth",
@@ -140,6 +167,42 @@
   },
   "components" : {
     "schemas" : {
+      "CooperativeProfileResponse" : {
+        "type" : "object",
+        "properties" : {
+          "address" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "email" : {
+            "type" : "string"
+          },
+          "industry" : {
+            "type" : "string"
+          },
+          "locality" : {
+            "type" : "string"
+          },
+          "location" : {
+            "$ref" : "#/components/schemas/GeoPoint"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "phone" : {
+            "type" : "string"
+          },
+          "province" : {
+            "type" : "string"
+          },
+          "slug" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "name", "slug" ]
+      },
       "CooperativeSummary" : {
         "type" : "object",
         "properties" : {
@@ -174,6 +237,20 @@
           }
         },
         "required" : [ "cooperatives", "email", "id", "role" ]
+      },
+      "GeoPoint" : {
+        "type" : "object",
+        "properties" : {
+          "latitude" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "longitude" : {
+            "type" : "number",
+            "format" : "double"
+          }
+        },
+        "required" : [ "latitude", "longitude" ]
       },
       "HealthResponse" : {
         "type" : "object",

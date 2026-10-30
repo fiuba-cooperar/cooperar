@@ -84,8 +84,8 @@ class AuthIntegrationTest {
 
     @Test
     void returnsTheAccountRoleAndCooperativesOnMe() {
-        Cooperative zeta = cooperatives.save(new Cooperative("Zeta"));
-        Cooperative alfa = cooperatives.save(new Cooperative("Alfa"));
+        Cooperative zeta = cooperatives.save(new Cooperative("Zeta", "zeta"));
+        Cooperative alfa = cooperatives.save(new Cooperative("Alfa", "alfa"));
         UserAccount user =
                 new UserAccount("coop@test.local", passwordEncoder.encode("coop-password"), Role.COOPERATIVE);
         user.getCooperatives().add(zeta);

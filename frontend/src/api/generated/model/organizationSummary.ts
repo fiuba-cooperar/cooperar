@@ -5,8 +5,12 @@
  * Open observatory of worker-recovered companies and worker cooperatives
  * OpenAPI spec version: v1
  */
+import type { OrganizationStatus } from './organizationStatus';
 
 export interface OrganizationSummary {
   id: string;
   name: string;
+  /** Only for rejected organizations */
+  rejectionReason?: string;
+  status: OrganizationStatus;
 }

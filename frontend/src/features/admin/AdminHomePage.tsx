@@ -3,8 +3,6 @@ import styles from './AdminHomePage.module.css';
 
 // Tools whose stories are still open: they are listed so the admin knows what is coming.
 const UPCOMING_TOOLS = [
-  // TODO(#12): link to the approval of new organizations.
-  { title: 'Altas pendientes', description: 'Revisá y aprobá las cooperativas que se registran.' },
   // TODO(#40): link to the survey builder.
   {
     title: 'Relevamientos',

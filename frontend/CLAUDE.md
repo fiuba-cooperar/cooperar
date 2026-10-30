@@ -32,7 +32,7 @@ src/
 └── test/                    Helpers de test: renderRoute, stubFetchJson, expectNoA11yViolations
 ```
 
-Las features actuales son `home` (portada y páginas «Próximamente» de las secciones que todavía no existen), `auth` (registro en dos pasos, login, sesión y guardas de ruta), `organizations` (por ahora, el selector del tipo de organización, las etiquetas de rubros y provincias y la validación del CUIT), `admin` (panel del observatorio: `AdminLayout` con su header y menú lateral propios, y la portada con las herramientas «Próximamente»), `cooperative` (sección por rol, hoy solo la portada) y `errors` (404 y acceso denegado).
+Las features actuales son `home` (portada y páginas «Próximamente» de las secciones que todavía no existen), `auth` (registro en dos pasos, confirmación del email en `/verify-email`, login, sesión y guardas de ruta), `organizations` (por ahora, el selector del tipo de organización, las etiquetas de tipos, estados, rubros y provincias, y la validación y el formato del CUIT), `admin` (panel del observatorio: `AdminLayout` con su header y menú lateral propios, la portada con las herramientas «Próximamente» y las altas pendientes, donde se aprueban o rechazan con motivo), `cooperative` (sección por rol: la portada muestra el estado de cada organización y pide confirmar el email si falta) y `errors` (404 y acceso denegado).
 
 ## Reglas
 
@@ -47,7 +47,7 @@ Las features actuales son `home` (portada y páginas «Próximamente» de las se
 
 ## Sesión
 
-- Los tokens viven en `localStorage` (`src/api/session.ts`). `AuthProvider` expone `useAuth()` con `status`, `user`, `login` y `logout`.
+- Los tokens viven en `localStorage` (`src/api/session.ts`). `AuthProvider` expone `useAuth()` con `status`, `user`, `login`, `logout` y `refreshUser` (vuelve a pedir `/api/me`, por ejemplo después de confirmar el email o para ver si el alta ya fue revisada).
 - Todas las llamadas generadas pasan por `src/api/apiFetch.ts` (mutator de orval): agrega el `Authorization`, y ante un 401 renueva el par de tokens una sola vez (aunque haya varias llamadas en paralelo) y reintenta. Si el refresh es rechazado limpia la sesión y avisa a la UI.
 - Es la única excepción a «sin `fetch` a mano»: el propio refresh no puede pasar por el cliente generado.
 
@@ -65,7 +65,7 @@ Muchas personas del sector usan la plataforma desde el celular y sin experiencia
 
 ## Tests
 
-- Los tests montan `MantineProvider` (con `env="test"`) dentro de `renderRoute`, y `test/setup.ts` simula `matchMedia` y `ResizeObserver`, que jsdom no trae.
+- Los tests montan `MantineProvider` (con `env="test"`) dentro de `renderRoute`, y `test/setup.ts` simula `matchMedia` y `ResizeObserver`, que jsdom no trae. jsdom tampoco tiene `document.fonts`, que usa el `Textarea` con `autosize`: en su lugar se usa `rows`.
 
 - Vitest + Testing Library en `jsdom`. Los tests van junto al código (`Xxx.test.tsx`).
 - Se consulta por rol y por texto visible (`getByRole`, `findByText`), no por clases ni test ids.

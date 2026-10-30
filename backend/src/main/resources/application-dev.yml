@@ -1,4 +1,13 @@
-# Local development: human-readable logs, Swagger UI at /swagger-ui.html and a throwaway JWT secret and admin.
+# Local development: human-readable logs, Swagger UI at /swagger-ui.html, a throwaway JWT secret and admin, and
+# emails caught by Mailpit (http://localhost:8025) instead of delivered.
+spring:
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    properties:
+      mail.smtp.auth: ${MAIL_SMTP_AUTH:false}
+      mail.smtp.starttls.enable: ${MAIL_SMTP_STARTTLS:false}
+
 cooperar:
   security:
     jwt:
@@ -8,6 +17,9 @@ cooperar:
     password: ${ADMIN_PASSWORD:dev-admin-password}
     first-name: ${ADMIN_FIRST_NAME:Admin}
     last-name: ${ADMIN_LAST_NAME:Observatorio}
+  notifications:
+    public-url: ${PUBLIC_URL:http://localhost:5173}
+    from: ${MAIL_FROM:CooperAR <no-reply@cooperar.local>}
 
 logging:
   level:

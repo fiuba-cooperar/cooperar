@@ -36,7 +36,12 @@ ar.uba.fi.cooperar
     └── config/            OpenApiConfig y otra configuración transversal
 ```
 
-Hoy existen los módulos `health` y `user` (cuentas, registro, login y sesión; en `web`, `service`, `domain` y `repository`) y, de `organizations`, la entidad `Organization` (tabla `organizations`) con los datos del alta, los value objects `Cuit` y `Address` (embebido; por ahora se escribe a mano salvo la provincia, y la geocodificación llega con la #13) y los enums `OrganizationType` (cooperativa, ERT o ambas), `Sector` y `Province` (el resto llega con las fichas, #3 y #14).
+Hoy existen estos módulos:
+
+- `health`.
+- `user`: cuentas, registro, confirmación del email, login y sesión (en `web`, `service`, `domain` y `repository`).
+- `organizations`: la entidad `Organization` (tabla `organizations`) con los datos del alta, los value objects `Cuit` y `Address` (embebido; por ahora se escribe a mano salvo la provincia, y la geocodificación llega con la #13), los enums `OrganizationType` (cooperativa, ERT o ambas), `Sector`, `Province` y `OrganizationStatus`, y la revisión del alta por el admin (`OrganizationReviewService`, `/api/admin/organizations`). El resto de la ficha llega con la #3 y la #14.
+- `notifications` (solo en `service`): `AccountNotifications` arma los emails en español y los manda por la interfaz `EmailSender`, cuya implementación SMTP está en `integration/smtp`.
 
 ### Reglas entre capas
 
@@ -69,20 +74,29 @@ Hoy existen los módulos `health` y `user` (cuentas, registro, login y sesión; 
 
 - Resource server JWT con HS256 y clave en `JWT_SECRET` (mínimo 32 caracteres; se valida al arrancar). Los roles viajan en el claim `roles` (`["ADMIN"]`, `["COOPERATIVE"]`) y se mapean a `ROLE_*`.
 - **Login** (`/api/auth/login`, `/refresh`, `/logout`, públicos): el access token es un JWT de 15 minutos (`cooperar.security.session.access-token-ttl`) y el refresh token es opaco, de 7 días, y se guarda en la base solo como hash SHA-256. Cada `/refresh` lo rota (el anterior queda revocado) y `/logout` lo revoca. Las contraseñas van con BCrypt.
-- `GET /api/me` devuelve la cuenta, su rol y sus organizaciones.
-- **Registro** (`/api/auth/register`, público): crea en una transacción la cuenta con rol `COOPERATIVE` y su primera organización (cooperativa, ERT o ambas). El email y el CUIT son únicos (el CUIT se guarda como 11 dígitos y se valida el dígito verificador); si alguno ya existe responde 409 con la lista `conflicts` (`EMAIL`, `CUIT`). Hasta la #12 la organización queda pública apenas se registra.
+- `GET /api/me` devuelve la cuenta, su rol, si confirmó el email y sus organizaciones con su estado (y el motivo, si fue rechazada).
+- **Registro** (`/api/auth/register`, público): crea en una transacción la cuenta con rol `COOPERATIVE` y su primera organización (cooperativa, ERT o ambas). El email y el CUIT son únicos (el CUIT se guarda como 11 dígitos y se valida el dígito verificador); si alguno ya existe responde 409 con la lista `conflicts` (`EMAIL`, `CUIT`).
+- **Confirmación del email**: el registro manda un enlace `PUBLIC_URL/verify-email?token=...` con un token opaco de un solo uso que vence a las 48 horas (en la base, solo su SHA-256). `POST /api/auth/verify-email` (público) lo canjea y `POST /api/me/email-verification` manda uno nuevo e invalida los anteriores. La cuenta puede loguearse sin confirmar, pero sus organizaciones no llegan al admin hasta que confirme. El admin inicial nace confirmado.
+- **Aprobación de altas** (#12): toda organización nueva queda `PENDING`, y solo las `APPROVED` son públicas, así que **toda consulta pública de organizaciones tiene que filtrar por `status = 'APPROVED'`**. `GET /api/admin/organizations/pending` lista las pendientes cuya cuenta ya confirmó el email, de la más antigua a la más nueva, con la cuenta que las registró (`registered_by`). `POST .../{id}/approve` y `POST .../{id}/reject` (con `reason` obligatorio) responden 409 si la organización no está esperando revisión. En ambos casos se avisa por email a la cuenta que la registró.
 - **Admin inicial**: al arrancar, si no existe ningún admin y están `ADMIN_EMAIL` y `ADMIN_PASSWORD`, se crea. En `prod` no hay valores por defecto.
 - Pendiente: limitar los intentos de login (rate limiting, #22).
 - Las reglas por ruta están en `SecurityConfig`. Lo que no matchea ninguna regla se deniega (`denyAll`).
-- Actuator expone solo `health` (con probes `liveness` y `readiness`) e `info`.
+- Actuator expone solo `health` (con probes `liveness` y `readiness`) e `info`. El indicador de mail está apagado: si el SMTP no responde, la API sigue disponible.
+
+## Emails
+
+- Se mandan por SMTP (`spring.mail.*`, configurado con `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_SMTP_AUTH` y `MAIL_SMTP_STARTTLS`), con remitente `MAIL_FROM`. Los enlaces apuntan a `PUBLIC_URL`, la dirección del frontend. Fuera de `dev`, `MAIL_HOST`, `MAIL_FROM` y `PUBLIC_URL` son obligatorios.
+- En `dev` van a Mailpit (`localhost:1025`, interfaz en http://localhost:8025), que `docker compose` levanta.
+- Los services publican eventos (`VerificationEmailRequested`, `OrganizationReviewed`) y `AccountNotifications` los manda con `@TransactionalEventListener`, o sea después del commit: si el envío falla se loguea (sin la dirección) y lo guardado no se deshace.
+- En los tests, `RecordingEmailSender` reemplaza al SMTP y guarda los emails en memoria. Como se mandan después del commit, los tests que los leen no pueden ser `@Transactional` y limpian la base al terminar (ver `OrganizationReviewIntegrationTest`).
 
 ## Perfiles
 
 | Perfil | Uso |
 |---|---|
-| `dev` (por defecto) | Desarrollo local: Swagger UI en `/swagger-ui.html`, logs legibles, `JWT_SECRET` de desarrollo por defecto |
+| `dev` (por defecto) | Desarrollo local: Swagger UI en `/swagger-ui.html`, logs legibles, `JWT_SECRET` de desarrollo por defecto y emails a Mailpit |
 | `test` | Tests: lo activa `@IntegrationTest` y la base la pone Testcontainers |
-| `prod` | Producción: logs ECS, sin `/v3/api-docs` ni Swagger UI, `JWT_SECRET` obligatorio |
+| `prod` | Producción: logs ECS, sin `/v3/api-docs` ni Swagger UI, `JWT_SECRET` y la configuración de email obligatorios |
 
 La conexión se configura con `DB_URL`, `DB_USER` y `DB_PASSWORD` (ver `.env.example`).
 

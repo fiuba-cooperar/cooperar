@@ -1,0 +1,21 @@
+.details {
+  display: grid;
+  gap: var(--mantine-spacing-xs);
+  margin: 0;
+}
+
+/* Term and description side by side from small screens up, stacked on phones. */
+.detail {
+  display: grid;
+  gap: 2px;
+
+  @media (min-width: $mantine-breakpoint-sm) {
+    grid-template-columns: 140px 1fr;
+    gap: var(--mantine-spacing-md);
+  }
+
+  dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+}

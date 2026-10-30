@@ -19,7 +19,7 @@ Esta regla vale en todas las sesiones y para todo el equipo:
 | Comentarios y mensajes en Dockerfiles, workflows de CI, `docker-compose.yml`, `Makefile`, `.env.example` y archivos de configuración | Textos de la interfaz que ve el usuario, en voseo rioplatense ("Buscá", "Volver al inicio") |
 | | Las respuestas de Claude en la conversación |
 
-Los términos del dominio se traducen siempre igual en el código: ficha → `profile`, consulta → `inquiry`, feria → `fair`, hito → `milestone`, relevamiento → `survey`, necesidad → `need`, cooperativa → `cooperative`, organización (cooperativa o ERT) → `organization`, rubro → `sector`, departamento/partido/comuna → `district`, localidad/barrio → `locality`, tipo de organización (cooperativa, ERT o ambas) → `OrganizationType`. ERT y MIA se mantienen como siglas: `Ert`, `Mia`. Si aparece un término nuevo, se agrega a esta lista.
+Los términos del dominio se traducen siempre igual en el código: ficha → `profile`, consulta → `inquiry`, feria → `fair`, hito → `milestone`, relevamiento → `survey`, necesidad → `need`, cooperativa → `cooperative`, organización (cooperativa o ERT) → `organization`, alta (de una organización) → `registration`, aprobación/revisión del alta → `review` (estado `OrganizationStatus`: `PENDING`, `APPROVED`, `REJECTED`), aviso por email → `notification`, rubro → `sector`, departamento/partido/comuna → `district`, localidad/barrio → `locality`, tipo de organización (cooperativa, ERT o ambas) → `OrganizationType`. ERT y MIA se mantienen como siglas: `Ert`, `Mia`. Si aparece un término nuevo, se agrega a esta lista.
 
 ## Perfiles
 
@@ -98,7 +98,7 @@ ar.uba.fi.cooperar
 └── shared/               Transversal: error (ProblemDetail), security, config
 ```
 
-Módulos previstos según las issues: `organizations` (fichas, privacidad), `catalog`, `inquiries`, `users`, `fairs`, `spaces`, `history`, `network` (necesidades, MIA, grafo), `surveys`, `metrics`, `search` y `content`. Hoy existen `health` y `user` (registro, login y sesión), más la entidad `Organization` de `organizations` (cooperativa, ERT o ambas) con los datos del alta: tipo, nombre, CUIT, rubro y dirección (provincia, departamento/partido/comuna, localidad/barrio, calle y número, y referencias opcionales). Cada módulo se crea con su primera issue: no se dejan paquetes vacíos. Detalle en `backend/CLAUDE.md`.
+Módulos previstos según las issues: `organizations` (fichas, privacidad), `catalog`, `inquiries`, `users`, `fairs`, `spaces`, `history`, `network` (necesidades, MIA, grafo), `surveys`, `metrics`, `search` y `content`. Hoy existen `health`, `user` (registro, confirmación del email, login y sesión), `organizations` (la entidad `Organization`, cooperativa, ERT o ambas, con los datos del alta: tipo, nombre, CUIT, rubro y dirección, y la aprobación por el observatorio) y `notifications` (emails a las cuentas, por SMTP). Cada módulo se crea con su primera issue: no se dejan paquetes vacíos. Detalle en `backend/CLAUDE.md`.
 
 ### Frontend (resumen)
 
@@ -175,7 +175,7 @@ La plataforma guarda datos de cooperativas y de personas (contactos, quienes env
 | Campos de la ficha y su nivel de privacidad | #3 |
 | Fuente de los datos semilla | #4 |
 | Staging: la #9 propone Render, que choca con la regla de no usar cloud propietario. Hay que decidir si staging va en Render (aceptado solo para staging) o en la Facultad. | #9, #59 |
-| Envío de emails (SMTP de la Facultad u otro autohospedado) | #12, #23 |
+| Servidor SMTP de producción (el de la Facultad u otro autohospedado). El envío ya es por SMTP genérico y en desarrollo los emails van a Mailpit. | #12, #23 |
 | Almacenamiento de imágenes (disco local o compatible con S3 autohospedado, como MinIO) | #13 |
 | Geocodificación (Nominatim público con límites o instancia propia) | #13 |
 | Librería de mapas (MapLibre o Leaflet) | #17 |

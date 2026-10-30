@@ -13,7 +13,6 @@ import {
   TextInput,
   ThemeIcon,
   Title,
-  VisuallyHidden,
 } from '@mantine/core';
 import { IconAlertCircle, IconCircleCheck } from '@tabler/icons-react';
 import { useEffect, useId, useRef, useState, type SyntheticEvent } from 'react';
@@ -249,19 +248,13 @@ export function RegisterPage() {
             ¡Listo! Ya tenés tu cuenta
           </Title>
           <Text c="dimmed" fz={16}>
-            Tu organización ya quedó registrada en el observatorio. Desde tu panel vas a poder
-            completar su ficha y agregar más organizaciones.
+            Te enviamos un email a <strong>{account.email.trim()}</strong> para que confirmes tu
+            cuenta. Cuando lo confirmes, el observatorio va a revisar el alta de tu organización y
+            te vamos a avisar por email.
           </Text>
-          <Group justify="center" mt="xs">
-            <Button component={Link} to={ROLE_HOME[Role.COOPERATIVE]} h={48}>
-              Ingresar a mi panel
-            </Button>
-            {/* Becomes a link when the public profile lands (#14). */}
-            <Button variant="outline" h={48} disabled>
-              Ver mi ficha pública
-              <VisuallyHidden component="span"> (próximamente)</VisuallyHidden>
-            </Button>
-          </Group>
+          <Button component={Link} to={ROLE_HOME[Role.COOPERATIVE]} h={48} mt="xs">
+            Ingresar a mi panel
+          </Button>
         </Stack>
       </Paper>
     );

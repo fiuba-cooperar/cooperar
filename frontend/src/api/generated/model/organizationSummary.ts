@@ -12,5 +12,7 @@ export interface OrganizationSummary {
   name: string;
   /** Only for rejected organizations */
   rejectionReason?: string;
+  /** Path segment of the public profile */
+  slug: string;
   status: OrganizationStatus;
 }

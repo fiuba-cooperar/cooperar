@@ -48,6 +48,7 @@ class RegistrationIntegrationTest {
                 """);
         assertThat(me).bodyJson().extractingPath("$.organizations[*].id").isEqualTo(List.of(organizationId));
         assertThat(me).bodyJson().extractingPath("$.organizations[*].name").isEqualTo(List.of("La Litoraleña"));
+        assertThat(me).bodyJson().extractingPath("$.organizations[*].slug").isEqualTo(List.of("la-litoralena"));
 
         Address address = organizations
                 .findById(UUID.fromString(organizationId))

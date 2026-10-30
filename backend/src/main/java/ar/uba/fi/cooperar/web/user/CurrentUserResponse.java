@@ -35,6 +35,9 @@ public record CurrentUserResponse(
             @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
             String name,
 
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Path segment of the public profile")
+            String slug,
+
             @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
             OrganizationStatus status,
 
@@ -45,6 +48,7 @@ public record CurrentUserResponse(
             return new OrganizationSummary(
                     organization.getId(),
                     organization.getName(),
+                    organization.getSlug(),
                     organization.getStatus(),
                     organization.getRejectionReason());
         }

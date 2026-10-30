@@ -14,9 +14,15 @@ const ACCOUNT = {
   role: 'COOPERATIVE',
   emailVerified: true,
   organizations: [
-    { id: 'c1', name: 'La Litoraleña', status: 'APPROVED' },
-    { id: 'c2', name: 'Textil Sur', status: 'PENDING' },
-    { id: 'c3', name: 'Gráfica Norte', status: 'REJECTED', rejectionReason: 'El CUIT no coincide' },
+    { id: 'c1', name: 'La Litoraleña', slug: 'la-litoralena', status: 'APPROVED' },
+    { id: 'c2', name: 'Textil Sur', slug: 'textil-sur', status: 'PENDING' },
+    {
+      id: 'c3',
+      name: 'Gráfica Norte',
+      slug: 'grafica-norte',
+      status: 'REJECTED',
+      rejectionReason: 'El CUIT no coincide',
+    },
   ],
 };
 
@@ -34,10 +40,15 @@ describe('cooperative panel', () => {
     const approved = await screen.findByRole('article', { name: 'La Litoraleña' });
     expect(within(approved).getByText('Aprobada')).toBeInTheDocument();
     expect(within(approved).getByText('Ya es visible en el sitio público.')).toBeInTheDocument();
+    expect(within(approved).getByRole('link', { name: 'Ver mi ficha pública' })).toHaveAttribute(
+      'href',
+      '/organizations/la-litoralena',
+    );
 
     const pending = screen.getByRole('article', { name: 'Textil Sur' });
     expect(within(pending).getByText('Pendiente de aprobación')).toBeInTheDocument();
     expect(within(pending).getByText(/está revisando el alta/)).toBeInTheDocument();
+    expect(within(pending).queryByRole('link')).not.toBeInTheDocument();
 
     const rejected = screen.getByRole('article', { name: 'Gráfica Norte' });
     expect(within(rejected).getByText('Rechazada')).toBeInTheDocument();
@@ -51,7 +62,7 @@ describe('cooperative panel', () => {
       {
         ...ACCOUNT,
         emailVerified: false,
-        organizations: [{ id: 'c2', name: 'Textil Sur', status: 'PENDING' }],
+        organizations: [{ id: 'c2', name: 'Textil Sur', slug: 'textil-sur', status: 'PENDING' }],
       },
       { 'POST /api/me/email-verification': { status: 204 } },
     );

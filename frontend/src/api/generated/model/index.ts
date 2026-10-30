@@ -6,11 +6,19 @@
  * OpenAPI spec version: v1
  */
 
-export * from './cooperativeSummary';
 export * from './currentUserResponse';
 export * from './healthResponse';
 export * from './healthStatus';
 export * from './loginRequest';
+export * from './organizationSummary';
+export * from './organizationType';
+export * from './province';
 export * from './refreshTokenRequest';
+export * from './registrationAccountRequest';
+export * from './registrationAddressRequest';
+export * from './registrationOrganizationRequest';
+export * from './registrationRequest';
+export * from './registrationResponse';
 export * from './role';
+export * from './sector';
 export * from './tokenResponse';

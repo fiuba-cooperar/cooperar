@@ -24,6 +24,7 @@ src/
 ├── api/generated/           Cliente generado por orval. NO se edita a mano; está excluido de lint y formato
 ├── components/
 │   ├── layout/              AppLayout (header con el menú, main, footer, skip link) y publicSections (secciones del menú)
+│   ├── form/                LabelWithHint (label con un ícono de info que muestra la aclaración del campo en un tooltip)
 ├── features/<module>/       Una carpeta por módulo de dominio, alineada con el backend
 │   ├── api/                 Hooks de datos que envuelven al cliente generado (useXxx)
 │   ├── components/          Componentes propios del módulo
@@ -31,7 +32,7 @@ src/
 └── test/                    Helpers de test: renderRoute, stubFetchJson, expectNoA11yViolations
 ```
 
-Las features actuales son `home` (portada y páginas «Próximamente» de las secciones que todavía no existen), `auth` (login, sesión y guardas de ruta), `admin` y `cooperative` (secciones por rol, hoy solo la portada) y `errors` (404 y acceso denegado).
+Las features actuales son `home` (portada y páginas «Próximamente» de las secciones que todavía no existen), `auth` (registro en dos pasos, login, sesión y guardas de ruta), `organizations` (por ahora, el selector del tipo de organización, las etiquetas de rubros y provincias y la validación del CUIT), `admin` y `cooperative` (secciones por rol, hoy solo la portada) y `errors` (404 y acceso denegado).
 
 ## Reglas
 
@@ -57,7 +58,7 @@ Muchas personas del sector usan la plataforma desde el celular y sin experiencia
 - HTML semántico: un `h1` por página, landmarks (`header`, `main`, `footer`) y botones que sean `<button>`.
 - Todo se puede usar con teclado y con el foco visible. Ya existe un skip link "Saltar al contenido principal".
 - Los contenidos que cambian solos se anuncian con `role="status"` o `aria-live`.
-- Formularios con `<label>` asociado y errores vinculados con `aria-describedby`.
+- Formularios con `<label>` asociado y errores vinculados con `aria-describedby`. Las aclaraciones de un campo van en un tooltip junto al label con `LabelWithHint` (`src/components/form`), no como texto debajo. El ícono queda fuera del orden de tabulación (Tab pasa de campo en campo), así que el campo lleva la misma aclaración en `aria-description` para los lectores de pantalla.
 - Contraste AA en modo claro y en modo oscuro (`prefers-color-scheme`). También se respeta `prefers-reduced-motion`.
 - Mobile first: los layouts se piensan desde 320 px y se usan unidades relativas.
 - Cada página nueva tiene un test con `expectNoA11yViolations` (axe-core). `eslint-plugin-jsx-a11y` no se usa porque no soporta ESLint 10 y no se actualiza desde 2024.

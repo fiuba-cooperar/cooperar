@@ -1,0 +1,7 @@
+/* Matches a plain Mantine label: its line height plus 6px below, so fields side by side stay aligned. */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 6px;
+}

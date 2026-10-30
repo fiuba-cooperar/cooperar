@@ -7,5 +7,4 @@ export const PUBLIC_SECTIONS = [
   { path: '/history', label: 'Historia del sector' },
 ] as const;
 
-// TODO(#11): replace the "coming soon" page with the registration flow.
 export const REGISTER_PATH = '/register';

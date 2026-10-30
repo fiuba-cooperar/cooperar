@@ -9,6 +9,83 @@
     "url" : "/"
   } ],
   "paths" : {
+    "/api/admin/organizations/pending" : {
+      "get" : {
+        "description" : "Only organizations whose account has already confirmed its email.",
+        "operationId" : "listPendingOrganizations",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/PendingOrganizationResponse"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Organizations awaiting review, oldest first",
+        "tags" : [ "admin-organizations" ]
+      }
+    },
+    "/api/admin/organizations/{id}/approve" : {
+      "post" : {
+        "description" : "Answers 409 when the organization is not awaiting review.",
+        "operationId" : "approveOrganization",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "summary" : "Approve an organization, which makes it public",
+        "tags" : [ "admin-organizations" ]
+      }
+    },
+    "/api/admin/organizations/{id}/reject" : {
+      "post" : {
+        "description" : "Answers 409 when the organization is not awaiting review.",
+        "operationId" : "rejectOrganization",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RejectOrganizationRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "summary" : "Reject an organization with a reason that its account gets to see",
+        "tags" : [ "admin-organizations" ]
+      }
+    },
     "/api/auth/login" : {
       "post" : {
         "operationId" : "login",
@@ -119,6 +196,29 @@
         "tags" : [ "auth" ]
       }
     },
+    "/api/auth/verify-email" : {
+      "post" : {
+        "description" : "Answers 400 when the token is unknown, already used or expired.",
+        "operationId" : "verifyEmail",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/VerifyEmailRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "summary" : "Confirm the account's email with the token from the emailed link",
+        "tags" : [ "auth" ]
+      }
+    },
     "/api/health" : {
       "get" : {
         "operationId" : "getHealth",
@@ -167,6 +267,19 @@
         "tags" : [ "auth" ]
       }
     },
+    "/api/me/email-verification" : {
+      "post" : {
+        "description" : "Previous links stop working. Answers 409 when the email is already confirmed.",
+        "operationId" : "resendVerificationEmail",
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "summary" : "Email a new confirmation link to the signed-in account",
+        "tags" : [ "auth" ]
+      }
+    },
     "/api/organizations/{slug}" : {
       "get" : {
         "operationId" : "getOrganizationProfile",
@@ -197,11 +310,36 @@
   },
   "components" : {
     "schemas" : {
+      "AddressResponse" : {
+        "type" : "object",
+        "properties" : {
+          "additionalReferences" : {
+            "type" : "string"
+          },
+          "district" : {
+            "type" : "string"
+          },
+          "locality" : {
+            "type" : "string"
+          },
+          "province" : {
+            "$ref" : "#/components/schemas/Province"
+          },
+          "street" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "district", "locality", "province", "street" ]
+      },
       "CurrentUserResponse" : {
         "type" : "object",
         "properties" : {
           "email" : {
             "type" : "string"
+          },
+          "emailVerified" : {
+            "type" : "boolean",
+            "description" : "Until it is confirmed, the account's organizations do not reach the review"
           },
           "firstName" : {
             "type" : "string",
@@ -225,7 +363,7 @@
             "$ref" : "#/components/schemas/Role"
           }
         },
-        "required" : [ "email", "id", "organizations", "role" ]
+        "required" : [ "email", "emailVerified", "id", "organizations", "role" ]
       },
       "GeoPoint" : {
         "type" : "object",
@@ -311,6 +449,10 @@
         },
         "required" : [ "district", "locality", "name", "province", "sector", "slug", "street" ]
       },
+      "OrganizationStatus" : {
+        "type" : "string",
+        "enum" : [ "PENDING", "APPROVED", "REJECTED" ]
+      },
       "OrganizationSummary" : {
         "type" : "object",
         "properties" : {
@@ -320,13 +462,53 @@
           },
           "name" : {
             "type" : "string"
+          },
+          "rejectionReason" : {
+            "type" : "string",
+            "description" : "Only for rejected organizations"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/OrganizationStatus"
           }
         },
-        "required" : [ "id", "name" ]
+        "required" : [ "id", "name", "status" ]
       },
       "OrganizationType" : {
         "type" : "string",
         "enum" : [ "COOPERATIVE", "ERT", "COOPERATIVE_AND_ERT" ]
+      },
+      "PendingOrganizationResponse" : {
+        "type" : "object",
+        "properties" : {
+          "address" : {
+            "$ref" : "#/components/schemas/AddressResponse"
+          },
+          "cuit" : {
+            "type" : "string",
+            "description" : "The 11 digits, without dashes"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "registeredAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "registeredBy" : {
+            "$ref" : "#/components/schemas/RegistrantResponse"
+          },
+          "sector" : {
+            "$ref" : "#/components/schemas/Sector"
+          },
+          "type" : {
+            "$ref" : "#/components/schemas/OrganizationType"
+          }
+        },
+        "required" : [ "address", "cuit", "id", "name", "registeredAt", "registeredBy", "sector", "type" ]
       },
       "Province" : {
         "type" : "string",
@@ -341,6 +523,21 @@
           }
         },
         "required" : [ "refreshToken" ]
+      },
+      "RegistrantResponse" : {
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "type" : "string"
+          },
+          "firstName" : {
+            "type" : "string"
+          },
+          "lastName" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "email", "firstName", "lastName" ]
       },
       "RegistrationAccountRequest" : {
         "type" : "object",
@@ -454,6 +651,17 @@
         },
         "required" : [ "accountId", "organizationId" ]
       },
+      "RejectOrganizationRequest" : {
+        "type" : "object",
+        "properties" : {
+          "reason" : {
+            "type" : "string",
+            "maxLength" : 1000,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "reason" ]
+      },
       "Role" : {
         "type" : "string",
         "enum" : [ "ADMIN", "COOPERATIVE" ]
@@ -478,6 +686,16 @@
           }
         },
         "required" : [ "accessToken", "expiresIn", "refreshToken" ]
+      },
+      "VerifyEmailRequest" : {
+        "type" : "object",
+        "properties" : {
+          "token" : {
+            "type" : "string",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "token" ]
       }
     },
     "securitySchemes" : {

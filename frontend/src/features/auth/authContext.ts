@@ -19,6 +19,8 @@ export interface AuthContextValue {
   /** Resolves with the signed-in account; rejects with a {@link LoginError}. */
   login: (email: string, password: string) => Promise<CurrentUserResponse>;
   logout: () => Promise<void>;
+  /** Reloads the signed-in account, e.g. after it confirms its email; keeps the current one if that fails. */
+  refreshUser: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null);

@@ -10,6 +10,8 @@ import type { Role } from './role';
 
 export interface CurrentUserResponse {
   email: string;
+  /** Until it is confirmed, the account's organizations do not reach the review */
+  emailVerified: boolean;
   /** Missing for the initial admin when it was created without a name */
   firstName?: string;
   id: string;

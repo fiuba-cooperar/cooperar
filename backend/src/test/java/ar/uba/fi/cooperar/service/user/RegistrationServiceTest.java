@@ -2,6 +2,7 @@ package ar.uba.fi.cooperar.service.user;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.AdditionalAnswers.returnsFirstArg;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -11,6 +12,7 @@ import static org.mockito.Mockito.when;
 import ar.uba.fi.cooperar.domain.organizations.Address;
 import ar.uba.fi.cooperar.domain.organizations.InvalidCuitException;
 import ar.uba.fi.cooperar.domain.organizations.Organization;
+import ar.uba.fi.cooperar.domain.organizations.OrganizationStatus;
 import ar.uba.fi.cooperar.domain.organizations.OrganizationType;
 import ar.uba.fi.cooperar.domain.organizations.Province;
 import ar.uba.fi.cooperar.domain.organizations.Sector;
@@ -21,6 +23,10 @@ import ar.uba.fi.cooperar.repository.user.UserAccountRepository;
 import ar.uba.fi.cooperar.service.organizations.OrganizationSlugs;
 import ar.uba.fi.cooperar.service.user.RegistrationConflictException.Field;
 import java.sql.SQLException;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -39,8 +45,21 @@ class RegistrationServiceTest {
     private final UserAccountRepository users = mock(UserAccountRepository.class);
     private final OrganizationRepository organizations = mock(OrganizationRepository.class);
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-    private final RegistrationService service =
-            new RegistrationService(users, organizations, new OrganizationSlugs(organizations), encoder);
+    private final EmailVerificationService emailVerification = mock(EmailVerificationService.class);
+    private final Instant now = Instant.parse("2026-10-30T12:00:00Z");
+    private final RegistrationService service = new RegistrationService(
+            users,
+            organizations,
+            new OrganizationSlugs(organizations),
+            encoder,
+            emailVerification,
+            Clock.fixed(now, ZoneOffset.UTC));
+
+    @BeforeEach
+    void saveReturnsTheEntity() {
+        when(users.saveAndFlush(any())).then(returnsFirstArg());
+        when(organizations.saveAndFlush(any())).then(returnsFirstArg());
+    }
 
     @Test
     void createsACooperativeAccountLinkedToTheNewOrganization() {
@@ -63,7 +82,11 @@ class RegistrationServiceTest {
         assertThat(organization.getSector()).isEqualTo(Sector.FOOD);
         assertThat(organization.getAddress())
                 .isEqualTo(new Address(Province.SANTA_FE, "Rosario", "Centro", "Rivadavia 100", null));
+        assertThat(organization.getStatus()).isEqualTo(OrganizationStatus.PENDING);
+        assertThat(organization.getRegisteredBy()).isSameAs(saved);
+        assertThat(organization.getCreatedAt()).isEqualTo(now);
         verify(organizations).saveAndFlush(organization);
+        verify(emailVerification).sendLink(saved);
 
         assertThat(registration).isEqualTo(new Registration(saved.getId(), organization.getId()));
     }
@@ -90,6 +113,7 @@ class RegistrationServiceTest {
                         e -> assertThat(e.getFields()).containsExactlyInAnyOrder(Field.EMAIL, Field.CUIT))
                 .hasMessage("The email and the CUIT are already registered");
         verify(users, never()).saveAndFlush(any());
+        verify(emailVerification, never()).sendLink(any());
     }
 
     @Test

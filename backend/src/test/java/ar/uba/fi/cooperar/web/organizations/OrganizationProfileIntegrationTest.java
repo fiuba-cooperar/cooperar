@@ -10,7 +10,11 @@ import ar.uba.fi.cooperar.domain.organizations.OrganizationProfile;
 import ar.uba.fi.cooperar.domain.organizations.OrganizationType;
 import ar.uba.fi.cooperar.domain.organizations.Province;
 import ar.uba.fi.cooperar.domain.organizations.Sector;
+import ar.uba.fi.cooperar.domain.user.Role;
+import ar.uba.fi.cooperar.domain.user.UserAccount;
 import ar.uba.fi.cooperar.repository.organizations.OrganizationRepository;
+import ar.uba.fi.cooperar.repository.user.UserAccountRepository;
+import java.time.Instant;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
@@ -34,9 +38,12 @@ class OrganizationProfileIntegrationTest {
     @Autowired
     private OrganizationRepository organizations;
 
+    @Autowired
+    private UserAccountRepository users;
+
     @Test
     void returnsThePublicProfileWithoutAToken() {
-        Organization organization = organization("La Cacerola", "la-cacerola", "30-71234567-1");
+        Organization organization = approved("La Cacerola", "la-cacerola", "30-71234567-1");
         organization.updateProfile(new OrganizationProfile(
                 "Panificados",
                 "11 1234-5678",
@@ -66,7 +73,7 @@ class OrganizationProfileIntegrationTest {
 
     @Test
     void exposesNoFieldBeyondThePublicOnes() {
-        organizations.saveAndFlush(organization("Sin Datos", "sin-datos", "20-12345678-6"));
+        organizations.saveAndFlush(approved("Sin Datos", "sin-datos", "20-12345678-6"));
 
         assertThat(mvc.get().uri("/api/organizations/sin-datos"))
                 .hasStatusOk()
@@ -87,6 +94,23 @@ class OrganizationProfileIntegrationTest {
     }
 
     @Test
+    void hidesAnOrganizationAwaitingReview() {
+        organizations.saveAndFlush(organization("Pendiente", "pendiente", "30-71234567-1", verifiedAccount()));
+
+        assertThat(mvc.get().uri("/api/organizations/pendiente")).hasStatus(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    void hidesARejectedOrganization() {
+        UserAccount account = verifiedAccount();
+        Organization organization = organization("Rechazada", "rechazada", "30-71234567-1", account);
+        organization.reject("Datos incompletos", account.getId(), Instant.now());
+        organizations.saveAndFlush(organization);
+
+        assertThat(mvc.get().uri("/api/organizations/rechazada")).hasStatus(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
     void answersNotFoundAsAProblemDetailForAnUnknownSlug() {
         assertThat(mvc.get().uri("/api/organizations/no-existe"))
                 .hasStatus(HttpStatus.NOT_FOUND)
@@ -97,13 +121,28 @@ class OrganizationProfileIntegrationTest {
                         """);
     }
 
-    private static Organization organization(String name, String slug, String cuit) {
+    private Organization approved(String name, String slug, String cuit) {
+        UserAccount account = verifiedAccount();
+        Organization organization = organization(name, slug, cuit, account);
+        organization.approve(account.getId(), Instant.now());
+        return organization;
+    }
+
+    private UserAccount verifiedAccount() {
+        UserAccount account = new UserAccount("coop@test.local", "hash", Role.COOPERATIVE);
+        account.verifyEmail(Instant.now());
+        return users.saveAndFlush(account);
+    }
+
+    private static Organization organization(String name, String slug, String cuit, UserAccount registeredBy) {
         return new Organization(
                 name,
                 slug,
                 OrganizationType.COOPERATIVE,
                 Cuit.parse(cuit),
                 Sector.FOOD,
-                new Address(Province.CITY_OF_BUENOS_AIRES, "Comuna 5", "Almagro", "Gascón 1234", "Portón verde"));
+                new Address(Province.CITY_OF_BUENOS_AIRES, "Comuna 5", "Almagro", "Gascón 1234", "Portón verde"),
+                registeredBy,
+                Instant.now());
     }
 }

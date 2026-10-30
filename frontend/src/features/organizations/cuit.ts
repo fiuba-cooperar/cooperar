@@ -14,3 +14,10 @@ export function cuitProblem(value: string): CuitProblem | null {
   // A result of 10 is never assigned, so no digit can match it.
   return (result === 11 ? 0 : result) === Number(digits[10]) ? null : 'check-digit';
 }
+
+/** Shows the 11 digits of a CUIT with its usual dashes: 30-12345678-1. */
+export function formatCuit(digits: string): string {
+  return /^\d{11}$/.test(digits)
+    ? `${digits.slice(0, 2)}-${digits.slice(2, 10)}-${digits.slice(10)}`
+    : digits;
+}

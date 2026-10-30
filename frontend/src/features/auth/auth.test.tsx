@@ -7,12 +7,19 @@ import { stubFetchRoutes } from '@/test/http';
 import { renderRoute } from '@/test/render';
 
 const TOKENS = { accessToken: 'access-1', refreshToken: 'refresh-1', expiresIn: 900 };
-const ADMIN = { id: 'u1', email: 'admin@test.local', role: 'ADMIN', organizations: [] };
+const ADMIN = {
+  id: 'u1',
+  email: 'admin@test.local',
+  role: 'ADMIN',
+  emailVerified: true,
+  organizations: [],
+};
 const COOPERATIVE = {
   id: 'u2',
   email: 'coop@test.local',
   role: 'COOPERATIVE',
-  organizations: [{ id: 'c1', name: 'La Cooperativa' }],
+  emailVerified: true,
+  organizations: [{ id: 'c1', name: 'La Cooperativa', status: 'APPROVED' }],
 };
 
 async function fillAndSubmit(email: string, password: string) {

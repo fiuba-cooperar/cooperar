@@ -1,3 +1,8 @@
+# Emails are recorded by RecordingEmailSender, so the SMTP server is never contacted.
+spring:
+  mail:
+    host: localhost
+
 cooperar:
   security:
     jwt:
@@ -5,3 +10,6 @@ cooperar:
   admin:
     email: admin@test.local
     password: test-admin-password
+  notifications:
+    public-url: http://localhost:5173
+    from: CooperAR <no-reply@test.local>

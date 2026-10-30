@@ -6,21 +6,27 @@
  * OpenAPI spec version: v1
  */
 
+export * from './addressResponse';
 export * from './currentUserResponse';
 export * from './geoPoint';
 export * from './healthResponse';
 export * from './healthStatus';
 export * from './loginRequest';
 export * from './organizationProfileResponse';
+export * from './organizationStatus';
 export * from './organizationSummary';
 export * from './organizationType';
+export * from './pendingOrganizationResponse';
 export * from './province';
 export * from './refreshTokenRequest';
+export * from './registrantResponse';
 export * from './registrationAccountRequest';
 export * from './registrationAddressRequest';
 export * from './registrationOrganizationRequest';
 export * from './registrationRequest';
 export * from './registrationResponse';
+export * from './rejectOrganizationRequest';
 export * from './role';
 export * from './sector';
 export * from './tokenResponse';
+export * from './verifyEmailRequest';

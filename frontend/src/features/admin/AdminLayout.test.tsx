@@ -12,6 +12,7 @@ const ADMIN = {
   firstName: 'Ana',
   lastName: 'Pérez',
   role: 'ADMIN',
+  emailVerified: true,
   organizations: [],
 };
 
@@ -54,7 +55,7 @@ describe('admin panel', () => {
       within(menu)
         .getAllByRole('link')
         .map((link) => link.textContent),
-    ).toEqual(['Inicio', 'Cooperativas', 'Ver el sitio público']);
+    ).toEqual(['Inicio', 'Altas pendientes', 'Cooperativas', 'Ver el sitio público']);
     expect(within(menu).getByRole('link', { name: 'Inicio' })).toHaveAttribute(
       'aria-current',
       'page',
@@ -72,7 +73,7 @@ describe('admin panel', () => {
       within(upcoming)
         .getAllByRole('listitem')
         .map((item) => item.firstChild?.textContent),
-    ).toEqual(['Altas pendientes', 'Relevamientos', 'Métricas del sector']);
+    ).toEqual(['Relevamientos', 'Métricas del sector']);
     expect(within(upcoming).queryByRole('link')).not.toBeInTheDocument();
   });
 

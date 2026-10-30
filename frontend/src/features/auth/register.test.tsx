@@ -11,7 +11,8 @@ const NEW_ACCOUNT = {
   id: 'u1',
   email: 'ana@coop.local',
   role: 'COOPERATIVE',
-  organizations: [{ id: 'c1', name: 'La Litoraleña' }],
+  emailVerified: false,
+  organizations: [{ id: 'c1', name: 'La Litoraleña', status: 'PENDING' }],
 };
 
 // No pause between keystrokes: each one re-renders the whole form, and the default pause makes these tests slow.
@@ -80,6 +81,9 @@ describe('registration', () => {
     expect(screen.getByRole('link', { name: 'Ingresar a mi panel' })).toHaveAttribute(
       'href',
       '/cooperative',
+    );
+    expect(screen.getByText(/Te enviamos un email a/)).toHaveTextContent(
+      'Te enviamos un email a ana@coop.local para que confirmes tu cuenta.',
     );
     const registerCall = fetchMock.mock.calls.find(([url]) => url === '/api/auth/register');
     expect(JSON.parse(requestBody(registerCall?.[1]))).toEqual({
@@ -358,7 +362,7 @@ describe('registration', () => {
     await fillOrganizationStep();
     await submit();
     const confirmation = await screen.findByRole('heading', { name: '¡Listo! Ya tenés tu cuenta' });
-    expect(within(container).getByText(/quedó registrada/)).toBeInTheDocument();
+    expect(within(container).getByText(/Te enviamos un email a/)).toBeInTheDocument();
     expect(confirmation).toBeInTheDocument();
     await expectNoA11yViolations(container);
   });

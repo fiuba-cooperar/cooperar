@@ -1,4 +1,6 @@
-import { Badge, Group, Paper, Stack, Text, Title, type MantineColor } from '@mantine/core';
+import { Badge, Button, Group, Paper, Stack, Text, Title, type MantineColor } from '@mantine/core';
+import { IconExternalLink } from '@tabler/icons-react';
+import { Link } from 'react-router';
 import { OrganizationStatus, type OrganizationSummary } from '@/api/generated/model';
 import { ORGANIZATION_STATUS_LABELS } from '@/features/organizations/labels';
 
@@ -26,9 +28,20 @@ function StatusDetail({
       );
     case OrganizationStatus.APPROVED:
       return (
-        <Text size="sm" c="dimmed">
-          Ya es visible en el sitio público.
-        </Text>
+        <Group justify="space-between" align="center" gap="sm">
+          <Text size="sm" c="dimmed">
+            Ya es visible en el sitio público.
+          </Text>
+          <Button
+            component={Link}
+            to={`/organizations/${organization.slug}`}
+            variant="light"
+            size="sm"
+            rightSection={<IconExternalLink size={16} aria-hidden />}
+          >
+            Ver mi ficha pública
+          </Button>
+        </Group>
       );
     case OrganizationStatus.REJECTED:
       return (

@@ -467,11 +467,15 @@
             "type" : "string",
             "description" : "Only for rejected organizations"
           },
+          "slug" : {
+            "type" : "string",
+            "description" : "Path segment of the public profile"
+          },
           "status" : {
             "$ref" : "#/components/schemas/OrganizationStatus"
           }
         },
-        "required" : [ "id", "name", "status" ]
+        "required" : [ "id", "name", "slug", "status" ]
       },
       "OrganizationType" : {
         "type" : "string",

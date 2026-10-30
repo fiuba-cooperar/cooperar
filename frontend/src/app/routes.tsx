@@ -17,6 +17,7 @@ import { ForbiddenPage } from '@/features/errors/ForbiddenPage';
 import { NotFoundPage } from '@/features/errors/NotFoundPage';
 import { ComingSoonPage } from '@/features/home/ComingSoonPage';
 import { HomePage } from '@/features/home/HomePage';
+import { OrganizationProfilePage } from '@/features/organizations/OrganizationProfilePage';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PUBLIC_SECTIONS, REGISTER_PATH } from '@/components/layout/publicSections';
 
@@ -33,6 +34,7 @@ export const routes: RouteObject[] = [
         element: <ComingSoonPage title={label} />,
       })),
       { path: 'forbidden', element: <ForbiddenPage /> },
+      { path: 'organizations/:slug', element: <OrganizationProfilePage /> },
       {
         element: <RequireRole role={Role.COOPERATIVE} />,
         children: [{ path: 'cooperative', element: <CooperativeHomePage /> }],

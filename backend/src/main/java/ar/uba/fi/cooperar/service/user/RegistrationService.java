@@ -6,6 +6,7 @@ import ar.uba.fi.cooperar.domain.user.Role;
 import ar.uba.fi.cooperar.domain.user.UserAccount;
 import ar.uba.fi.cooperar.repository.organizations.OrganizationRepository;
 import ar.uba.fi.cooperar.repository.user.UserAccountRepository;
+import ar.uba.fi.cooperar.service.organizations.OrganizationSlugs;
 import ar.uba.fi.cooperar.service.user.RegistrationConflictException.Field;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
@@ -32,6 +33,7 @@ public class RegistrationService {
 
     private final UserAccountRepository users;
     private final OrganizationRepository organizations;
+    private final OrganizationSlugs slugs;
     private final PasswordEncoder passwordEncoder;
     private final EmailVerificationService emailVerification;
     private final Clock clock;
@@ -39,11 +41,13 @@ public class RegistrationService {
     public RegistrationService(
             UserAccountRepository users,
             OrganizationRepository organizations,
+            OrganizationSlugs slugs,
             PasswordEncoder passwordEncoder,
             EmailVerificationService emailVerification,
             Clock clock) {
         this.users = users;
         this.organizations = organizations;
+        this.slugs = slugs;
         this.passwordEncoder = passwordEncoder;
         this.emailVerification = emailVerification;
         this.clock = clock;
@@ -74,8 +78,10 @@ public class RegistrationService {
                 email,
                 passwordEncoder.encode(newAccount.password()),
                 Role.COOPERATIVE);
+        String name = newOrganization.name().trim();
         Organization organization = new Organization(
-                newOrganization.name().trim(),
+                name,
+                slugs.uniqueFor(name),
                 newOrganization.type(),
                 cuit,
                 newOrganization.sector(),

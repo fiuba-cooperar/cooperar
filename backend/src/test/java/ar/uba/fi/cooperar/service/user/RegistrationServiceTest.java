@@ -20,6 +20,7 @@ import ar.uba.fi.cooperar.domain.user.Role;
 import ar.uba.fi.cooperar.domain.user.UserAccount;
 import ar.uba.fi.cooperar.repository.organizations.OrganizationRepository;
 import ar.uba.fi.cooperar.repository.user.UserAccountRepository;
+import ar.uba.fi.cooperar.service.organizations.OrganizationSlugs;
 import ar.uba.fi.cooperar.service.user.RegistrationConflictException.Field;
 import java.sql.SQLException;
 import java.time.Clock;
@@ -46,8 +47,13 @@ class RegistrationServiceTest {
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
     private final EmailVerificationService emailVerification = mock(EmailVerificationService.class);
     private final Instant now = Instant.parse("2026-10-30T12:00:00Z");
-    private final RegistrationService service =
-            new RegistrationService(users, organizations, encoder, emailVerification, Clock.fixed(now, ZoneOffset.UTC));
+    private final RegistrationService service = new RegistrationService(
+            users,
+            organizations,
+            new OrganizationSlugs(organizations),
+            encoder,
+            emailVerification,
+            Clock.fixed(now, ZoneOffset.UTC));
 
     @BeforeEach
     void saveReturnsTheEntity() {
@@ -70,6 +76,7 @@ class RegistrationServiceTest {
 
         Organization organization = saved.getOrganizations().iterator().next();
         assertThat(organization.getName()).isEqualTo("La Litoraleña");
+        assertThat(organization.getSlug()).isEqualTo("la-litoralena");
         assertThat(organization.getType()).isEqualTo(OrganizationType.COOPERATIVE_AND_ERT);
         assertThat(organization.getCuit().digits()).isEqualTo("30123456781");
         assertThat(organization.getSector()).isEqualTo(Sector.FOOD);
@@ -82,6 +89,17 @@ class RegistrationServiceTest {
         verify(emailVerification).sendLink(saved);
 
         assertThat(registration).isEqualTo(new Registration(saved.getId(), organization.getId()));
+    }
+
+    @Test
+    void numbersTheSlugWhenAnotherOrganizationHasTheSameName() {
+        when(organizations.existsBySlug("la-litoralena")).thenReturn(true);
+
+        service.register(ACCOUNT, ORGANIZATION);
+
+        ArgumentCaptor<Organization> organization = ArgumentCaptor.forClass(Organization.class);
+        verify(organizations).saveAndFlush(organization.capture());
+        assertThat(organization.getValue().getSlug()).isEqualTo("la-litoralena-2");
     }
 
     @Test

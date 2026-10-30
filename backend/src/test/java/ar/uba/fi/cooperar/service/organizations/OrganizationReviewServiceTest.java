@@ -39,6 +39,7 @@ class OrganizationReviewServiceTest {
     private final UserAccount account = new UserAccount("Ana", "Pérez", "ana@coop.local", "hash", Role.COOPERATIVE);
     private final Organization organization = new Organization(
             "La Litoraleña",
+            "la-litoralena",
             OrganizationType.ERT,
             Cuit.parse("30-12345678-1"),
             Sector.FOOD,

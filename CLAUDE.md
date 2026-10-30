@@ -40,6 +40,7 @@ Los términos del dominio se traducen siempre igual en el código: ficha → `pr
 - **Reconversión de espacios**: uso social de la infraestructura excedente de una ERT, como bachilleratos populares, centros culturales, guarderías o alquiler de salones.
 - **Toma / recuperación**: ocupación de la planta por los trabajadores para defender la fuente de trabajo, normalmente seguida de una expropiación o una cesión judicial.
 - **Ficha**: perfil público de una cooperativa o ERT (datos, ubicación, contacto, productos, historia).
+- **Rubro**: actividad principal de una cooperativa (alimentos, textil, metalúrgica, etc.). Sale de una lista cerrada que mantiene el observatorio, para poder filtrar por rubro. En el código es `Sector`, pero no confundirlo con «el sector», que es el conjunto de las ERT y cooperativas.
 - **Hito**: evento de la historia de una empresa, con una fecha que puede ser imprecisa (año, mes o rango).
 - **Relevamiento**: cuestionario que el observatorio asigna a las cooperativas para recolectar datos del sector.
 - **Fuentes de datos**: INAES (padrón de cooperativas), RENACER (registro de ERT), programa Facultad Abierta de la UBA (informes sobre ERT) y Recoop (comercializadora de la red).

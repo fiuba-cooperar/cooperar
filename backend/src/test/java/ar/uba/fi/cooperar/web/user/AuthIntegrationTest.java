@@ -9,6 +9,7 @@ import ar.uba.fi.cooperar.domain.organizations.Organization;
 import ar.uba.fi.cooperar.domain.organizations.OrganizationType;
 import ar.uba.fi.cooperar.domain.organizations.Province;
 import ar.uba.fi.cooperar.domain.organizations.Sector;
+import ar.uba.fi.cooperar.domain.organizations.Slugs;
 import ar.uba.fi.cooperar.domain.user.Role;
 import ar.uba.fi.cooperar.domain.user.UserAccount;
 import ar.uba.fi.cooperar.repository.organizations.OrganizationRepository;
@@ -189,6 +190,7 @@ class AuthIntegrationTest {
     private static Organization organization(String name, String cuit) {
         return new Organization(
                 name,
+                Slugs.fromName(name),
                 OrganizationType.COOPERATIVE,
                 Cuit.parse(cuit),
                 Sector.OTHER,

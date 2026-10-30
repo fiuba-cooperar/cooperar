@@ -1,0 +1,10 @@
+.map {
+  height: 220px;
+  border-radius: var(--mantine-radius-md);
+  /* Keeps Leaflet's panes and controls below Mantine overlays. */
+  z-index: 0;
+}
+
+.marker {
+  color: var(--mantine-color-brand-6);
+}

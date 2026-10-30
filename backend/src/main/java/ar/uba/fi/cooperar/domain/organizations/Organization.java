@@ -13,6 +13,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
+import org.locationtech.jts.geom.Point;
 
 /**
  * A cooperative or ERT. It starts pending and the observatory approves or rejects it once the account that registered
@@ -28,6 +29,10 @@ public class Organization {
     @Column(nullable = false)
     private String name;
 
+    /** Fixed at creation: renaming the organization must not break links that were already shared. */
+    @Column(nullable = false, unique = true, updatable = false)
+    private String slug;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private OrganizationType type;
@@ -41,6 +46,14 @@ public class Organization {
 
     @Embedded
     private Address address;
+
+    private String description;
+
+    private String phone;
+
+    private String email;
+
+    private Point location;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -66,6 +79,7 @@ public class Organization {
 
     public Organization(
             String name,
+            String slug,
             OrganizationType type,
             Cuit cuit,
             Sector sector,
@@ -74,6 +88,7 @@ public class Organization {
             Instant createdAt) {
         this.id = UUID.randomUUID();
         this.name = name;
+        this.slug = slug;
         this.type = type;
         this.cuit = cuit.digits();
         this.sector = sector;
@@ -106,12 +121,23 @@ public class Organization {
         this.reviewedAt = now;
     }
 
+    public void updateProfile(OrganizationProfile profile) {
+        this.description = profile.description();
+        this.phone = profile.phone();
+        this.email = profile.email();
+        this.location = profile.location();
+    }
+
     public UUID getId() {
         return id;
     }
 
     public String getName() {
         return name;
+    }
+
+    public String getSlug() {
+        return slug;
     }
 
     public OrganizationType getType() {
@@ -128,6 +154,22 @@ public class Organization {
 
     public Address getAddress() {
         return address;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public Point getLocation() {
+        return location;
     }
 
     public OrganizationStatus getStatus() {

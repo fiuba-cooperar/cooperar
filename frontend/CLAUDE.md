@@ -25,6 +25,7 @@ src/
 ├── components/
 │   ├── layout/              AppLayout (header con el menú, main, footer) y publicSections (secciones del menú); Brand (logo) y SkipLink, que comparten todos los layouts
 │   ├── form/                LabelWithHint (label con un ícono de info que muestra la aclaración del campo en un tooltip)
+│   ├── map/                 LocationMap (Leaflet, se carga de forma diferida)
 ├── features/<module>/       Una carpeta por módulo de dominio, alineada con el backend
 │   ├── api/                 Hooks de datos que envuelven al cliente generado (useXxx)
 │   ├── components/          Componentes propios del módulo
@@ -32,7 +33,9 @@ src/
 └── test/                    Helpers de test: renderRoute, stubFetchJson, expectNoA11yViolations
 ```
 
-Las features actuales son `home` (portada y páginas «Próximamente» de las secciones que todavía no existen), `auth` (registro en dos pasos, confirmación del email en `/verify-email`, login, sesión y guardas de ruta), `organizations` (por ahora, el selector del tipo de organización, las etiquetas de tipos, estados, rubros y provincias, y la validación y el formato del CUIT), `admin` (panel del observatorio: `AdminLayout` con su header y menú lateral propios, la portada con las herramientas «Próximamente» y las altas pendientes, donde se aprueban o rechazan con motivo), `cooperative` (sección por rol: la portada muestra el estado de cada organización y pide confirmar el email si falta) y `errors` (404 y acceso denegado).
+Las features actuales son `home` (portada y páginas «Próximamente» de las secciones que todavía no existen), `auth` (registro en dos pasos, confirmación del email en `/verify-email`, login, sesión y guardas de ruta), `organizations` (ficha pública en `/organizations/:slug`, el selector del tipo de organización, las etiquetas de tipos, estados, rubros y provincias, y la validación y el formato del CUIT), `admin` (panel del observatorio: `AdminLayout` con su header y menú lateral propios, la portada con las herramientas «Próximamente» y las altas pendientes, donde se aprueban o rechazan con motivo), `cooperative` (sección por rol: la portada muestra el estado de cada organización y pide confirmar el email si falta) y `errors` (404 y acceso denegado).
+
+Los mapas usan las teselas públicas de OpenStreetMap. Para usar otro servidor de teselas, se define `VITE_MAP_TILE_URL` (una plantilla de URL de Leaflet) al hacer el build.
 
 ## Reglas
 

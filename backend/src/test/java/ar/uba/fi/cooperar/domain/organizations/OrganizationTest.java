@@ -86,6 +86,7 @@ class OrganizationTest {
     private static Organization organization(UserAccount registeredBy) {
         return new Organization(
                 "La Litoraleña",
+                "la-litoralena",
                 OrganizationType.ERT,
                 Cuit.parse("30-12345678-1"),
                 Sector.FOOD,

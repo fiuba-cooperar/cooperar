@@ -8,9 +8,11 @@
 
 export * from './addressResponse';
 export * from './currentUserResponse';
+export * from './geoPoint';
 export * from './healthResponse';
 export * from './healthStatus';
 export * from './loginRequest';
+export * from './organizationProfileResponse';
 export * from './organizationStatus';
 export * from './organizationSummary';
 export * from './organizationType';

@@ -279,6 +279,33 @@
         "summary" : "Email a new confirmation link to the signed-in account",
         "tags" : [ "auth" ]
       }
+    },
+    "/api/organizations/{slug}" : {
+      "get" : {
+        "operationId" : "getOrganizationProfile",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/OrganizationProfileResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Public profile of an organization",
+        "tags" : [ "organizations" ]
+      }
     }
   },
   "components" : {
@@ -338,6 +365,20 @@
         },
         "required" : [ "email", "emailVerified", "id", "organizations", "role" ]
       },
+      "GeoPoint" : {
+        "type" : "object",
+        "properties" : {
+          "latitude" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "longitude" : {
+            "type" : "number",
+            "format" : "double"
+          }
+        },
+        "required" : [ "latitude", "longitude" ]
+      },
       "HealthResponse" : {
         "type" : "object",
         "description" : "Application health and the state of its dependencies",
@@ -368,6 +409,45 @@
           }
         },
         "required" : [ "email", "password" ]
+      },
+      "OrganizationProfileResponse" : {
+        "type" : "object",
+        "properties" : {
+          "description" : {
+            "type" : "string"
+          },
+          "district" : {
+            "type" : "string"
+          },
+          "email" : {
+            "type" : "string"
+          },
+          "locality" : {
+            "type" : "string"
+          },
+          "location" : {
+            "$ref" : "#/components/schemas/GeoPoint"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "phone" : {
+            "type" : "string"
+          },
+          "province" : {
+            "$ref" : "#/components/schemas/Province"
+          },
+          "sector" : {
+            "$ref" : "#/components/schemas/Sector"
+          },
+          "slug" : {
+            "type" : "string"
+          },
+          "street" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "district", "locality", "name", "province", "sector", "slug", "street" ]
       },
       "OrganizationStatus" : {
         "type" : "string",

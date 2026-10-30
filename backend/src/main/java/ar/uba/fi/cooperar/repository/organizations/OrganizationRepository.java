@@ -1,7 +1,9 @@
 package ar.uba.fi.cooperar.repository.organizations;
 
 import ar.uba.fi.cooperar.domain.organizations.Organization;
+import ar.uba.fi.cooperar.domain.organizations.OrganizationStatus;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -9,6 +11,10 @@ import org.springframework.data.jpa.repository.Query;
 public interface OrganizationRepository extends JpaRepository<Organization, UUID> {
 
     boolean existsByCuit(String cuit);
+
+    Optional<Organization> findBySlugAndStatus(String slug, OrganizationStatus status);
+
+    boolean existsBySlug(String slug);
 
     /** The review queue: pending organizations whose account confirmed its email, oldest first. */
     @Query("""

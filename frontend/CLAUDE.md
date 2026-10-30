@@ -23,7 +23,7 @@ src/
 ├── app/                     Composición: App (providers), routes, queryClient, theme (tema de Mantine)
 ├── api/generated/           Cliente generado por orval. NO se edita a mano; está excluido de lint y formato
 ├── components/
-│   ├── layout/              AppLayout (header con el menú, main, footer, skip link) y publicSections (secciones del menú)
+│   ├── layout/              AppLayout (header con el menú, main, footer) y publicSections (secciones del menú); Brand (logo) y SkipLink, que comparten todos los layouts
 │   ├── form/                LabelWithHint (label con un ícono de info que muestra la aclaración del campo en un tooltip)
 ├── features/<module>/       Una carpeta por módulo de dominio, alineada con el backend
 │   ├── api/                 Hooks de datos que envuelven al cliente generado (useXxx)
@@ -32,7 +32,7 @@ src/
 └── test/                    Helpers de test: renderRoute, stubFetchJson, expectNoA11yViolations
 ```
 
-Las features actuales son `home` (portada y páginas «Próximamente» de las secciones que todavía no existen), `auth` (registro en dos pasos, login, sesión y guardas de ruta), `organizations` (por ahora, el selector del tipo de organización, las etiquetas de rubros y provincias y la validación del CUIT), `admin` y `cooperative` (secciones por rol, hoy solo la portada) y `errors` (404 y acceso denegado).
+Las features actuales son `home` (portada y páginas «Próximamente» de las secciones que todavía no existen), `auth` (registro en dos pasos, login, sesión y guardas de ruta), `organizations` (por ahora, el selector del tipo de organización, las etiquetas de rubros y provincias y la validación del CUIT), `admin` (panel del observatorio: `AdminLayout` con su header y menú lateral propios, y la portada con las herramientas «Próximamente»), `cooperative` (sección por rol, hoy solo la portada) y `errors` (404 y acceso denegado).
 
 ## Reglas
 
@@ -40,7 +40,7 @@ Las features actuales son `home` (portada y páginas «Próximamente» de las se
 - **Los componentes no usan los hooks generados directamente.** Cada feature expone hooks propios en `features/<module>/api/` que envuelven al generado y fijan las opciones (`select`, `refetchInterval`, invalidaciones). Así un cambio de contrato se absorbe en un solo lugar.
 - **Estado del servidor en TanStack Query**, y estado de UI local con `useState`/`useReducer`. No se agrega una librería de estado global sin una decisión con issue.
 - **Imports absolutos con `@/`** (`@/features/auth/...`). Los relativos solo dentro de la misma feature.
-- **Rutas.** Se declaran en `app/routes.tsx`. Las rutas por rol cuelgan de `RequireRole` (`features/auth`): sin sesión redirige a `/login` y con otro rol muestra «Acceso denegado».
+- **Rutas.** Se declaran en `app/routes.tsx`. Las rutas por rol cuelgan de `RequireRole` (`features/auth`): sin sesión redirige a `/login` y con otro rol redirige a `/forbidden` («Acceso denegado», dentro del layout público). El panel del admin no usa `AppLayout`: cuelga de `RequireRole` en un árbol aparte con su `AdminLayout`.
 - **Estilos y componentes.** Se usa Mantine (`@mantine/core`) para los componentes (`Button`, `TextInput`, `Paper`, `Alert`, etc.). El tema (colores del logo, tipografía Inter/Poppins, radio, modo claro/oscuro automático) está en `app/theme.ts` y se aplica con `MantineProvider`. Lo que Mantine no cubre se escribe con CSS Modules (`Xxx.module.css`) usando las variables de Mantine (`var(--mantine-color-brand-6)`, `var(--mantine-spacing-md)`); no se usan colores sueltos. Si un componente hace falta en más de una feature, se arma sobre los de Mantine en `src/components/`.
 - **Idioma.** Código, nombres de archivos, identificadores y tests en inglés. **Todo texto visible para el usuario va en español** rioplatense, en voseo ("Buscá", "Volver al inicio").
 - **TypeScript estricto** (`strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`). Nada de `any` ni de `!` para silenciar el compilador.

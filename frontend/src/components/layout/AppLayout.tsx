@@ -4,7 +4,9 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router';
 import { ROLE_HOME } from '@/features/auth/roleHome';
 import { useAuth } from '@/features/auth/useAuth';
 import styles from './AppLayout.module.css';
+import { Brand } from './Brand';
 import { PUBLIC_SECTIONS, REGISTER_PATH } from './publicSections';
+import { SkipLink } from './SkipLink';
 
 function AccountActions({ onNavigate }: { onNavigate?: () => void }) {
   const { status, user, logout } = useAuth();
@@ -58,17 +60,6 @@ const FOCUSED_ACTION_PROPS = {
   miw: 'max-content',
 } as const;
 
-function Brand() {
-  return (
-    <Link to="/" className={styles.brand} aria-label="cooperAR, ir al inicio">
-      <img src="/brand/symbol-mocks.png" alt="" />
-      <span>
-        cooper<span style={{ fontWeight: 600 }}>AR</span>
-      </span>
-    </Link>
-  );
-}
-
 export function AppLayout() {
   const { pathname } = useLocation();
   const isLoginPage = pathname === '/login';
@@ -88,9 +79,7 @@ export function AppLayout() {
 
   return (
     <div className={styles.shell}>
-      <a className={styles.skipLink} href="#main-content">
-        Saltar al contenido principal
-      </a>
+      <SkipLink />
       <header className={styles.header}>
         {/* Same bar on every page, so its height does not jump between screens. */}
         <Container fluid px={{ base: 'md', sm: 48 }} py="md" className={styles.headerBar}>

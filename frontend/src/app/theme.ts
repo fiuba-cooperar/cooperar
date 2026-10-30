@@ -86,6 +86,11 @@ export const cssVariablesResolver: CSSVariablesResolver = () => ({
     '--color-map': '#d3e4f4',
     '--color-band': '#16324f',
     '--color-band-text': '#d5e3f0',
+    // Side menu of the panels, on the navy band.
+    '--color-panel-nav-text': '#e6eef6',
+    '--color-panel-nav-muted': '#b9cde0',
+    '--color-panel-nav-hover': '#21466b',
+    '--color-panel-nav-active': '#2f5e8f',
   },
   dark: {
     '--mantine-color-body': '#0f1923',
@@ -96,6 +101,11 @@ export const cssVariablesResolver: CSSVariablesResolver = () => ({
     '--color-map': '#0e3558',
     '--color-band': '#16324f',
     '--color-band-text': '#d5e3f0',
+    // Side menu of the panels, on the navy band.
+    '--color-panel-nav-text': '#e6eef6',
+    '--color-panel-nav-muted': '#b9cde0',
+    '--color-panel-nav-hover': '#21466b',
+    '--color-panel-nav-active': '#2f5e8f',
     '--color-danger': '#ff9d94',
     '--color-field-border': '#5e7186',
     '--mantine-color-error': '#ff9d94',

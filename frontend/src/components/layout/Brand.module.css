@@ -1,0 +1,33 @@
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--mantine-color-brand-9);
+  font-family: 'Poppins', 'Inter Variable', sans-serif;
+  font-size: 27px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.01em;
+
+  @mixin dark {
+    color: var(--mantine-color-white);
+  }
+}
+
+.brand img {
+  height: 38px;
+  width: auto;
+}
+
+/* Smaller on the narrowest phones, so the logo and a header button fit side by side in 320px. */
+@media (max-width: 22.5em) {
+  .brand {
+    gap: 8px;
+    font-size: 22px;
+  }
+
+  .brand img {
+    height: 32px;
+  }
+}

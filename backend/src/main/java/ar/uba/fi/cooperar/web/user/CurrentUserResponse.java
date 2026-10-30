@@ -11,6 +11,13 @@ import java.util.UUID;
 public record CurrentUserResponse(
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) UUID id,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String email,
+
+        @Schema(description = "Missing for the initial admin when it was created without a name")
+        String firstName,
+
+        @Schema(description = "Missing for the initial admin when it was created without a name")
+        String lastName,
+
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Role role,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) List<OrganizationSummary> organizations) {
 
@@ -26,6 +33,7 @@ public record CurrentUserResponse(
                 .sorted(Comparator.comparing(Organization::getName))
                 .map(organization -> new OrganizationSummary(organization.getId(), organization.getName()))
                 .toList();
-        return new CurrentUserResponse(user.getId(), user.getEmail(), user.getRole(), organizations);
+        return new CurrentUserResponse(
+                user.getId(), user.getEmail(), user.getFirstName(), user.getLastName(), user.getRole(), organizations);
     }
 }

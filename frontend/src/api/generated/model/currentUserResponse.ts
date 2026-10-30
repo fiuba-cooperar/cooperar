@@ -10,7 +10,11 @@ import type { Role } from './role';
 
 export interface CurrentUserResponse {
   email: string;
+  /** Missing for the initial admin when it was created without a name */
+  firstName?: string;
   id: string;
+  /** Missing for the initial admin when it was created without a name */
+  lastName?: string;
   organizations: OrganizationSummary[];
   role: Role;
 }

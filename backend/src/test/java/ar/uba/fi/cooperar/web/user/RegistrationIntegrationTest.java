@@ -44,7 +44,7 @@ class RegistrationIntegrationTest {
 
         var me = mvc.get().uri("/api/me").header(HttpHeaders.AUTHORIZATION, "Bearer " + field(login, "accessToken"));
         assertThat(me).hasStatusOk().bodyJson().isLenientlyEqualTo("""
-                {"email": "ana@coop.local", "role": "COOPERATIVE"}
+                {"email": "ana@coop.local", "firstName": "Ana", "lastName": "Pérez", "role": "COOPERATIVE"}
                 """);
         assertThat(me).bodyJson().extractingPath("$.organizations[*].id").isEqualTo(List.of(organizationId));
         assertThat(me).bodyJson().extractingPath("$.organizations[*].name").isEqualTo(List.of("La Litoraleña"));

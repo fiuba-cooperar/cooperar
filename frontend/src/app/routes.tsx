@@ -1,6 +1,8 @@
 import type { RouteObject } from 'react-router';
 import { Role } from '@/api/generated/model';
 import { AdminHomePage } from '@/features/admin/AdminHomePage';
+import { AdminLayout } from '@/features/admin/AdminLayout';
+import { ADMIN_HOME_PATH, ADMIN_SECTIONS } from '@/features/admin/adminSections';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { RegisterPage } from '@/features/auth/RegisterPage';
 import { RequireRole } from '@/features/auth/RequireRole';
@@ -25,14 +27,29 @@ export const routes: RouteObject[] = [
       })),
       { path: 'forbidden', element: <ForbiddenPage /> },
       {
-        element: <RequireRole role={Role.ADMIN} />,
-        children: [{ path: 'admin', element: <AdminHomePage /> }],
-      },
-      {
         element: <RequireRole role={Role.COOPERATIVE} />,
         children: [{ path: 'cooperative', element: <CooperativeHomePage /> }],
       },
       { path: '*', element: <NotFoundPage /> },
+    ],
+  },
+  {
+    // The observatory panel has its own header and side menu instead of the public ones.
+    element: <RequireRole role={Role.ADMIN} />,
+    children: [
+      {
+        path: ADMIN_HOME_PATH,
+        element: <AdminLayout />,
+        children: [
+          { index: true, element: <AdminHomePage /> },
+          ...ADMIN_SECTIONS.filter(({ path }) => path !== ADMIN_HOME_PATH).map(
+            ({ path, label }) => ({
+              path,
+              element: <ComingSoonPage title={label} homePath={ADMIN_HOME_PATH} />,
+            }),
+          ),
+        ],
+      },
     ],
   },
 ];

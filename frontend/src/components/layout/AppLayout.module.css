@@ -4,21 +4,6 @@
   min-height: 100dvh;
 }
 
-.skipLink {
-  position: absolute;
-  left: var(--mantine-spacing-xs);
-  top: -100%;
-  z-index: 10;
-  padding: var(--mantine-spacing-xs) var(--mantine-spacing-md);
-  background: var(--mantine-color-body);
-  border: 2px solid var(--mantine-color-brand-6);
-  border-radius: var(--mantine-radius-md);
-}
-
-.skipLink:focus {
-  top: var(--mantine-spacing-xs);
-}
-
 .header {
   border-top: 4px solid var(--mantine-color-brand-4);
   border-bottom: 1px solid var(--mantine-color-default-border);
@@ -45,40 +30,6 @@
   display: flex;
   justify-content: flex-end;
   margin-inline-start: auto;
-}
-
-.brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
-  color: var(--mantine-color-brand-9);
-  font-family: 'Poppins', 'Inter Variable', sans-serif;
-  font-size: 27px;
-  font-weight: 500;
-  line-height: 1;
-  letter-spacing: -0.01em;
-
-  @mixin dark {
-    color: var(--mantine-color-white);
-  }
-}
-
-.brand img {
-  height: 38px;
-  width: auto;
-}
-
-/* Smaller on the narrowest phones, so the logo and a header button fit side by side in 320px. */
-@media (max-width: 22.5em) {
-  .brand {
-    gap: 8px;
-    font-size: 22px;
-  }
-
-  .brand img {
-    height: 32px;
-  }
 }
 
 .navLink {

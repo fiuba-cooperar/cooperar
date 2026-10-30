@@ -124,6 +124,16 @@ class AuthIntegrationTest {
     }
 
     @Test
+    void meLeavesTheNameOutForTheUnnamedInitialAdmin() {
+        String accessToken = field(login(ADMIN_EMAIL, ADMIN_PASSWORD), "accessToken");
+
+        var me = mvc.get().uri("/api/me").header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken);
+        assertThat(me).hasStatusOk().bodyJson().isLenientlyEqualTo("""
+                {"email": "admin@test.local", "role": "ADMIN", "firstName": null, "lastName": null}
+                """);
+    }
+
+    @Test
     void doesNotExposeThePasswordHashOnMe() {
         String accessToken = field(login(ADMIN_EMAIL, ADMIN_PASSWORD), "accessToken");
 

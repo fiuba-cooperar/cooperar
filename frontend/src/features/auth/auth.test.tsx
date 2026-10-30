@@ -184,11 +184,11 @@ describe('authentication', () => {
   it('signs out, revokes the refresh token and returns to the public view', async () => {
     saveTokens({ accessToken: 'access-1', refreshToken: 'refresh-1' });
     const fetchMock = stubFetchRoutes({
-      'GET /api/me': { body: ADMIN },
+      'GET /api/me': { body: COOPERATIVE },
       'POST /api/auth/logout': { status: 204 },
     });
 
-    renderRoute('/admin');
+    renderRoute('/cooperative');
     await userEvent.click(await screen.findByRole('button', { name: 'Cerrar sesión' }));
 
     expect(await screen.findByRole('heading', { name: 'Ingresá a tu cuenta' })).toBeInTheDocument();

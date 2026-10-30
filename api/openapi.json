@@ -176,9 +176,17 @@
           "email" : {
             "type" : "string"
           },
+          "firstName" : {
+            "type" : "string",
+            "description" : "Missing for the initial admin when it was created without a name"
+          },
           "id" : {
             "type" : "string",
             "format" : "uuid"
+          },
+          "lastName" : {
+            "type" : "string",
+            "description" : "Missing for the initial admin when it was created without a name"
           },
           "organizations" : {
             "type" : "array",

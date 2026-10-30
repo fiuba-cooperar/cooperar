@@ -6,6 +6,8 @@ cooperar:
   admin:
     email: ${ADMIN_EMAIL:admin@cooperar.local}
     password: ${ADMIN_PASSWORD:dev-admin-password}
+    first-name: ${ADMIN_FIRST_NAME:Admin}
+    last-name: ${ADMIN_LAST_NAME:Observatorio}
 
 logging:
   level:

@@ -309,7 +309,7 @@ function RegisterBand() {
             },
           })}
         >
-          Registrá tu cooperativa
+          Registrá tu organización
         </Button>
       </div>
     </Container>

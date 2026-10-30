@@ -3,10 +3,15 @@ package ar.uba.fi.cooperar.web.user;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import ar.uba.fi.cooperar.IntegrationTest;
-import ar.uba.fi.cooperar.domain.organizations.Cooperative;
+import ar.uba.fi.cooperar.domain.organizations.Address;
+import ar.uba.fi.cooperar.domain.organizations.Cuit;
+import ar.uba.fi.cooperar.domain.organizations.Organization;
+import ar.uba.fi.cooperar.domain.organizations.OrganizationType;
+import ar.uba.fi.cooperar.domain.organizations.Province;
+import ar.uba.fi.cooperar.domain.organizations.Sector;
 import ar.uba.fi.cooperar.domain.user.Role;
 import ar.uba.fi.cooperar.domain.user.UserAccount;
-import ar.uba.fi.cooperar.repository.organizations.CooperativeRepository;
+import ar.uba.fi.cooperar.repository.organizations.OrganizationRepository;
 import ar.uba.fi.cooperar.repository.user.UserAccountRepository;
 import com.jayway.jsonpath.JsonPath;
 import java.nio.charset.StandardCharsets;
@@ -35,7 +40,7 @@ class AuthIntegrationTest {
     private UserAccountRepository users;
 
     @Autowired
-    private CooperativeRepository cooperatives;
+    private OrganizationRepository organizations;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -83,13 +88,13 @@ class AuthIntegrationTest {
     }
 
     @Test
-    void returnsTheAccountRoleAndCooperativesOnMe() {
-        Cooperative zeta = cooperatives.save(new Cooperative("Zeta"));
-        Cooperative alfa = cooperatives.save(new Cooperative("Alfa"));
+    void returnsTheAccountRoleAndOrganizationsOnMe() {
+        Organization zeta = organizations.save(organization("Zeta", "30-71234567-1"));
+        Organization alfa = organizations.save(organization("Alfa", "20-12345678-6"));
         UserAccount user =
                 new UserAccount("coop@test.local", passwordEncoder.encode("coop-password"), Role.COOPERATIVE);
-        user.getCooperatives().add(zeta);
-        user.getCooperatives().add(alfa);
+        user.getOrganizations().add(zeta);
+        user.getOrganizations().add(alfa);
         users.save(user);
 
         String accessToken = field(login("coop@test.local", "coop-password"), "accessToken");
@@ -98,7 +103,7 @@ class AuthIntegrationTest {
         assertThat(me).hasStatusOk().bodyJson().isLenientlyEqualTo("""
                         {"email": "coop@test.local", "role": "COOPERATIVE"}
                         """);
-        assertThat(me).bodyJson().extractingPath("$.cooperatives[*].name").isEqualTo(List.of("Alfa", "Zeta"));
+        assertThat(me).bodyJson().extractingPath("$.organizations[*].name").isEqualTo(List.of("Alfa", "Zeta"));
     }
 
     @Test
@@ -160,13 +165,22 @@ class AuthIntegrationTest {
     void anAdminTokenReachesAdminEndpointsAndACooperativeTokenDoesNot() {
         users.save(new UserAccount("coop@test.local", passwordEncoder.encode("coop-password"), Role.COOPERATIVE));
         String admin = field(login(ADMIN_EMAIL, ADMIN_PASSWORD), "accessToken");
-        String cooperative = field(login("coop@test.local", "coop-password"), "accessToken");
+        String organization = field(login("coop@test.local", "coop-password"), "accessToken");
 
         // No handler exists behind /api/admin yet, so getting past security means a 404.
         assertThat(mvc.get().uri("/api/admin/any").header(HttpHeaders.AUTHORIZATION, "Bearer " + admin))
                 .hasStatus(HttpStatus.NOT_FOUND);
-        assertThat(mvc.get().uri("/api/admin/any").header(HttpHeaders.AUTHORIZATION, "Bearer " + cooperative))
+        assertThat(mvc.get().uri("/api/admin/any").header(HttpHeaders.AUTHORIZATION, "Bearer " + organization))
                 .hasStatus(HttpStatus.FORBIDDEN);
+    }
+
+    private static Organization organization(String name, String cuit) {
+        return new Organization(
+                name,
+                OrganizationType.COOPERATIVE,
+                Cuit.parse(cuit),
+                Sector.OTHER,
+                new Address(Province.SANTA_FE, "Rosario", "Centro", "Rivadavia 100", null));
     }
 
     private MvcTestResult login(String email, String password) {

@@ -29,6 +29,8 @@
   display: flex;
   align-items: center;
   gap: 16px;
+  /* As tall as the 44px buttons even where only the logo and the burger show. */
+  min-height: calc(44px + 2 * var(--mantine-spacing-md));
 }
 
 /* Both sides grow alike so the menu stays centered on the page. */
@@ -40,7 +42,9 @@
 }
 
 .headerEnd {
+  display: flex;
   justify-content: flex-end;
+  margin-inline-start: auto;
 }
 
 .brand {
@@ -63,6 +67,18 @@
 .brand img {
   height: 38px;
   width: auto;
+}
+
+/* Smaller on the narrowest phones, so the logo and a header button fit side by side in 320px. */
+@media (max-width: 22.5em) {
+  .brand {
+    gap: 8px;
+    font-size: 22px;
+  }
+
+  .brand img {
+    height: 32px;
+  }
 }
 
 .navLink {
@@ -94,6 +110,10 @@
 
 .mainCentered > * {
   width: 100%;
+}
+
+.mainForm {
+  padding-block: 48px;
 }
 
 .mainFlush {

@@ -6,7 +6,7 @@
  * OpenAPI spec version: v1
  */
 
-export interface CooperativeSummary {
+export interface OrganizationSummary {
   id: string;
   name: string;
 }

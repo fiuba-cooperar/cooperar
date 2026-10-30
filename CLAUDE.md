@@ -19,7 +19,7 @@ Esta regla vale en todas las sesiones y para todo el equipo:
 | Comentarios y mensajes en Dockerfiles, workflows de CI, `docker-compose.yml`, `Makefile`, `.env.example` y archivos de configuración | Textos de la interfaz que ve el usuario, en voseo rioplatense ("Buscá", "Volver al inicio") |
 | | Las respuestas de Claude en la conversación |
 
-Los términos del dominio se traducen siempre igual en el código: ficha → `profile`, consulta → `inquiry`, feria → `fair`, hito → `milestone`, relevamiento → `survey`, necesidad → `need`, cooperativa → `cooperative`. ERT y MIA se mantienen como siglas: `Ert`, `Mia`. Si aparece un término nuevo, se agrega a esta lista.
+Los términos del dominio se traducen siempre igual en el código: ficha → `profile`, consulta → `inquiry`, feria → `fair`, hito → `milestone`, relevamiento → `survey`, necesidad → `need`, cooperativa → `cooperative`, organización (cooperativa o ERT) → `organization`, rubro → `sector`, departamento/partido/comuna → `district`, localidad/barrio → `locality`, tipo de organización (cooperativa, ERT o ambas) → `OrganizationType`. ERT y MIA se mantienen como siglas: `Ert`, `Mia`. Si aparece un término nuevo, se agrega a esta lista.
 
 ## Perfiles
 
@@ -98,7 +98,7 @@ ar.uba.fi.cooperar
 └── shared/               Transversal: error (ProblemDetail), security, config
 ```
 
-Módulos previstos según las issues: `organizations` (fichas, privacidad), `catalog`, `inquiries`, `users`, `fairs`, `spaces`, `history`, `network` (necesidades, MIA, grafo), `surveys`, `metrics`, `search` y `content`. Hoy existen `health` y `user` (login y sesión), más la entidad mínima `Cooperative` de `organizations`. Cada módulo se crea con su primera issue: no se dejan paquetes vacíos. Detalle en `backend/CLAUDE.md`.
+Módulos previstos según las issues: `organizations` (fichas, privacidad), `catalog`, `inquiries`, `users`, `fairs`, `spaces`, `history`, `network` (necesidades, MIA, grafo), `surveys`, `metrics`, `search` y `content`. Hoy existen `health` y `user` (registro, login y sesión), más la entidad `Organization` de `organizations` (cooperativa, ERT o ambas) con los datos del alta: tipo, nombre, CUIT, rubro y dirección (provincia, departamento/partido/comuna, localidad/barrio, calle y número, y referencias opcionales). Cada módulo se crea con su primera issue: no se dejan paquetes vacíos. Detalle en `backend/CLAUDE.md`.
 
 ### Frontend (resumen)
 

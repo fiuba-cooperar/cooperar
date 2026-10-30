@@ -30,7 +30,7 @@ describe('public site', () => {
         '/login',
       );
       expect(
-        within(screen.getByRole('banner')).getByRole('link', { name: 'Registrá tu cooperativa' }),
+        within(screen.getByRole('banner')).getByRole('link', { name: 'Registrá tu organización' }),
       ).toHaveAttribute('href', '/register');
       expect(within(screen.getByRole('contentinfo')).getByText(/FIUBA/)).toBeInTheDocument();
       unmount();
@@ -63,7 +63,9 @@ describe('public site', () => {
   it('replaces the account buttons with the user section when signed in', async () => {
     saveTokens({ accessToken: 'access-1', refreshToken: 'refresh-1' });
     stubFetchRoutes({
-      'GET /api/me': { body: { id: 'u1', email: 'a@test.local', role: 'ADMIN', cooperatives: [] } },
+      'GET /api/me': {
+        body: { id: 'u1', email: 'a@test.local', role: 'ADMIN', organizations: [] },
+      },
     });
 
     renderRoute('/');
@@ -128,12 +130,10 @@ describe('public site', () => {
     renderRoute('/');
 
     await userEvent.click(
-      within(screen.getByRole('banner')).getByRole('link', { name: 'Registrá tu cooperativa' }),
+      within(screen.getByRole('banner')).getByRole('link', { name: 'Registrá tu organización' }),
     );
 
-    expect(
-      await screen.findByRole('heading', { level: 1, name: 'Registrá tu cooperativa' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Tu cuenta' })).toBeInTheDocument();
   });
 
   it('has no accessibility violations on the home page', async () => {

@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { getAccessToken, saveTokens } from '@/api/session';
@@ -7,12 +7,12 @@ import { stubFetchRoutes } from '@/test/http';
 import { renderRoute } from '@/test/render';
 
 const TOKENS = { accessToken: 'access-1', refreshToken: 'refresh-1', expiresIn: 900 };
-const ADMIN = { id: 'u1', email: 'admin@test.local', role: 'ADMIN', cooperatives: [] };
+const ADMIN = { id: 'u1', email: 'admin@test.local', role: 'ADMIN', organizations: [] };
 const COOPERATIVE = {
   id: 'u2',
   email: 'coop@test.local',
   role: 'COOPERATIVE',
-  cooperatives: [{ id: 'c1', name: 'La Cooperativa' }],
+  organizations: [{ id: 'c1', name: 'La Cooperativa' }],
 };
 
 async function fillAndSubmit(email: string, password: string) {
@@ -29,6 +29,23 @@ describe('authentication', () => {
     renderRoute('/admin');
 
     expect(await screen.findByRole('heading', { name: 'Ingresá a tu cuenta' })).toBeInTheDocument();
+  });
+
+  it('shows only the logo and the register button in the login header', async () => {
+    stubFetchRoutes({});
+
+    renderRoute('/login');
+
+    const header = await screen.findByRole('banner');
+    expect(within(header).getByRole('link', { name: 'cooperAR, ir al inicio' })).toHaveAttribute(
+      'href',
+      '/',
+    );
+    expect(within(header).getByRole('link', { name: 'Registrá tu organización' })).toHaveAttribute(
+      'href',
+      '/register',
+    );
+    expect(screen.queryByRole('navigation', { name: 'Principal' })).not.toBeInTheDocument();
   });
 
   it('shows only the public navigation without a session', async () => {
@@ -55,7 +72,7 @@ describe('authentication', () => {
     expect(getAccessToken()).toBe('access-1');
   });
 
-  it('signs a cooperative in and lands on its own section with its cooperatives', async () => {
+  it('signs a cooperative in and lands on its own section with its organizations', async () => {
     stubFetchRoutes({
       'POST /api/auth/login': { body: TOKENS },
       'GET /api/me': { body: COOPERATIVE },
@@ -64,7 +81,7 @@ describe('authentication', () => {
     renderRoute('/login');
     await fillAndSubmit('coop@test.local', 'secret');
 
-    expect(await screen.findByRole('heading', { name: 'Mi cooperativa' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Mi organización' })).toBeInTheDocument();
     expect(screen.getByText('La Cooperativa')).toBeInTheDocument();
   });
 

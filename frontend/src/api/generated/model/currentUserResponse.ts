@@ -5,12 +5,12 @@
  * Open observatory of worker-recovered companies and worker cooperatives
  * OpenAPI spec version: v1
  */
-import type { CooperativeSummary } from './cooperativeSummary';
+import type { OrganizationSummary } from './organizationSummary';
 import type { Role } from './role';
 
 export interface CurrentUserResponse {
-  cooperatives: CooperativeSummary[];
   email: string;
   id: string;
+  organizations: OrganizationSummary[];
   role: Role;
 }

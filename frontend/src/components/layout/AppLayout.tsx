@@ -36,7 +36,7 @@ function AccountActions({ onNavigate }: { onNavigate?: () => void }) {
         Ingresar
       </Button>
       <Button component={Link} to={REGISTER_PATH} h={44} px={18} fz={15} onClick={onNavigate}>
-        Registrá tu cooperativa
+        Registrá tu organización
       </Button>
     </>
   );
@@ -50,9 +50,38 @@ function SectionLinks({ onNavigate }: { onNavigate?: () => void }) {
   ));
 }
 
+// 44px tall like the other header buttons; tighter on phones so it fits next to the logo in 320px.
+const FOCUSED_ACTION_PROPS = {
+  h: 44,
+  px: { base: 10, sm: 18 },
+  fz: { base: 14, sm: 15 },
+  miw: 'max-content',
+} as const;
+
+function Brand() {
+  return (
+    <Link to="/" className={styles.brand} aria-label="cooperAR, ir al inicio">
+      <img src="/brand/symbol-mocks.png" alt="" />
+      <span>
+        cooper<span style={{ fontWeight: 600 }}>AR</span>
+      </span>
+    </Link>
+  );
+}
+
 export function AppLayout() {
   const { pathname } = useLocation();
   const isLoginPage = pathname === '/login';
+  const isRegisterPage = pathname === REGISTER_PATH;
+  const focusedAction = isLoginPage ? (
+    <Button component={Link} to={REGISTER_PATH} {...FOCUSED_ACTION_PROPS}>
+      Registrá tu organización
+    </Button>
+  ) : isRegisterPage ? (
+    <Button component={Link} to="/login" variant="outline" {...FOCUSED_ACTION_PROPS}>
+      Ya tengo cuenta
+    </Button>
+  ) : null;
   // The home page draws its own full-width bands, so it skips the centered container.
   const isHomePage = pathname === '/';
   const [menuOpened, menu] = useDisclosure(false);
@@ -63,46 +92,38 @@ export function AppLayout() {
         Saltar al contenido principal
       </a>
       <header className={styles.header}>
-        {isLoginPage ? (
-          // The login header spans the full width, as in the mock.
-          <Container fluid px={48} py="lg">
-            <Group justify="space-between">
-              <Anchor component={Link} to="/" fw={500} fz={15} c="inherit" underline="hover">
-                ← Volver al sitio
-              </Anchor>
-              <Button component={Link} to={REGISTER_PATH} fz={15}>
-                Registrá tu cooperativa
-              </Button>
-            </Group>
-          </Container>
-        ) : (
-          // Full width with the logo and the buttons at the edges and the menu centered, as in the mock.
-          <Container fluid px={{ base: 'md', sm: 48 }} py="md" className={styles.headerBar}>
-            <div className={styles.headerSide}>
-              <Link to="/" className={styles.brand} aria-label="cooperAR, ir al inicio">
-                <img src="/brand/symbol-mocks.png" alt="" />
-                <span>
-                  cooper<span style={{ fontWeight: 600 }}>AR</span>
-                </span>
-              </Link>
-            </div>
-            <Group component="nav" aria-label="Principal" gap="lg" visibleFrom="lg">
-              <SectionLinks />
-            </Group>
-            <div className={[styles.headerSide, styles.headerEnd].join(' ')}>
-              <Group gap={10} wrap="nowrap" visibleFrom="lg">
-                <AccountActions />
+        {/* Same bar on every page, so its height does not jump between screens. */}
+        <Container fluid px={{ base: 'md', sm: 48 }} py="md" className={styles.headerBar}>
+          {focusedAction ? (
+            // The login and register mocks keep only the logo and one action, so the form has no distractions.
+            <>
+              <Brand />
+              <div className={styles.headerEnd}>{focusedAction}</div>
+            </>
+          ) : (
+            // Logo and buttons at the edges and the menu centered, as in the mock.
+            <>
+              <div className={styles.headerSide}>
+                <Brand />
+              </div>
+              <Group component="nav" aria-label="Principal" gap="lg" visibleFrom="lg">
+                <SectionLinks />
               </Group>
-              <Burger
-                opened={menuOpened}
-                onClick={menu.toggle}
-                hiddenFrom="lg"
-                aria-label="Abrir el menú"
-                aria-expanded={menuOpened}
-              />
-            </div>
-          </Container>
-        )}
+              <div className={[styles.headerSide, styles.headerEnd].join(' ')}>
+                <Group gap={10} wrap="nowrap" visibleFrom="lg">
+                  <AccountActions />
+                </Group>
+                <Burger
+                  opened={menuOpened}
+                  onClick={menu.toggle}
+                  hiddenFrom="lg"
+                  aria-label="Abrir el menú"
+                  aria-expanded={menuOpened}
+                />
+              </div>
+            </>
+          )}
+        </Container>
       </header>
       <Drawer
         opened={menuOpened}
@@ -124,7 +145,12 @@ export function AppLayout() {
       </Drawer>
       <main
         id="main-content"
-        className={[styles.main, isLoginPage && styles.mainCentered, isHomePage && styles.mainFlush]
+        className={[
+          styles.main,
+          isLoginPage && styles.mainCentered,
+          isRegisterPage && styles.mainForm,
+          isHomePage && styles.mainFlush,
+        ]
           .filter(Boolean)
           .join(' ')}
         tabIndex={-1}
@@ -137,8 +163,8 @@ export function AppLayout() {
           </Container>
         )}
       </main>
-      {/* The login mock has no footer. */}
-      {!isLoginPage && (
+      {/* Neither the login nor the register mock has a footer. */}
+      {!isLoginPage && !isRegisterPage && (
         <footer className={styles.footer}>
           <Container fluid px={{ base: 'md', sm: 48 }} py="lg">
             <Group justify="space-between" gap="sm">

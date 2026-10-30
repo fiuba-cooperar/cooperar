@@ -2,6 +2,7 @@ import type { RouteObject } from 'react-router';
 import { Role } from '@/api/generated/model';
 import { AdminHomePage } from '@/features/admin/AdminHomePage';
 import { LoginPage } from '@/features/auth/LoginPage';
+import { RegisterPage } from '@/features/auth/RegisterPage';
 import { RequireRole } from '@/features/auth/RequireRole';
 import { CooperativeHomePage } from '@/features/cooperative/CooperativeHomePage';
 import { ForbiddenPage } from '@/features/errors/ForbiddenPage';
@@ -17,7 +18,7 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <HomePage /> },
       { path: 'login', element: <LoginPage /> },
-      { path: REGISTER_PATH, element: <ComingSoonPage title="Registrá tu cooperativa" /> },
+      { path: REGISTER_PATH, element: <RegisterPage /> },
       ...PUBLIC_SECTIONS.map(({ path, label }) => ({
         path,
         element: <ComingSoonPage title={label} />,

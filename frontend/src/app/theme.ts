@@ -2,10 +2,13 @@ import {
   createTheme,
   Input,
   InputWrapper,
+  Select,
   Title,
   type CSSVariablesResolver,
   type MantineColorsTuple,
 } from '@mantine/core';
+import { IconChevronDown } from '@tabler/icons-react';
+import { createElement } from 'react';
 
 // Shades taken from the mocks: index 6 is the primary blue, 4 the light sky blue of the header strip.
 const brand: MantineColorsTuple = [
@@ -38,15 +41,28 @@ export const theme = createTheme({
     // 48px fields with a border dark enough to meet the 3:1 contrast of WCAG 1.4.11.
     Input: Input.extend({
       styles: {
-        input: { height: 48, borderColor: 'light-dark(#7c8b9a, #5e7186)' },
+        input: { height: 48, borderColor: 'var(--color-field-border)' },
       },
     }),
     InputWrapper: InputWrapper.extend({
-      styles: { label: { fontSize: 14, fontWeight: 600, marginBottom: 6 } },
+      // Block labels: inline-block ones sit on the line box and drop 2px below a label that has a hint icon.
+      styles: { label: { display: 'block', fontSize: 14, fontWeight: 600, marginBottom: 6 } },
     }),
     Title: Title.extend({ styles: { root: { letterSpacing: '-0.02em' } } }),
     TextInput: { defaultProps: { size: 'md' } },
     PasswordInput: { defaultProps: { size: 'md' } },
+    // A plain chevron like the mocks, instead of Mantine's up-and-down arrows.
+    Select: Select.extend({
+      defaultProps: {
+        size: 'md',
+        rightSection: createElement(IconChevronDown, {
+          size: 18,
+          stroke: 2.2,
+          'aria-hidden': true,
+        }),
+        rightSectionPointerEvents: 'none',
+      },
+    }),
   },
 });
 
@@ -58,6 +74,9 @@ export const cssVariablesResolver: CSSVariablesResolver = () => ({
     '--mantine-color-text': '#14202e',
     '--mantine-color-dimmed': '#51606f',
     '--color-danger': '#a32b2b',
+    '--color-field-border': '#7c8b9a',
+    // Field errors in the same AA red as the alerts; Mantine's default red is too light on white.
+    '--mantine-color-error': '#a32b2b',
     '--color-success': '#1b6b3a',
     // Sun yellow of the flag, for the main call to action; always paired with dark text.
     '--color-accent': '#f6b40e',
@@ -78,6 +97,8 @@ export const cssVariablesResolver: CSSVariablesResolver = () => ({
     '--color-band': '#16324f',
     '--color-band-text': '#d5e3f0',
     '--color-danger': '#ff9d94',
+    '--color-field-border': '#5e7186',
+    '--mantine-color-error': '#ff9d94',
     '--color-success': '#7fd49b',
   },
 });

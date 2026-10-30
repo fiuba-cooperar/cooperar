@@ -23,7 +23,7 @@ public class MeController {
     }
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(operationId = "getCurrentUser", summary = "The signed-in account, its role and its cooperatives")
+    @Operation(operationId = "getCurrentUser", summary = "The signed-in account, its role and its organizations")
     public CurrentUserResponse getCurrentUser(@AuthenticationPrincipal Jwt jwt) {
         return CurrentUserResponse.from(currentUserService.get(UUID.fromString(jwt.getSubject())));
     }

@@ -21,6 +21,7 @@ export function EmailVerificationNotice({ email }: { email: string }) {
         <Button
           variant="outline"
           size="sm"
+          h={44}
           loading={resend.isPending}
           onClick={() => {
             resend.mutate();

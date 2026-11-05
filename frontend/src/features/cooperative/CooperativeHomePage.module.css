@@ -1,5 +1,35 @@
-.organizations {
-  list-style: none;
+.layout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px;
+  align-items: flex-start;
+}
+
+.main {
+  flex: 2 1 460px;
+  min-width: 0;
+}
+
+.steps {
   margin: 0;
   padding: 0;
+  list-style: none;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 0;
+  border-top: 1px solid var(--mantine-color-default-border);
+}
+
+.stepIcon {
+  flex: none;
+  color: var(--mantine-color-dimmed);
+}
+
+.stepText {
+  flex: 1;
+  min-width: 0;
 }

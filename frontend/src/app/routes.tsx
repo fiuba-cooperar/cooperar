@@ -13,6 +13,11 @@ import { RegisterPage } from '@/features/auth/RegisterPage';
 import { RequireRole } from '@/features/auth/RequireRole';
 import { VERIFY_EMAIL_PATH, VerifyEmailPage } from '@/features/auth/VerifyEmailPage';
 import { CooperativeHomePage } from '@/features/cooperative/CooperativeHomePage';
+import { CooperativeLayout } from '@/features/cooperative/CooperativeLayout';
+import {
+  COOPERATIVE_HOME_PATH,
+  COOPERATIVE_SECTIONS,
+} from '@/features/cooperative/cooperativeSections';
 import { ForbiddenPage } from '@/features/errors/ForbiddenPage';
 import { NotFoundPage } from '@/features/errors/NotFoundPage';
 import { ComingSoonPage } from '@/features/home/ComingSoonPage';
@@ -35,10 +40,6 @@ export const routes: RouteObject[] = [
       })),
       { path: 'forbidden', element: <ForbiddenPage /> },
       { path: 'organizations/:slug', element: <OrganizationProfilePage /> },
-      {
-        element: <RequireRole role={Role.COOPERATIVE} />,
-        children: [{ path: 'cooperative', element: <CooperativeHomePage /> }],
-      },
       { path: '*', element: <NotFoundPage /> },
     ],
   },
@@ -58,6 +59,25 @@ export const routes: RouteObject[] = [
             path,
             element: <ComingSoonPage title={label} homePath={ADMIN_HOME_PATH} />,
           })),
+        ],
+      },
+    ],
+  },
+  {
+    // The cooperative panel has its own header and side menu instead of the public ones.
+    element: <RequireRole role={Role.COOPERATIVE} />,
+    children: [
+      {
+        path: COOPERATIVE_HOME_PATH,
+        element: <CooperativeLayout />,
+        children: [
+          { index: true, element: <CooperativeHomePage /> },
+          ...COOPERATIVE_SECTIONS.filter(({ path }) => path !== COOPERATIVE_HOME_PATH).map(
+            ({ path, label }) => ({
+              path,
+              element: <ComingSoonPage title={label} homePath={COOPERATIVE_HOME_PATH} />,
+            }),
+          ),
         ],
       },
     ],

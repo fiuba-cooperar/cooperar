@@ -88,8 +88,8 @@ describe('authentication', () => {
     renderRoute('/login');
     await fillAndSubmit('coop@test.local', 'secret');
 
-    expect(await screen.findByRole('heading', { name: 'Mi organización' })).toBeInTheDocument();
-    expect(screen.getByText('La Cooperativa')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /Hola, / })).toBeInTheDocument();
+    expect(screen.getByText(/Estás administrando/)).toHaveTextContent('La Cooperativa');
   });
 
   it('shows a clear message when the credentials are wrong', async () => {
@@ -196,7 +196,8 @@ describe('authentication', () => {
     });
 
     renderRoute('/cooperative');
-    await userEvent.click(await screen.findByRole('button', { name: 'Cerrar sesión' }));
+    const header = await screen.findByRole('banner');
+    await userEvent.click(await within(header).findByRole('button', { name: 'Cerrar sesión' }));
 
     expect(await screen.findByRole('heading', { name: 'Ingresá a tu cuenta' })).toBeInTheDocument();
     expect(getAccessToken()).toBeNull();

@@ -30,6 +30,8 @@ export const theme = createTheme({
   // Light text on the dark primary in light mode, dark text on the sky blue in dark mode.
   primaryShade: { light: 6, dark: 4 },
   autoContrast: true,
+  // Mantine forces antialiased text, which thins the strokes; the mocks use the browser default.
+  fontSmoothing: false,
   defaultRadius: 'md',
   fontFamily: "'Inter Variable', system-ui, 'Segoe UI', Roboto, sans-serif",
   headings: { fontFamily: "'Inter Variable', system-ui, 'Segoe UI', Roboto, sans-serif" },
@@ -75,6 +77,10 @@ export const cssVariablesResolver: CSSVariablesResolver = () => ({
     '--mantine-color-dimmed': '#51606f',
     '--color-danger': '#a32b2b',
     '--color-field-border': '#7c8b9a',
+    // Hairlines of the cards and menus, and the hover of a menu entry, as in the mocks.
+    '--color-line': '#d3deea',
+    '--color-hover': '#e6eef6',
+    '--color-placeholder': '#dce6f0',
     // Field errors in the same AA red as the alerts; Mantine's default red is too light on white.
     '--mantine-color-error': '#a32b2b',
     '--color-success': '#1b6b3a',
@@ -108,6 +114,9 @@ export const cssVariablesResolver: CSSVariablesResolver = () => ({
     '--color-panel-nav-active': '#2f5e8f',
     '--color-danger': '#ff9d94',
     '--color-field-border': '#5e7186',
+    '--color-line': '#2e4358',
+    '--color-hover': '#1b2c3d',
+    '--color-placeholder': '#22364a',
     '--mantine-color-error': '#ff9d94',
     '--color-success': '#7fd49b',
   },

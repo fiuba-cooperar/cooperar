@@ -37,6 +37,7 @@ function StatusDetail({
             to={`/organizations/${organization.slug}`}
             variant="light"
             size="sm"
+            h={44}
             rightSection={<IconExternalLink size={16} aria-hidden />}
           >
             Ver mi ficha pública

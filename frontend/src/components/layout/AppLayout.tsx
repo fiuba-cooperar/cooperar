@@ -1,5 +1,6 @@
-import { Anchor, Burger, Button, Container, Drawer, Group, Stack, Text } from '@mantine/core';
+import { Burger, Button, Container, Drawer, Group, Stack, Text } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
+import { IconLayoutDashboard, IconLogout } from '@tabler/icons-react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router';
 import { ROLE_HOME } from '@/features/auth/roleHome';
 import { useAuth } from '@/features/auth/useAuth';
@@ -14,12 +15,27 @@ function AccountActions({ onNavigate }: { onNavigate?: () => void }) {
   if (user) {
     return (
       <>
-        <Anchor component={Link} to={ROLE_HOME[user.role]} fw={600} size="sm" onClick={onNavigate}>
-          Mi sección
-        </Anchor>
-        <Anchor component="button" type="button" fw={600} size="sm" onClick={() => void logout()}>
+        <Button
+          component={Link}
+          to={ROLE_HOME[user.role]}
+          h={44}
+          px={18}
+          fz={15}
+          leftSection={<IconLayoutDashboard size={18} stroke={1.9} aria-hidden />}
+          onClick={onNavigate}
+        >
+          Mi panel
+        </Button>
+        <Button
+          variant="default"
+          h={44}
+          px={18}
+          fz={15}
+          leftSection={<IconLogout size={18} stroke={1.9} aria-hidden />}
+          onClick={() => void logout()}
+        >
           Cerrar sesión
-        </Anchor>
+        </Button>
       </>
     );
   }

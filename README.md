@@ -32,6 +32,12 @@ La primera vez tarda unos minutos porque construye las imágenes. Cuando termina
 
 La pantalla inicial muestra si el backend y la base de datos responden.
 
+## Demo en línea
+
+La última versión de `main` está publicada en **https://cooperar.onrender.com**. Se actualiza sola cuando se mergea a `main` y pasan los checks de GitHub. Usa solo datos ficticios.
+
+Corre en planes gratuitos: si nadie la visita durante 15 minutos, el backend se duerme y la primera visita puede tardar unos minutos en responder. Cómo está armada: sección «Demo pública» de [`CLAUDE.md`](CLAUDE.md).
+
 Todas las variables tienen un valor por defecto pensado para desarrollo. Para cambiar puertos o credenciales, copiá `.env.example` a `.env` y editalo. Para detener todo usá `docker compose down` (los datos persisten en el volumen `db-data`), y `docker compose down -v` si además querés borrarlos.
 
 ## Desarrollo

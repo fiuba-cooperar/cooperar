@@ -1,0 +1,94 @@
+# Render Blueprint for the stakeholders' demo (free plan). The real production runs on the Faculty's servers.
+# Overview and caveats: the "Demo pública" section of CLAUDE.md. Variables marked `sync: false` are asked for in the
+# Render dashboard when the Blueprint is created: they are secrets or depend on the account, so they never live in the repo.
+# Deploys: every merge to main updates the demo once the GitHub checks pass (autoDeployTrigger: checksPass), and each
+# service only redeploys when its own files change (buildFilter), so a frontend-only merge does not restart the backend.
+services:
+  - type: web
+    name: cooperar-backend
+    runtime: docker
+    plan: free
+    # Same region as the Neon database (AWS US East 2) to keep queries fast.
+    region: ohio
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /actuator/health/readiness
+    # The free plan has a slow CPU: a deploy takes a few minutes to come back up, hence the buildFilter below.
+    autoDeployTrigger: checksPass
+    buildFilter:
+      paths:
+        - backend/**
+        - api/openapi.json
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      # Render expects the service on $PORT; the image listens on 8080.
+      - key: PORT
+        value: "8080"
+      # Neon: jdbc:postgresql://<host>/<database>?sslmode=require (user and password go in their own variables).
+      - key: DB_URL
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ADMIN_FIRST_NAME
+        value: Admin
+      - key: ADMIN_LAST_NAME
+        value: Observatorio
+      # Free web services block the SMTP ports 25, 465 and 587, so the relay is reached on 2525.
+      - key: MAIL_HOST
+        value: smtp-relay.brevo.com
+      - key: MAIL_PORT
+        value: "2525"
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: MAIL_FROM
+        sync: false
+      # URL of the frontend service below; the links in the emails point here.
+      - key: PUBLIC_URL
+        sync: false
+
+  - type: web
+    name: cooperar
+    runtime: static
+    buildCommand: cd frontend && npm ci --no-audit --no-fund && npm run build
+    staticPublishPath: frontend/dist
+    autoDeployTrigger: checksPass
+    buildFilter:
+      paths:
+        - frontend/**
+        - api/openapi.json
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+    routes:
+      # Same origin as in nginx: the browser only talks to the frontend, which forwards /api (no CORS needed).
+      # The destination assumes the backend service is served at cooperar-backend.onrender.com.
+      - type: rewrite
+        source: /api/*
+        destination: https://cooperar-backend.onrender.com/api/*
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable

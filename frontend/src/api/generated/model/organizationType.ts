@@ -11,5 +11,4 @@ export type OrganizationType = (typeof OrganizationType)[keyof typeof Organizati
 export const OrganizationType = {
   COOPERATIVE: 'COOPERATIVE',
   ERT: 'ERT',
-  COOPERATIVE_AND_ERT: 'COOPERATIVE_AND_ERT',
 } as const;

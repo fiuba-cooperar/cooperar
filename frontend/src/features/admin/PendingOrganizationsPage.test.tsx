@@ -17,7 +17,7 @@ const ADMIN = {
 const LITORALENA = {
   id: 'c1',
   name: 'La Litoraleña',
-  type: 'COOPERATIVE_AND_ERT',
+  type: 'COOPERATIVE',
   cuit: '30123456781',
   sector: 'FOOD',
   address: {
@@ -59,7 +59,7 @@ describe('pending organizations', () => {
     renderRoute('/admin/pending-organizations');
 
     const card = await screen.findByRole('article', { name: 'La Litoraleña' });
-    expect(within(card).getByText('Cooperativa y empresa recuperada')).toBeInTheDocument();
+    expect(within(card).getByText('Cooperativa')).toBeInTheDocument();
     expect(within(card).getByText('30-12345678-1')).toBeInTheDocument();
     expect(within(card).getByText('Alimentos')).toBeInTheDocument();
     expect(within(card).getByText('Rivadavia 100, Centro, Rosario, Santa Fe')).toBeInTheDocument();

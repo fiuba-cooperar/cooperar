@@ -3,7 +3,6 @@ import { OrganizationStatus, OrganizationType, Province, Sector } from '@/api/ge
 export const ORGANIZATION_TYPE_LABELS: Record<OrganizationType, string> = {
   [OrganizationType.COOPERATIVE]: 'Cooperativa',
   [OrganizationType.ERT]: 'Empresa recuperada',
-  [OrganizationType.COOPERATIVE_AND_ERT]: 'Cooperativa y empresa recuperada',
 };
 
 export const ORGANIZATION_STATUS_LABELS: Record<OrganizationStatus, string> = {

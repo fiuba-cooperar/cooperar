@@ -1,10 +1,5 @@
 import { Radio, SimpleGrid, Stack, Text, ThemeIcon } from '@mantine/core';
-import {
-  IconAffiliate,
-  IconBuildingFactory2,
-  IconUsersGroup,
-  type Icon,
-} from '@tabler/icons-react';
+import { IconBuildingFactory2, IconUsersGroup, type Icon } from '@tabler/icons-react';
 import { OrganizationType } from '@/api/generated/model';
 import styles from './OrganizationTypePicker.module.css';
 
@@ -12,20 +7,14 @@ const OPTIONS: { value: OrganizationType; title: string; description: string; ic
   {
     value: OrganizationType.COOPERATIVE,
     title: 'Cooperativa',
-    description: 'Cooperativa de trabajo',
+    description: 'Cooperativa de origen',
     icon: IconUsersGroup,
   },
   {
     value: OrganizationType.ERT,
     title: 'Empresa recuperada',
-    description: 'Recuperada por sus trabajadores',
+    description: 'Empresa recuperada por sus trabajadores',
     icon: IconBuildingFactory2,
-  },
-  {
-    value: OrganizationType.COOPERATIVE_AND_ERT,
-    title: 'Ambas',
-    description: 'Empresa recuperada organizada como cooperativa',
-    icon: IconAffiliate,
   },
 ];
 
@@ -37,7 +26,7 @@ interface OrganizationTypePickerProps {
   error?: string | undefined;
 }
 
-/** Cooperative, ERT or both, as a group of selectable cards. */
+/** Cooperative or ERT, as a group of selectable cards. */
 export function OrganizationTypePicker({ value, onChange, error }: OrganizationTypePickerProps) {
   return (
     <Radio.Group
@@ -53,7 +42,7 @@ export function OrganizationTypePicker({ value, onChange, error }: OrganizationT
         if (type) onChange(type);
       }}
     >
-      <SimpleGrid cols={{ base: 1, xs: 3 }} spacing="sm">
+      <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="sm">
         {OPTIONS.map(({ value: option, title, description, icon: OptionIcon }, index) => (
           <Radio.Card
             key={option}

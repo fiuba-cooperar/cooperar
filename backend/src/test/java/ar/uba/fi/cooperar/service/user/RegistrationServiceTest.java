@@ -37,7 +37,7 @@ class RegistrationServiceTest {
     private static final NewAccount ACCOUNT = new NewAccount(" Ana ", " Pérez ", " Ana@Coop.Local ", "secret-password");
     private static final NewOrganization ORGANIZATION = new NewOrganization(
             " La Litoraleña ",
-            OrganizationType.COOPERATIVE_AND_ERT,
+            OrganizationType.COOPERATIVE,
             "30-12345678-1",
             Sector.FOOD,
             new Address(Province.SANTA_FE, " Rosario ", " Centro ", " Rivadavia 100 ", "  "));
@@ -77,7 +77,7 @@ class RegistrationServiceTest {
         Organization organization = saved.getOrganizations().iterator().next();
         assertThat(organization.getName()).isEqualTo("La Litoraleña");
         assertThat(organization.getSlug()).isEqualTo("la-litoralena");
-        assertThat(organization.getType()).isEqualTo(OrganizationType.COOPERATIVE_AND_ERT);
+        assertThat(organization.getType()).isEqualTo(OrganizationType.COOPERATIVE);
         assertThat(organization.getCuit().digits()).isEqualTo("30123456781");
         assertThat(organization.getSector()).isEqualTo(Sector.FOOD);
         assertThat(organization.getAddress())

@@ -118,7 +118,7 @@ function validateAccount(form: AccountForm): Errors<AccountForm> {
 
 function validateOrganization(form: OrganizationForm): Errors<OrganizationForm> {
   const errors: Errors<OrganizationForm> = {};
-  if (!form.type) errors.type = 'Elegí si es una cooperativa, una empresa recuperada o ambas.';
+  if (!form.type) errors.type = 'Elegí si es una cooperativa o una empresa recuperada.';
   if (!form.name.trim()) errors.name = 'Ingresá el nombre de la organización.';
   if (!form.cuit.trim()) errors.cuit = 'Ingresá el CUIT.';
   else {

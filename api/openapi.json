@@ -479,7 +479,7 @@
       },
       "OrganizationType" : {
         "type" : "string",
-        "enum" : [ "COOPERATIVE", "ERT", "COOPERATIVE_AND_ERT" ]
+        "enum" : [ "COOPERATIVE", "ERT" ]
       },
       "PendingOrganizationResponse" : {
         "type" : "object",

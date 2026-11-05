@@ -38,7 +38,7 @@ async function fillAccountStep(user = setupUser()) {
 }
 
 async function fillOrganizationStep(cuit = '30-12345678-1', user = setupUser()) {
-  await user.click(await screen.findByRole('radio', { name: /^Ambas/ }));
+  await user.click(await screen.findByRole('radio', { name: /^Cooperativa/ }));
   await fill(user, screen.getByLabelText('Nombre de la organización'), 'La Litoraleña');
   await fill(user, screen.getByLabelText('CUIT'), cuit);
   await user.click(screen.getByRole('combobox', { name: 'Rubro' }));
@@ -95,7 +95,7 @@ describe('registration', () => {
       },
       organization: {
         name: 'La Litoraleña',
-        type: 'COOPERATIVE_AND_ERT',
+        type: 'COOPERATIVE',
         cuit: '30-12345678-1',
         sector: 'FOOD',
         address: {
@@ -212,7 +212,7 @@ describe('registration', () => {
       screen.getByText('Este CUIT no existe. Revisá que los números estén bien escritos.'),
     ).toBeInTheDocument();
     expect(
-      screen.getByText('Elegí si es una cooperativa, una empresa recuperada o ambas.'),
+      screen.getByText('Elegí si es una cooperativa o una empresa recuperada.'),
     ).toBeInTheDocument();
     expect(screen.getByText('Elegí un rubro.')).toBeInTheDocument();
     expect(screen.getByText('Elegí una provincia.')).toBeInTheDocument();
@@ -231,7 +231,6 @@ describe('registration', () => {
     const group = await screen.findByRole('radiogroup', { name: 'Tipo de organización' });
     const cooperative = within(group).getByRole('radio', { name: /^Cooperativa/ });
     const ert = within(group).getByRole('radio', { name: /^Empresa recuperada/ });
-    const both = within(group).getByRole('radio', { name: /^Ambas/ });
     expect(cooperative).toHaveAttribute('tabindex', '0');
     expect(ert).toHaveAttribute('tabindex', '-1');
 
@@ -240,9 +239,9 @@ describe('registration', () => {
     expect(ert).toHaveAttribute('tabindex', '0');
     expect(cooperative).toHaveAttribute('tabindex', '-1');
 
-    await user.keyboard('{ArrowRight}');
-    expect(both).toBeChecked();
-    expect(both).toHaveFocus();
+    await user.keyboard('{ArrowLeft}');
+    expect(cooperative).toBeChecked();
+    expect(cooperative).toHaveFocus();
   });
 
   it('groups the address fields and sends the optional references only when typed', async () => {

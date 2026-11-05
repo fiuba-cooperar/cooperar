@@ -60,7 +60,7 @@ Los términos del dominio se traducen siempre igual en el código: ficha → `pr
 | Infra | Docker Compose; imágenes `eclipse-temurin:25-jre-alpine` y `nginx:1.30-alpine` |
 | CI | GitHub Actions: un workflow por parte (filtrado por ruta) con un solo job: lint y test en el backend (`gradlew`), y lint, test y build en el frontend (`npm`), sin Docker salvo el que usa Testcontainers. La imagen y el deploy van en un workflow aparte sobre `main` (#9). |
 
-Restricción de producción: va a correr en servidores de la Facultad con hardware limitado. Hay que priorizar imágenes livianas y pocos servicios, y no usar servicios propietarios de un cloud (nada de S3, Cloud SQL, colas gestionadas, etc.). Todo tiene que poder autohospedarse.
+Restricción de producción: va a correr en servidores de la Facultad con hardware limitado, así que hay que priorizar imágenes livianas y pocos servicios, y que todo levante con Docker Compose. Fuera de ese entorno (demos, staging, pruebas) se puede usar el proveedor que convenga, siempre con datos ficticios (ver «Demo pública» y la regla 11 de privacidad).
 
 ## Estructura del repo
 
@@ -71,6 +71,7 @@ frontend/               React + Vite (ver frontend/CLAUDE.md)
 docs/                   Modelo de datos, minutas, relevamientos, evaluaciones
 .github/                CI, plantillas de PR e issues
 docker-compose.yml      Entorno completo de desarrollo
+render.yaml             Blueprint de Render para la demo pública
 Makefile                Atajos: up, down, test, lint, api
 ```
 
@@ -111,7 +112,7 @@ La búsqueda semántica (#45), las consultas en lenguaje natural (#46), la deman
 
 - **PostGIS** queda habilitado desde la primera migración, porque lo necesitan issues Must cercanas (#13, #17, #24, #27).
 - **pgvector todavía no está instalado**, porque nada lo usa hasta la #45. Cuando llegue, hay que hacer dos cosas: (1) cambiar a una imagen que traiga PostGIS y pgvector juntos (ninguna oficial los trae, así que habrá que construirla compilando pgvector sobre `postgis/postgis`), usando la misma imagen en `docker-compose.yml` y en `TestcontainersConfiguration`; (2) agregar una migración que haga `CREATE EXTENSION vector`. Los embeddings van a ser columnas `vector(n)` en las tablas del dominio, con índice HNSW, para que la búsqueda híbrida sea una sola consulta SQL que combina full-text y similitud.
-- **Proveedores intercambiables.** Toda dependencia de un modelo (embeddings, LLM) se define como una interfaz en `service/<module>`, por ejemplo `EmbeddingProvider` o `TimelineExtractor`. Las implementaciones van en una capa `integration/<provider>` y se eligen por configuración (`cooperar.ai.*`). La lógica de negocio nunca importa el SDK de un proveedor. Se prefieren los modelos locales por la restricción de hardware y de cloud.
+- **Proveedores intercambiables.** Toda dependencia de un modelo (embeddings, LLM) se define como una interfaz en `service/<module>`, por ejemplo `EmbeddingProvider` o `TimelineExtractor`. Las implementaciones van en una capa `integration/<provider>` y se eligen por configuración (`cooperar.ai.*`). La lógica de negocio nunca importa el SDK de un proveedor. Se prefieren los modelos locales por la restricción de hardware de los servidores de la Facultad.
 - **Trabajo pesado fuera del request.** El cálculo de embeddings y de recomendaciones se dispara con eventos de dominio (`@TransactionalEventListener` + `@Async`) y no bloquea el guardado.
 - **Registro de búsquedas.** El buscador (#15) registra cada búsqueda con su texto, filtros, cantidad de resultados y zona aproximada. Ese registro es el insumo de la demanda insatisfecha y de las métricas.
 - **Grafo.** Se arma en memoria (JGraphT) a partir de consultas a los repositorios. Si algún día hace falta una base de grafos, se decide con una issue.
@@ -132,6 +133,22 @@ Requisitos: Docker con Compose v2. Para trabajar fuera de Docker: JDK 25 y Node 
 | Frontend con recarga en caliente (necesita el backend en :8080) | `cd frontend && npm run dev` |
 
 Los comandos de cada parte están en su `CLAUDE.md`.
+
+## Demo pública
+
+Hay una demo en línea para que las stakeholders de la SEU vean el avance. La producción real va a correr en los servidores de la Facultad. Nos confirmaron que la demo puede estar en el proveedor que convenga mientras use solo datos ficticios: la restricción es por los datos sensibles, no por el proveedor.
+
+| Pieza | Servicio |
+|---|---|
+| Frontend (sitio estático, reenvía `/api` al backend) | Render, https://cooperar.onrender.com |
+| Backend (Docker, región Ohio) | Render, plan gratis |
+| Base de datos (PostgreSQL con PostGIS) | Neon, misma región |
+| Emails (SMTP por el puerto 2525) | Brevo |
+
+- La infraestructura está en `render.yaml`. Las variables secretas se cargan en el panel de Render (`sync: false`) y nunca van al repo.
+- El deploy del backend es manual: en el plan gratis se duerme tras 15 minutos sin tráfico y tarda unos 3 minutos en arrancar.
+- Render bloquea los puertos SMTP 25, 465 y 587 en el plan gratis, por eso se usa el 2525.
+- Se opera con el CLI de Render (`render`).
 
 ## Convenciones
 
@@ -166,6 +183,7 @@ La plataforma guarda datos de cooperativas y de personas (contactos, quienes env
 8. **Los datos semilla** salen solo de fuentes públicas cuya licencia permite reutilizarlos (#4), y se documenta la fuente.
 9. **Sin secretos en el repo.** La configuración va por variables de entorno (`.env.example` documenta cuáles). `.env` está en `.gitignore`.
 10. **Mínimo necesario.** No se pide ni se guarda un dato sin una finalidad clara. Si se agrega un dato personal, se documenta su finalidad y plazo de conservación (#57).
+11. **Datos reales solo en la Facultad.** Los entornos públicos fuera de los servidores de la Facultad (la demo, staging) usan únicamente datos ficticios. No se cargan ahí datos reales de cooperativas ni de personas.
 
 ## Decisiones pendientes
 
@@ -175,7 +193,6 @@ La plataforma guarda datos de cooperativas y de personas (contactos, quienes env
 | Modelo de dominio y diagrama ER | #1 |
 | Campos de la ficha y su nivel de privacidad | #3 |
 | Fuente de los datos semilla | #4 |
-| Staging: la #9 propone Render, que choca con la regla de no usar cloud propietario. Hay que decidir si staging va en Render (aceptado solo para staging) o en la Facultad. | #9, #59 |
 | Servidor SMTP de producción (el de la Facultad u otro autohospedado). El envío ya es por SMTP genérico y en desarrollo los emails van a Mailpit. | #12, #23 |
 | Almacenamiento de imágenes (disco local o compatible con S3 autohospedado, como MinIO) | #13 |
 | Geocodificación (Nominatim público con límites o instancia propia) | #13 |

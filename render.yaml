@@ -1,6 +1,8 @@
 # Render Blueprint for the stakeholders' demo (free plan). The real production runs on the Faculty's servers.
-# Steps and caveats: docs/despliegue-demo.md. Variables marked `sync: false` are asked for in the Render dashboard
-# when the Blueprint is created: they are secrets or depend on the account, so they never live in the repo.
+# Overview and caveats: the "Demo pública" section of CLAUDE.md. Variables marked `sync: false` are asked for in the
+# Render dashboard when the Blueprint is created: they are secrets or depend on the account, so they never live in the repo.
+# Deploys: every merge to main updates the demo once the GitHub checks pass (autoDeployTrigger: checksPass), and each
+# service only redeploys when its own files change (buildFilter), so a frontend-only merge does not restart the backend.
 services:
   - type: web
     name: cooperar-backend
@@ -11,8 +13,12 @@ services:
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
     healthCheckPath: /actuator/health/readiness
-    # The free plan has a slow CPU: every deploy takes several minutes to come back up, so deploys are manual.
-    autoDeployTrigger: "off"
+    # The free plan has a slow CPU: a deploy takes a few minutes to come back up, hence the buildFilter below.
+    autoDeployTrigger: checksPass
+    buildFilter:
+      paths:
+        - backend/**
+        - api/openapi.json
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: prod
@@ -56,6 +62,11 @@ services:
     runtime: static
     buildCommand: cd frontend && npm ci --no-audit --no-fund && npm run build
     staticPublishPath: frontend/dist
+    autoDeployTrigger: checksPass
+    buildFilter:
+      paths:
+        - frontend/**
+        - api/openapi.json
     envVars:
       - key: NODE_VERSION
         value: "24"

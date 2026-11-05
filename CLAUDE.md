@@ -58,7 +58,7 @@ Los términos del dominio se traducen siempre igual en el código: ficha → `pr
 | | Cliente de API generado con orval desde `api/openapi.json` |
 | | ESLint 10 (typescript-eslint strict type-checked) + Prettier, Vitest 5 + Testing Library + axe-core |
 | Infra | Docker Compose; imágenes `eclipse-temurin:25-jre-alpine` y `nginx:1.30-alpine` |
-| CI | GitHub Actions: un workflow por parte (filtrado por ruta) con un solo job: lint y test en el backend (`gradlew`), y lint, test y build en el frontend (`npm`), sin Docker salvo el que usa Testcontainers. La imagen y el deploy van en un workflow aparte sobre `main` (#9). |
+| CI | GitHub Actions: un workflow por parte (filtrado por ruta) con un solo job: lint y test en el backend (`gradlew`), y lint, test y build en el frontend (`npm`), sin Docker salvo el que usa Testcontainers. No hay workflow de imagen ni de deploy: la imagen la construye Render y el deploy lo dispara Render cuando pasan los checks (ver «Demo pública»). |
 
 Restricción de producción: va a correr en servidores de la Facultad con hardware limitado, así que hay que priorizar imágenes livianas y pocos servicios, y que todo levante con Docker Compose. Fuera de ese entorno (demos, staging, pruebas) se puede usar el proveedor que convenga, siempre con datos ficticios (ver «Demo pública» y la regla 11 de privacidad).
 
@@ -146,7 +146,9 @@ Hay una demo en línea para que las stakeholders de la SEU vean el avance. La pr
 | Emails (SMTP por el puerto 2525) | Brevo |
 
 - La infraestructura está en `render.yaml`. Las variables secretas se cargan en el panel de Render (`sync: false`) y nunca van al repo.
-- El deploy del backend es manual: en el plan gratis se duerme tras 15 minutos sin tráfico y tarda unos 3 minutos en arrancar.
+- **Deploy automático a la demo (que hace de producción).** Al mergear a `main`, Render redespliega cuando pasan los checks de GitHub (`autoDeployTrigger: checksPass`). Cada servicio solo se redespliega si cambian sus archivos (`buildFilter`): un merge que toca solo `frontend/` no reinicia el backend. No cuesta minutos de GitHub Actions, porque el build corre en Render.
+- Si un merge toca el backend, la demo queda caída unos 3 minutos mientras arranca el nuevo. En el plan gratis el backend también se duerme tras 15 minutos sin tráfico.
+- Hay perfiles `dev` y `prod`. No hay staging: la demo es el único entorno público.
 - Render bloquea los puertos SMTP 25, 465 y 587 en el plan gratis, por eso se usa el 2525.
 - Se opera con el CLI de Render (`render`).
 

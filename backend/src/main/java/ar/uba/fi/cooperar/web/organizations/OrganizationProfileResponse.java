@@ -4,7 +4,9 @@ import ar.uba.fi.cooperar.domain.organizations.Address;
 import ar.uba.fi.cooperar.domain.organizations.Organization;
 import ar.uba.fi.cooperar.domain.organizations.Province;
 import ar.uba.fi.cooperar.domain.organizations.Sector;
+import ar.uba.fi.cooperar.service.organizations.OrganizationWithPhotos;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.List;
 import org.locationtech.jts.geom.Point;
 
 /**
@@ -23,7 +25,8 @@ public record OrganizationProfileResponse(
         String description,
         String phone,
         String email,
-        GeoPoint location) {
+        GeoPoint location,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) List<PhotoResponse> photos) {
 
     public record GeoPoint(
             @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
@@ -37,7 +40,8 @@ public record OrganizationProfileResponse(
         }
     }
 
-    static OrganizationProfileResponse from(Organization organization) {
+    static OrganizationProfileResponse from(OrganizationWithPhotos profile) {
+        Organization organization = profile.organization();
         Address address = organization.getAddress();
         return new OrganizationProfileResponse(
                 organization.getSlug(),
@@ -50,6 +54,7 @@ public record OrganizationProfileResponse(
                 organization.getDescription(),
                 organization.getPhone(),
                 organization.getEmail(),
-                GeoPoint.from(organization.getLocation()));
+                GeoPoint.from(organization.getLocation()),
+                PhotoResponse.from(organization.getSlug(), profile.photos()));
     }
 }

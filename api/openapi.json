@@ -280,6 +280,192 @@
         "tags" : [ "auth" ]
       }
     },
+    "/api/me/organizations/{organizationId}/photos" : {
+      "post" : {
+        "description" : "Answers 403 when the account does not own the organization. Answers 400 for files that are not JPEG, PNG or WebP images, 413 for files over 5 MB and 409 when the organization already has 10 photos.",
+        "operationId" : "uploadPhoto",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "organizationId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "file" : {
+                    "type" : "string",
+                    "format" : "binary"
+                  }
+                },
+                "required" : [ "file" ]
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/PhotoResponse"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Add a photo at the end of the organization's photos",
+        "tags" : [ "organization-editing" ]
+      }
+    },
+    "/api/me/organizations/{organizationId}/photos/order" : {
+      "put" : {
+        "description" : "Answers 403 when the account does not own the organization.",
+        "operationId" : "reorderPhotos",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "organizationId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ReorderPhotosRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/PhotoResponse"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Set the order of the organization's photos; the first one is its cover",
+        "tags" : [ "organization-editing" ]
+      }
+    },
+    "/api/me/organizations/{organizationId}/photos/{photoId}" : {
+      "delete" : {
+        "description" : "Answers 403 when the account does not own the organization.",
+        "operationId" : "deletePhoto",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "organizationId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "photoId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "summary" : "Delete a photo",
+        "tags" : [ "organization-editing" ]
+      }
+    },
+    "/api/me/organizations/{organizationId}/profile" : {
+      "get" : {
+        "description" : "Answers 403 when the account does not own the organization.",
+        "operationId" : "getEditableProfile",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "organizationId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EditableProfileResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "The profile of an organization as its owner edits it",
+        "tags" : [ "organization-editing" ]
+      },
+      "put" : {
+        "description" : "Answers 403 when the account does not own the organization. The point on the map is looked up again when the address changes.",
+        "operationId" : "updateProfile",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "organizationId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UpdateProfileRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EditableProfileResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Update the profile of an organization",
+        "tags" : [ "organization-editing" ]
+      }
+    },
     "/api/organizations/{slug}" : {
       "get" : {
         "operationId" : "getOrganizationProfile",
@@ -365,6 +551,46 @@
         },
         "required" : [ "email", "emailVerified", "id", "organizations", "role" ]
       },
+      "EditableProfileResponse" : {
+        "type" : "object",
+        "properties" : {
+          "address" : {
+            "$ref" : "#/components/schemas/AddressResponse"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "email" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "phone" : {
+            "type" : "string"
+          },
+          "photos" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PhotoResponse"
+            }
+          },
+          "sector" : {
+            "$ref" : "#/components/schemas/Sector"
+          },
+          "slug" : {
+            "type" : "string"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/OrganizationStatus"
+          }
+        },
+        "required" : [ "address", "id", "name", "photos", "sector", "slug", "status" ]
+      },
       "GeoPoint" : {
         "type" : "object",
         "properties" : {
@@ -434,6 +660,12 @@
           "phone" : {
             "type" : "string"
           },
+          "photos" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PhotoResponse"
+            }
+          },
           "province" : {
             "$ref" : "#/components/schemas/Province"
           },
@@ -447,7 +679,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "district", "locality", "name", "province", "sector", "slug", "street" ]
+        "required" : [ "district", "locality", "name", "photos", "province", "sector", "slug", "street" ]
       },
       "OrganizationStatus" : {
         "type" : "string",
@@ -513,6 +745,52 @@
           }
         },
         "required" : [ "address", "cuit", "id", "name", "registeredAt", "registeredBy", "sector", "type" ]
+      },
+      "PhotoResponse" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "url" : {
+            "type" : "string",
+            "description" : "Where the image can be loaded from"
+          }
+        },
+        "required" : [ "id", "url" ]
+      },
+      "ProfileAddressRequest" : {
+        "type" : "object",
+        "properties" : {
+          "additionalReferences" : {
+            "type" : "string",
+            "maxLength" : 300,
+            "minLength" : 0
+          },
+          "district" : {
+            "type" : "string",
+            "description" : "Departamento, partido or comuna",
+            "maxLength" : 100,
+            "minLength" : 0
+          },
+          "locality" : {
+            "type" : "string",
+            "description" : "Locality or neighborhood",
+            "maxLength" : 100,
+            "minLength" : 0
+          },
+          "province" : {
+            "$ref" : "#/components/schemas/Province"
+          },
+          "street" : {
+            "type" : "string",
+            "description" : "Street and number",
+            "maxLength" : 200,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "district", "locality", "province", "street" ]
       },
       "Province" : {
         "type" : "string",
@@ -666,6 +944,20 @@
         },
         "required" : [ "reason" ]
       },
+      "ReorderPhotosRequest" : {
+        "type" : "object",
+        "properties" : {
+          "photoIds" : {
+            "type" : "array",
+            "description" : "Every photo of the organization exactly once, in the order they should be shown",
+            "items" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          }
+        },
+        "required" : [ "photoIds" ]
+      },
       "Role" : {
         "type" : "string",
         "enum" : [ "ADMIN", "COOPERATIVE" ]
@@ -690,6 +982,35 @@
           }
         },
         "required" : [ "accessToken", "expiresIn", "refreshToken" ]
+      },
+      "UpdateProfileRequest" : {
+        "type" : "object",
+        "description" : "The whole editable profile: fields left out of the optional ones are cleared",
+        "properties" : {
+          "address" : {
+            "$ref" : "#/components/schemas/ProfileAddressRequest"
+          },
+          "description" : {
+            "type" : "string",
+            "maxLength" : 2000,
+            "minLength" : 0
+          },
+          "email" : {
+            "type" : "string",
+            "format" : "email",
+            "maxLength" : 254,
+            "minLength" : 0
+          },
+          "phone" : {
+            "type" : "string",
+            "maxLength" : 30,
+            "minLength" : 0
+          },
+          "sector" : {
+            "$ref" : "#/components/schemas/Sector"
+          }
+        },
+        "required" : [ "address", "sector" ]
       },
       "VerifyEmailRequest" : {
         "type" : "object",

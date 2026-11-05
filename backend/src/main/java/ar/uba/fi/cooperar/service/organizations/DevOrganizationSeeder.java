@@ -30,7 +30,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Fictitious organizations so the public profile can be seen locally before profiles can be edited (#13). Only runs in
+ * Fictitious organizations so the public profile can be seen locally without registering and approving each organization. Only runs in
  * the dev profile: production data must come from public sources (#10).
  */
 @Component

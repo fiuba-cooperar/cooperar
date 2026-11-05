@@ -177,8 +177,6 @@ La plataforma guarda datos de cooperativas y de personas (contactos, quienes env
 | Fuente de los datos semilla | #4 |
 | Staging: la #9 propone Render, que choca con la regla de no usar cloud propietario. Hay que decidir si staging va en Render (aceptado solo para staging) o en la Facultad. | #9, #59 |
 | Servidor SMTP de producción (el de la Facultad u otro autohospedado). El envío ya es por SMTP genérico y en desarrollo los emails van a Mailpit. | #12, #23 |
-| Almacenamiento de imágenes (disco local o compatible con S3 autohospedado, como MinIO) | #13 |
-| Geocodificación (Nominatim público con límites o instancia propia) | #13 |
 | Librería de mapas (MapLibre o Leaflet) | #17 |
 | Modelo y proveedor de embeddings | #45, #48 |
 | Proveedor de LLM y uso de Spring AI para el asistente | #49, #51 |

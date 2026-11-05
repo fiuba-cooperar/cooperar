@@ -17,6 +17,7 @@ const fullProfile = {
   phone: '11 1234-5678',
   email: 'contacto@example.org',
   location: { latitude: -34.6, longitude: -58.42 },
+  photos: [],
 };
 
 describe('OrganizationProfilePage', () => {
@@ -68,6 +69,43 @@ describe('OrganizationProfilePage', () => {
     expect(screen.getByText('Esta organización todavía no cargó productos.')).toBeVisible();
   });
 
+  it('uses the first photo as the cover and lists the others in a gallery', async () => {
+    stubFetchJson({
+      ...fullProfile,
+      photos: [
+        { id: 'p1', url: '/api/organizations/la-cacerola/photos/p1' },
+        { id: 'p2', url: '/api/organizations/la-cacerola/photos/p2' },
+        { id: 'p3', url: '/api/organizations/la-cacerola/photos/p3' },
+      ],
+    });
+
+    renderRoute('/organizations/la-cacerola');
+
+    const gallery = await screen.findByRole('region', { name: 'Fotos' });
+    expect(
+      within(gallery)
+        .getAllByRole('img')
+        .map((photo) => photo.getAttribute('src')),
+    ).toEqual([
+      '/api/organizations/la-cacerola/photos/p2',
+      '/api/organizations/la-cacerola/photos/p3',
+    ]);
+    expect(within(gallery).getByRole('img', { name: 'Foto 2 de La Cacerola' })).toBeVisible();
+    expect(document.querySelector('img[src$="/p1"]')).not.toBeNull();
+  });
+
+  it('shows no photo section when the organization has at most a cover', async () => {
+    stubFetchJson({
+      ...fullProfile,
+      photos: [{ id: 'p1', url: '/api/organizations/la-cacerola/photos/p1' }],
+    });
+
+    renderRoute('/organizations/la-cacerola');
+
+    await screen.findByRole('heading', { level: 1, name: 'La Cacerola' });
+    expect(screen.queryByRole('heading', { name: 'Fotos' })).not.toBeInTheDocument();
+  });
+
   it('leaves out the sections the organization has no data for', async () => {
     stubFetchJson({
       slug: 'sin-datos',
@@ -77,6 +115,7 @@ describe('OrganizationProfilePage', () => {
       district: 'Rosario',
       locality: 'Centro',
       street: 'Rivadavia 100',
+      photos: [],
     });
 
     renderRoute('/organizations/sin-datos');

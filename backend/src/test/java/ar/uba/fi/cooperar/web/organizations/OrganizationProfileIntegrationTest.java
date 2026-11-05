@@ -66,7 +66,8 @@ class OrganizationProfileIntegrationTest {
                           "description": "Panificados",
                           "phone": "11 1234-5678",
                           "email": "contacto@example.org",
-                          "location": {"latitude": -34.6, "longitude": -58.42}
+                          "location": {"latitude": -34.6, "longitude": -58.42},
+                          "photos": []
                         }
                         """);
     }
@@ -90,7 +91,8 @@ class OrganizationProfileIntegrationTest {
                         "description",
                         "phone",
                         "email",
-                        "location");
+                        "location",
+                        "photos");
     }
 
     @Test

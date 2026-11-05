@@ -13,6 +13,7 @@ import { RegisterPage } from '@/features/auth/RegisterPage';
 import { RequireRole } from '@/features/auth/RequireRole';
 import { VERIFY_EMAIL_PATH, VerifyEmailPage } from '@/features/auth/VerifyEmailPage';
 import { CooperativeHomePage } from '@/features/cooperative/CooperativeHomePage';
+import { EditProfilePage } from '@/features/cooperative/EditProfilePage';
 import { ForbiddenPage } from '@/features/errors/ForbiddenPage';
 import { NotFoundPage } from '@/features/errors/NotFoundPage';
 import { ComingSoonPage } from '@/features/home/ComingSoonPage';
@@ -37,7 +38,10 @@ export const routes: RouteObject[] = [
       { path: 'organizations/:slug', element: <OrganizationProfilePage /> },
       {
         element: <RequireRole role={Role.COOPERATIVE} />,
-        children: [{ path: 'cooperative', element: <CooperativeHomePage /> }],
+        children: [
+          { path: 'cooperative', element: <CooperativeHomePage /> },
+          { path: 'cooperative/organizations/:id/edit', element: <EditProfilePage /> },
+        ],
       },
       { path: '*', element: <NotFoundPage /> },
     ],

@@ -6,6 +6,7 @@
  * OpenAPI spec version: v1
  */
 import type { GeoPoint } from './geoPoint';
+import type { PhotoResponse } from './photoResponse';
 import type { Province } from './province';
 import type { Sector } from './sector';
 
@@ -17,6 +18,7 @@ export interface OrganizationProfileResponse {
   location?: GeoPoint;
   name: string;
   phone?: string;
+  photos: PhotoResponse[];
   province: Province;
   sector: Sector;
   slug: string;

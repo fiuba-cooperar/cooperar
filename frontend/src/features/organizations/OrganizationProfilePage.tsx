@@ -7,6 +7,7 @@ import {
   Grid,
   Group,
   Paper,
+  SimpleGrid,
   Stack,
   Text,
   Title,
@@ -42,13 +43,17 @@ export function OrganizationProfilePage() {
 
 function Profile({ profile }: { profile: OrganizationProfileResponse }) {
   const place = `${profile.locality}, ${PROVINCE_LABELS[profile.province]}`;
+  const [cover, ...otherPhotos] = profile.photos;
 
   return (
     <Stack gap="lg">
       <title>{`${profile.name} · CooperAR`}</title>
       <Paper withBorder radius="lg" className={styles.summary}>
-        {/* TODO(#13): show the cover photo. */}
-        <div className={styles.cover} />
+        {cover ? (
+          <img src={cover.url} alt="" className={styles.coverPhoto} />
+        ) : (
+          <div className={styles.cover} />
+        )}
         <Group justify="space-between" gap="md" p="lg">
           <Group gap="md" wrap="nowrap" miw={0}>
             {/* TODO(#13): show the logo. */}
@@ -90,6 +95,29 @@ function Profile({ profile }: { profile: OrganizationProfileResponse }) {
                 </Title>
                 <Text className={styles.description}>{profile.description}</Text>
               </Paper>
+            )}
+            {otherPhotos.length > 0 && (
+              <section aria-labelledby="photos">
+                <Title order={2} size="h3" id="photos" mb="xs">
+                  Fotos
+                </Title>
+                <SimpleGrid
+                  component="ul"
+                  cols={{ base: 1, xs: 2, md: 3 }}
+                  className={styles.gallery}
+                >
+                  {otherPhotos.map((photo, index) => (
+                    <li key={photo.id}>
+                      <img
+                        src={photo.url}
+                        alt={`Foto ${String(index + 2)} de ${profile.name}`}
+                        loading="lazy"
+                        className={styles.photo}
+                      />
+                    </li>
+                  ))}
+                </SimpleGrid>
+              </section>
             )}
             <section aria-labelledby="products">
               <Title order={2} size="h3" id="products" mb="xs">

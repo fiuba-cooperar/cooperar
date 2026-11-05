@@ -2,7 +2,12 @@ package ar.uba.fi.cooperar.shared.error;
 
 import ar.uba.fi.cooperar.domain.organizations.InvalidCuitException;
 import ar.uba.fi.cooperar.domain.organizations.OrganizationNotAwaitingReviewException;
+import ar.uba.fi.cooperar.service.organizations.InvalidPhotoException;
+import ar.uba.fi.cooperar.service.organizations.OrganizationAccessDeniedException;
 import ar.uba.fi.cooperar.service.organizations.OrganizationNotFoundException;
+import ar.uba.fi.cooperar.service.organizations.PhotoLimitReachedException;
+import ar.uba.fi.cooperar.service.organizations.PhotoNotFoundException;
+import ar.uba.fi.cooperar.service.organizations.PhotoTooLargeException;
 import ar.uba.fi.cooperar.service.user.AccountNotFoundException;
 import ar.uba.fi.cooperar.service.user.EmailAlreadyVerifiedException;
 import ar.uba.fi.cooperar.service.user.InvalidCredentialsException;
@@ -39,18 +44,33 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler({
         InvalidCuitException.class,
         PasswordTooLongException.class,
-        InvalidVerificationTokenException.class
+        InvalidVerificationTokenException.class,
+        InvalidPhotoException.class
     })
     public ProblemDetail handleInvalidInput(RuntimeException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, exception.getMessage());
     }
 
-    @ExceptionHandler(OrganizationNotFoundException.class)
+    @ExceptionHandler({OrganizationNotFoundException.class, PhotoNotFoundException.class})
     public ProblemDetail handleNotFound(RuntimeException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());
     }
 
-    @ExceptionHandler({OrganizationNotAwaitingReviewException.class, EmailAlreadyVerifiedException.class})
+    @ExceptionHandler(OrganizationAccessDeniedException.class)
+    public ProblemDetail handleAccessDenied(RuntimeException exception) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, exception.getMessage());
+    }
+
+    @ExceptionHandler(PhotoTooLargeException.class)
+    public ProblemDetail handleTooLarge(RuntimeException exception) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONTENT_TOO_LARGE, exception.getMessage());
+    }
+
+    @ExceptionHandler({
+        OrganizationNotAwaitingReviewException.class,
+        EmailAlreadyVerifiedException.class,
+        PhotoLimitReachedException.class
+    })
     public ProblemDetail handleStateConflict(RuntimeException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
     }

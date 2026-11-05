@@ -10,7 +10,8 @@ RUN ./gradlew --no-daemon bootJar \
 
 # Runtime: JRE only, unprivileged user and split layers for better caching.
 FROM eclipse-temurin:25-jre-alpine
-RUN addgroup -S cooperar && adduser -S cooperar -G cooperar
+RUN addgroup -S cooperar && adduser -S cooperar -G cooperar \
+    && mkdir -p /data/uploads && chown cooperar:cooperar /data/uploads
 USER cooperar
 WORKDIR /app
 COPY --from=build /workspace/extracted/dependencies/ ./

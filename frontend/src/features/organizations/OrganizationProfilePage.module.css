@@ -31,6 +31,27 @@
   background: var(--mantine-color-default-border);
 }
 
+.coverPhoto {
+  display: block;
+  width: 100%;
+  height: clamp(120px, 25vw, 240px);
+  object-fit: cover;
+}
+
+.gallery {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.photo {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: var(--mantine-radius-md);
+}
+
 .logo {
   flex: none;
   width: 72px;

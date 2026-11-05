@@ -121,6 +121,13 @@ public class Organization {
         this.reviewedAt = now;
     }
 
+    /** The registration data an organization may correct later; its name, CUIT and type stay as they were approved. */
+    public void edit(Sector sector, Address address, OrganizationProfile profile) {
+        this.sector = sector;
+        this.address = address;
+        updateProfile(profile);
+    }
+
     public void updateProfile(OrganizationProfile profile) {
         this.description = profile.description();
         this.phone = profile.phone();

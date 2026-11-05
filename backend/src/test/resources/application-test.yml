@@ -10,6 +10,8 @@ cooperar:
   admin:
     email: admin@test.local
     password: test-admin-password
+  storage:
+    path: build/test-uploads
   notifications:
     public-url: http://localhost:5173
     from: CooperAR <no-reply@test.local>

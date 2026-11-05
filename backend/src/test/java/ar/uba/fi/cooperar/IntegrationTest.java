@@ -15,5 +15,5 @@ import org.springframework.test.context.ActiveProfiles;
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@Import({TestcontainersConfiguration.class, RecordingEmailSender.Config.class})
+@Import({TestcontainersConfiguration.class, RecordingEmailSender.Config.class, FakeGeocoder.Config.class})
 public @interface IntegrationTest {}

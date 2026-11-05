@@ -7,7 +7,7 @@ import jakarta.persistence.Enumerated;
 
 /**
  * Postal address typed by hand, except for the province. The district is the second-level division (departamento,
- * partido or comuna) and the locality may be a neighborhood. Geocoding arrives with #13.
+ * partido or comuna) and the locality may be a neighborhood.
  */
 @Embeddable
 public record Address(
@@ -25,5 +25,13 @@ public record Address(
         street = street.trim();
         additionalReferences =
                 additionalReferences == null || additionalReferences.isBlank() ? null : additionalReferences.trim();
+    }
+
+    /** Whether both point at the same place, which is what geocoding depends on (the references do not matter). */
+    public boolean samePlaceAs(Address other) {
+        return province == other.province
+                && district.equalsIgnoreCase(other.district)
+                && locality.equalsIgnoreCase(other.locality)
+                && street.equalsIgnoreCase(other.street);
     }
 }

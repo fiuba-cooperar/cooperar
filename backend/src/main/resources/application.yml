@@ -16,6 +16,11 @@ spring:
   threads:
     virtual:
       enabled: true
+  servlet:
+    multipart:
+      # Photos are capped at 5 MB (OrganizationPhotoService); the request adds the form's own overhead.
+      max-file-size: 5MB
+      max-request-size: 6MB
   # Any SMTP server works (the Faculty's or a self-hosted one). MAIL_HOST is mandatory outside dev.
   mail:
     host: ${MAIL_HOST}
@@ -43,6 +48,14 @@ cooperar:
     password: ${ADMIN_PASSWORD:}
     first-name: ${ADMIN_FIRST_NAME:}
     last-name: ${ADMIN_LAST_NAME:}
+  storage:
+    # Uploaded images. In production this folder has to be a persistent volume.
+    path: ${STORAGE_PATH:./data/uploads}
+  geocoding:
+    nominatim:
+      url: ${NOMINATIM_URL:https://nominatim.openstreetmap.org}
+      # The public server requires a User-Agent that identifies the application, ideally with a contact.
+      user-agent: ${NOMINATIM_USER_AGENT:CooperAR (observatorio de ERT, FIUBA)}
   notifications:
     # Where people open the frontend; the links in the emails point here.
     public-url: ${PUBLIC_URL}

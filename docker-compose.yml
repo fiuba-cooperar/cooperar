@@ -36,7 +36,11 @@ services:
       # Development emails go to Mailpit instead of real inboxes.
       MAIL_HOST: mailpit
       MAIL_PORT: 1025
+      STORAGE_PATH: /data/uploads
+      NOMINATIM_USER_AGENT: ${NOMINATIM_USER_AGENT:-CooperAR (observatorio de ERT, FIUBA)}
       PUBLIC_URL: ${PUBLIC_URL:-http://localhost:5173}
+    volumes:
+      - uploads:/data/uploads
     ports:
       - '${BACKEND_PORT:-8080}:8080'
     depends_on:
@@ -62,3 +66,4 @@ services:
 
 volumes:
   db-data:
+  uploads:

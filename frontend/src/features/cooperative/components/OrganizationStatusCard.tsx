@@ -1,5 +1,5 @@
 import { Badge, Button, Group, Paper, Stack, Text, Title, type MantineColor } from '@mantine/core';
-import { IconExternalLink } from '@tabler/icons-react';
+import { IconExternalLink, IconPencil } from '@tabler/icons-react';
 import { Link } from 'react-router';
 import { OrganizationStatus, type OrganizationSummary } from '@/api/generated/model';
 import { ORGANIZATION_STATUS_LABELS } from '@/features/organizations/labels';
@@ -9,6 +9,35 @@ const STATUS_COLORS: Record<OrganizationStatus, MantineColor> = {
   [OrganizationStatus.APPROVED]: 'green',
   [OrganizationStatus.REJECTED]: 'red',
 };
+
+/** Rejected organizations have nothing left to edit: the observatory will not review them again. */
+function Actions({ organization }: { organization: OrganizationSummary }) {
+  if (organization.status === OrganizationStatus.REJECTED) return null;
+  return (
+    <Group gap="xs">
+      <Button
+        component={Link}
+        to={`/cooperative/organizations/${organization.id}/edit`}
+        variant="default"
+        size="sm"
+        leftSection={<IconPencil size={16} aria-hidden="true" />}
+      >
+        Editar ficha
+      </Button>
+      {organization.status === OrganizationStatus.APPROVED && (
+        <Button
+          component={Link}
+          to={`/organizations/${organization.slug}`}
+          variant="light"
+          size="sm"
+          rightSection={<IconExternalLink size={16} aria-hidden="true" />}
+        >
+          Ver mi ficha pública
+        </Button>
+      )}
+    </Group>
+  );
+}
 
 function StatusDetail({
   organization,
@@ -28,20 +57,9 @@ function StatusDetail({
       );
     case OrganizationStatus.APPROVED:
       return (
-        <Group justify="space-between" align="center" gap="sm">
-          <Text size="sm" c="dimmed">
-            Ya es visible en el sitio público.
-          </Text>
-          <Button
-            component={Link}
-            to={`/organizations/${organization.slug}`}
-            variant="light"
-            size="sm"
-            rightSection={<IconExternalLink size={16} aria-hidden />}
-          >
-            Ver mi ficha pública
-          </Button>
-        </Group>
+        <Text size="sm" c="dimmed">
+          Ya es visible en el sitio público.
+        </Text>
       );
     case OrganizationStatus.REJECTED:
       return (
@@ -75,7 +93,10 @@ export function OrganizationStatusCard({
             {ORGANIZATION_STATUS_LABELS[organization.status]}
           </Badge>
         </Group>
-        <StatusDetail organization={organization} emailVerified={emailVerified} />
+        <Group justify="space-between" align="center" gap="sm">
+          <StatusDetail organization={organization} emailVerified={emailVerified} />
+          <Actions organization={organization} />
+        </Group>
       </Stack>
     </Paper>
   );

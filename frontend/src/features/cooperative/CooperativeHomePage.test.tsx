@@ -40,6 +40,10 @@ describe('cooperative panel', () => {
     const approved = await screen.findByRole('article', { name: 'La Litoraleña' });
     expect(within(approved).getByText('Aprobada')).toBeInTheDocument();
     expect(within(approved).getByText('Ya es visible en el sitio público.')).toBeInTheDocument();
+    expect(within(approved).getByRole('link', { name: 'Editar ficha' })).toHaveAttribute(
+      'href',
+      '/cooperative/organizations/c1/edit',
+    );
     expect(within(approved).getByRole('link', { name: 'Ver mi ficha pública' })).toHaveAttribute(
       'href',
       '/organizations/la-litoralena',
@@ -48,11 +52,15 @@ describe('cooperative panel', () => {
     const pending = screen.getByRole('article', { name: 'Textil Sur' });
     expect(within(pending).getByText('Pendiente de aprobación')).toBeInTheDocument();
     expect(within(pending).getByText(/está revisando el alta/)).toBeInTheDocument();
-    expect(within(pending).queryByRole('link')).not.toBeInTheDocument();
+    expect(within(pending).getByRole('link', { name: 'Editar ficha' })).toBeVisible();
+    expect(
+      within(pending).queryByRole('link', { name: 'Ver mi ficha pública' }),
+    ).not.toBeInTheDocument();
 
     const rejected = screen.getByRole('article', { name: 'Gráfica Norte' });
     expect(within(rejected).getByText('Rechazada')).toBeInTheDocument();
     expect(within(rejected).getByText('El CUIT no coincide')).toBeInTheDocument();
+    expect(within(rejected).queryByRole('link')).not.toBeInTheDocument();
 
     expect(screen.queryByText('Confirmá tu email')).not.toBeInTheDocument();
   });

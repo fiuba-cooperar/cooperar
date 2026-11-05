@@ -8,6 +8,7 @@
 
 export * from './addressResponse';
 export * from './currentUserResponse';
+export * from './editableProfileResponse';
 export * from './geoPoint';
 export * from './healthResponse';
 export * from './healthStatus';
@@ -17,6 +18,8 @@ export * from './organizationStatus';
 export * from './organizationSummary';
 export * from './organizationType';
 export * from './pendingOrganizationResponse';
+export * from './photoResponse';
+export * from './profileAddressRequest';
 export * from './province';
 export * from './refreshTokenRequest';
 export * from './registrantResponse';
@@ -26,7 +29,10 @@ export * from './registrationOrganizationRequest';
 export * from './registrationRequest';
 export * from './registrationResponse';
 export * from './rejectOrganizationRequest';
+export * from './reorderPhotosRequest';
 export * from './role';
 export * from './sector';
 export * from './tokenResponse';
+export * from './updateProfileRequest';
+export * from './uploadPhotoBody';
 export * from './verifyEmailRequest';

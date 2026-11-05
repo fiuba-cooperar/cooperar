@@ -30,6 +30,8 @@ export const theme = createTheme({
   // Light text on the dark primary in light mode, dark text on the sky blue in dark mode.
   primaryShade: { light: 6, dark: 4 },
   autoContrast: true,
+  // Mantine forces antialiased text, which thins the strokes; the mocks use the browser default.
+  fontSmoothing: false,
   defaultRadius: 'md',
   fontFamily: "'Inter Variable', system-ui, 'Segoe UI', Roboto, sans-serif",
   headings: { fontFamily: "'Inter Variable', system-ui, 'Segoe UI', Roboto, sans-serif" },

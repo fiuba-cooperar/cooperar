@@ -6,6 +6,8 @@ services:
     name: cooperar-backend
     runtime: docker
     plan: free
+    # Same region as the Neon database (AWS US East 2) to keep queries fast.
+    region: ohio
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
     healthCheckPath: /actuator/health/readiness

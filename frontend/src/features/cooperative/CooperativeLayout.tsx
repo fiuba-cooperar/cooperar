@@ -1,9 +1,7 @@
 import { AppShell, Burger, Group, Stack } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { IconExternalLink } from '@tabler/icons-react';
 import { useState } from 'react';
-import { Link, NavLink, Outlet } from 'react-router';
-import { OrganizationStatus } from '@/api/generated/model';
+import { NavLink, Outlet } from 'react-router';
 import { Brand } from '@/components/layout/Brand';
 import { PanelAccount } from '@/components/layout/PanelAccount';
 import { SkipLink } from '@/components/layout/SkipLink';
@@ -79,15 +77,6 @@ export function CooperativeLayout() {
               {label}
             </NavLink>
           ))}
-          {organization?.status === OrganizationStatus.APPROVED && (
-            <Link
-              to={`/organizations/${organization.slug}`}
-              className={[styles.navLink, styles.publicProfileLink].join(' ')}
-            >
-              <IconExternalLink size={20} stroke={1.9} aria-hidden />
-              Ver mi ficha pública
-            </Link>
-          )}
         </Stack>
         <div className={styles.navbarAccount}>
           <PanelAccount />

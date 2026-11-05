@@ -36,12 +36,6 @@
   font-weight: 600;
 }
 
-/* Pinned to the bottom of the menu: it leaves the panel. */
-.publicProfileLink {
-  margin-top: auto;
-  color: var(--mantine-color-dimmed);
-}
-
 /* On phones the account sits at the bottom of the opened menu, since the header has no room for it. */
 .navbarAccount {
   margin-top: var(--mantine-spacing-md);

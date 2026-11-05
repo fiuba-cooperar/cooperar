@@ -121,20 +121,11 @@ describe('cooperative panel', () => {
       within(menu)
         .getAllByRole('link')
         .map((link) => link.textContent),
-    ).toEqual(['Inicio', 'Mi ficha', 'Productos y servicios', 'Equipo', 'Ver mi ficha pública']);
+    ).toEqual(['Inicio', 'Mi ficha', 'Productos y servicios', 'Equipo']);
     expect(within(menu).getByRole('link', { name: 'Inicio' })).toHaveAttribute(
       'aria-current',
       'page',
     );
-  });
-
-  it('hides the public profile link until the organization is approved', async () => {
-    signedIn({ ...ACCOUNT, organizations: [ACCOUNT.organizations[1]] });
-
-    renderRoute('/cooperative');
-
-    const menu = await screen.findByRole('navigation', { name: 'Panel de la cooperativa' });
-    expect(within(menu).queryByRole('link', { name: 'Ver mi ficha pública' })).toBeNull();
   });
 
   it('shows the quick accesses with the profile progress as coming soon', async () => {

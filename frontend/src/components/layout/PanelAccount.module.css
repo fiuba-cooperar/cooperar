@@ -1,0 +1,5 @@
+/* The initials sit in an inner placeholder that carries its own background. */
+.avatar :global(.mantine-Avatar-placeholder) {
+  background: var(--color-band);
+  color: var(--mantine-color-white);
+}

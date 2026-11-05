@@ -1,32 +1,12 @@
-import { AppShell, Avatar, Badge, Burger, Button, Group, Stack, Text } from '@mantine/core';
+import { AppShell, Badge, Burger, Group, Stack } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconExternalLink } from '@tabler/icons-react';
 import { Link, NavLink, Outlet } from 'react-router';
 import { Brand } from '@/components/layout/Brand';
+import { PanelAccount } from '@/components/layout/PanelAccount';
 import { SkipLink } from '@/components/layout/SkipLink';
-import { useAuth } from '@/features/auth/useAuth';
-import { displayName, initials } from '@/features/auth/userName';
 import { ADMIN_HOME_PATH, ADMIN_SECTIONS } from './adminSections';
 import styles from './AdminLayout.module.css';
-
-function Account() {
-  const { user, logout } = useAuth();
-  if (!user) return null;
-
-  return (
-    <Group gap={12} wrap="nowrap">
-      <Avatar variant="filled" color="brand.9" fw={700} aria-hidden>
-        {initials(user)}
-      </Avatar>
-      <Text fw={600} truncate="end" maw={{ base: 160, md: 280 }}>
-        {displayName(user)}
-      </Text>
-      <Button variant="subtle" h={44} px="sm" fz={15} onClick={() => void logout()}>
-        Cerrar sesión
-      </Button>
-    </Group>
-  );
-}
 
 /** Shell of the observatory panel: header with the signed-in admin and a side menu with the admin sections only. */
 export function AdminLayout() {
@@ -57,7 +37,7 @@ export function AdminLayout() {
             </Badge>
           </Group>
           <Group visibleFrom="sm">
-            <Account />
+            <PanelAccount />
           </Group>
         </Group>
       </AppShell.Header>
@@ -87,7 +67,7 @@ export function AdminLayout() {
           </Link>
         </Stack>
         <div className={styles.navbarAccount}>
-          <Account />
+          <PanelAccount />
         </div>
       </AppShell.Navbar>
       <AppShell.Main id="main-content" tabIndex={-1} className={styles.main}>

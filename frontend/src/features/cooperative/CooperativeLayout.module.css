@@ -1,0 +1,67 @@
+.header {
+  border-top: 4px solid var(--mantine-color-brand-4);
+  background: var(--mantine-color-default);
+}
+
+.separator {
+  width: 1px;
+  height: 30px;
+  background: var(--color-line);
+}
+
+.navbar {
+  background: var(--mantine-color-default);
+}
+
+.navLink {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 8px;
+  color: var(--mantine-color-text);
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.navLink:hover {
+  background: var(--color-hover);
+}
+
+.navLink[aria-current='page'] {
+  background: var(--mantine-color-brand-light);
+  color: var(--mantine-color-brand-light-color);
+  font-weight: 600;
+}
+
+/* Pinned to the bottom of the menu: it leaves the panel. */
+.publicProfileLink {
+  margin-top: auto;
+  color: var(--mantine-color-dimmed);
+}
+
+/* On phones the account sits at the bottom of the opened menu, since the header has no room for it. */
+.navbarAccount {
+  margin-top: var(--mantine-spacing-md);
+  padding: var(--mantine-spacing-sm);
+  border-radius: 8px;
+  background: var(--mantine-color-body);
+
+  @media (min-width: $mantine-breakpoint-sm) {
+    display: none;
+  }
+}
+
+.content {
+  padding: var(--mantine-spacing-xl) var(--mantine-spacing-md);
+
+  @media (min-width: $mantine-breakpoint-sm) {
+    padding: 36px 40px;
+  }
+}
+
+.main:focus {
+  outline: none;
+}

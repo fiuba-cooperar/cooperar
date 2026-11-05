@@ -70,10 +70,7 @@ describe('public site', () => {
 
     renderRoute('/');
 
-    expect(await screen.findByRole('link', { name: 'Mi sección' })).toHaveAttribute(
-      'href',
-      '/admin',
-    );
+    expect(await screen.findByRole('link', { name: 'Mi panel' })).toHaveAttribute('href', '/admin');
     expect(screen.queryByRole('link', { name: 'Ingresar' })).not.toBeInTheDocument();
   });
 

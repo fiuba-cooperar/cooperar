@@ -1,0 +1,76 @@
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 260px;
+  min-height: 48px;
+  padding: 0 12px 0 8px;
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  background: var(--mantine-color-default);
+}
+
+.trigger:hover {
+  border-color: var(--mantine-color-brand-6);
+}
+
+.initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--mantine-color-brand-1);
+  color: var(--mantine-color-brand-8);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.labels {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.25;
+  min-width: 0;
+}
+
+.dropdown {
+  min-width: 300px;
+  padding: 6px;
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  box-shadow: 0 10px 28px rgb(20 32 46 / 16%);
+}
+
+.label {
+  padding: 8px 12px 4px;
+  color: var(--mantine-color-dimmed);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.item {
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 6px;
+  font-size: 16px;
+}
+
+.item:hover:not(:disabled, [data-disabled]) {
+  background: var(--color-hover);
+}
+
+.item[data-selected] {
+  background: var(--mantine-color-brand-light);
+  color: var(--mantine-color-brand-light-color);
+  font-weight: 600;
+}
+
+.divider {
+  margin: 4px 0;
+  border-color: var(--color-line);
+}

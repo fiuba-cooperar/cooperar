@@ -341,7 +341,7 @@ describe('registration', () => {
 
     renderRoute('/register');
 
-    expect(await screen.findByRole('heading', { name: 'Mi organización' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /Hola, / })).toBeInTheDocument();
   });
 
   it('has no accessibility violations on either step or on the confirmation', async () => {

@@ -56,7 +56,7 @@ export function CooperativeHomePage() {
             </Text>
           ) : (
             <Text c="dimmed" size="md">
-              Todavía no tenés ninguna organización asociada a tu cuenta.
+              Todavía no tenés ninguna entidad asociada a tu cuenta.
             </Text>
           )}
         </Stack>

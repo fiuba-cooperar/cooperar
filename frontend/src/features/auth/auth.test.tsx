@@ -48,7 +48,7 @@ describe('authentication', () => {
       'href',
       '/',
     );
-    expect(within(header).getByRole('link', { name: 'Registrá tu organización' })).toHaveAttribute(
+    expect(within(header).getByRole('link', { name: 'Registrá tu entidad' })).toHaveAttribute(
       'href',
       '/register',
     );

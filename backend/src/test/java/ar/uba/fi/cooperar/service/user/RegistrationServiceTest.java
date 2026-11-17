@@ -9,6 +9,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import ar.uba.fi.cooperar.domain.organizations.ActivityType;
 import ar.uba.fi.cooperar.domain.organizations.Address;
 import ar.uba.fi.cooperar.domain.organizations.InvalidCuitException;
 import ar.uba.fi.cooperar.domain.organizations.Organization;
@@ -26,6 +27,7 @@ import java.sql.SQLException;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -37,10 +39,13 @@ class RegistrationServiceTest {
     private static final NewAccount ACCOUNT = new NewAccount(" Ana ", " Pérez ", " Ana@Coop.Local ", "secret-password");
     private static final NewOrganization ORGANIZATION = new NewOrganization(
             " La Litoraleña ",
+            " Cooperativa de Trabajo La Litoraleña Ltda. ",
             OrganizationType.COOPERATIVE,
             "30-12345678-1",
-            Sector.FOOD,
-            new Address(Province.SANTA_FE, " Rosario ", " Centro ", " Rivadavia 100 ", "  "));
+            Set.of(Sector.FOOD, Sector.SERVICES),
+            Set.of(ActivityType.PRODUCT, ActivityType.WORK),
+            new Address(Province.SANTA_FE, " Rosario ", " Centro ", " Rivadavia 100 ", "  "),
+            " Presidenta ");
 
     private final UserAccountRepository users = mock(UserAccountRepository.class);
     private final OrganizationRepository organizations = mock(OrganizationRepository.class);
@@ -79,7 +84,10 @@ class RegistrationServiceTest {
         assertThat(organization.getSlug()).isEqualTo("la-litoralena");
         assertThat(organization.getType()).isEqualTo(OrganizationType.COOPERATIVE);
         assertThat(organization.getCuit().digits()).isEqualTo("30123456781");
-        assertThat(organization.getSector()).isEqualTo(Sector.FOOD);
+        assertThat(organization.getLegalName()).isEqualTo("Cooperativa de Trabajo La Litoraleña Ltda.");
+        assertThat(organization.getSectors()).containsExactly(Sector.FOOD, Sector.SERVICES);
+        assertThat(organization.getActivityTypes()).containsExactly(ActivityType.WORK, ActivityType.PRODUCT);
+        assertThat(organization.getRegistrantRole()).isEqualTo("Presidenta");
         assertThat(organization.getAddress())
                 .isEqualTo(new Address(Province.SANTA_FE, "Rosario", "Centro", "Rivadavia 100", null));
         assertThat(organization.getStatus()).isEqualTo(OrganizationStatus.PENDING);
@@ -158,8 +166,15 @@ class RegistrationServiceTest {
 
     @Test
     void rejectsAnInvalidCuit() {
-        NewOrganization invalid =
-                new NewOrganization("Coop", OrganizationType.ERT, "30-12345678-9", Sector.FOOD, ORGANIZATION.address());
+        NewOrganization invalid = new NewOrganization(
+                "Coop",
+                "Coop Ltda.",
+                OrganizationType.ERT,
+                "30-12345678-9",
+                ORGANIZATION.sectors(),
+                ORGANIZATION.activityTypes(),
+                ORGANIZATION.address(),
+                "Presidenta");
 
         assertThatThrownBy(() -> service.register(ACCOUNT, invalid)).isInstanceOf(InvalidCuitException.class);
     }

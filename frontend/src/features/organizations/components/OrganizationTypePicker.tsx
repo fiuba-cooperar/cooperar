@@ -6,14 +6,14 @@ import styles from './OrganizationTypePicker.module.css';
 const OPTIONS: { value: OrganizationType; title: string; description: string; icon: Icon }[] = [
   {
     value: OrganizationType.COOPERATIVE,
-    title: 'Cooperativa',
-    description: 'Cooperativa de origen',
+    title: 'Cooperativa de origen',
+    description: 'Todos los rubros (trabajo, servicios, productos)',
     icon: IconUsersGroup,
   },
   {
     value: OrganizationType.ERT,
     title: 'Empresa recuperada',
-    description: 'Empresa recuperada por sus trabajadores',
+    description: 'Cooperativa autogestionada por sus trabajadores/as',
     icon: IconBuildingFactory2,
   },
 ];
@@ -30,7 +30,7 @@ interface OrganizationTypePickerProps {
 export function OrganizationTypePicker({ value, onChange, error }: OrganizationTypePickerProps) {
   return (
     <Radio.Group
-      label="Tipo de organización"
+      label="Tipo de entidad"
       name="organization-type"
       // Same error size and gap as the text fields below.
       size="md"

@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import ar.uba.fi.cooperar.domain.user.Role;
 import ar.uba.fi.cooperar.domain.user.UserAccount;
 import java.time.Instant;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
@@ -83,15 +84,40 @@ class OrganizationTest {
         return account;
     }
 
+    @Test
+    void listsSectorsAndActivityTypesInDeclarationOrder() {
+        Organization organization = organization(
+                account(), Set.of(Sector.OTHER, Sector.FOOD), Set.of(ActivityType.PRODUCT, ActivityType.WORK));
+
+        assertThat(organization.getSectors()).containsExactly(Sector.FOOD, Sector.OTHER);
+        assertThat(organization.getActivityTypes()).containsExactly(ActivityType.WORK, ActivityType.PRODUCT);
+    }
+
+    @Test
+    void needsAtLeastOneSectorAndOneActivityType() {
+        assertThatThrownBy(() -> organization(account(), Set.of(), Set.of(ActivityType.WORK)))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> organization(account(), Set.of(Sector.FOOD), Set.of()))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
     private static Organization organization(UserAccount registeredBy) {
+        return organization(registeredBy, Set.of(Sector.FOOD), Set.of(ActivityType.PRODUCT));
+    }
+
+    private static Organization organization(
+            UserAccount registeredBy, Set<Sector> sectors, Set<ActivityType> activityTypes) {
         return new Organization(
                 "La Litoraleña",
+                "Cooperativa de Trabajo La Litoraleña Ltda.",
                 "la-litoralena",
                 OrganizationType.ERT,
                 Cuit.parse("30-12345678-1"),
-                Sector.FOOD,
+                sectors,
+                activityTypes,
                 new Address(Province.SANTA_FE, "Rosario", "Centro", "Rivadavia 100", null),
                 registeredBy,
+                "Presidenta",
                 NOW);
     }
 }

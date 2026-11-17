@@ -8,6 +8,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import ar.uba.fi.cooperar.domain.organizations.ActivityType;
 import ar.uba.fi.cooperar.domain.organizations.Address;
 import ar.uba.fi.cooperar.domain.organizations.Cuit;
 import ar.uba.fi.cooperar.domain.organizations.Organization;
@@ -23,6 +24,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.ApplicationEventPublisher;
@@ -39,12 +41,15 @@ class OrganizationReviewServiceTest {
     private final UserAccount account = new UserAccount("Ana", "Pérez", "ana@coop.local", "hash", Role.COOPERATIVE);
     private final Organization organization = new Organization(
             "La Litoraleña",
+            "Cooperativa de Trabajo La Litoraleña Ltda.",
             "la-litoralena",
             OrganizationType.ERT,
             Cuit.parse("30-12345678-1"),
-            Sector.FOOD,
+            Set.of(Sector.FOOD),
+            Set.of(ActivityType.PRODUCT),
             new Address(Province.SANTA_FE, "Rosario", "Centro", "Rivadavia 100", null),
             account,
+            "Presidenta",
             NOW);
 
     @Test

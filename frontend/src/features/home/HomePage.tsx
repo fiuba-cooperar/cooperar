@@ -50,7 +50,7 @@ const ENTRIES = [
         <path d="M9 20v-6h6v6" />
       </EntryIcon>
     ),
-    title: 'Encontrar empresas',
+    title: 'Encontrar entidades',
     description: 'Buscá por rubro, zona o palabra clave y mirá la ficha de cada cooperativa.',
   },
   {
@@ -84,7 +84,7 @@ const ENTRIES = [
       </EntryIcon>
     ),
     title: 'Conocer su historia',
-    description: 'Líneas de tiempo con el proceso de recuperación de cada empresa.',
+    description: 'Líneas de tiempo con el proceso de recuperación de cada entidad.',
   },
 ];
 
@@ -148,7 +148,7 @@ function Search() {
         <input
           id="home-search"
           type="search"
-          placeholder="Buscá una empresa, un producto o una zona"
+          placeholder="Buscá una entidad, un producto o una zona"
           aria-describedby="home-search-soon"
           className={styles.searchInput}
           disabled
@@ -309,7 +309,7 @@ function RegisterBand() {
             },
           })}
         >
-          Registrá tu organización
+          Registrá tu entidad
         </Button>
       </div>
     </Container>

@@ -2,8 +2,10 @@ import {
   Alert,
   Anchor,
   Button,
+  Checkbox,
   Fieldset,
   Group,
+  MultiSelect,
   Paper,
   PasswordInput,
   Select,
@@ -17,11 +19,15 @@ import {
 import { IconAlertCircle, IconCircleCheck } from '@tabler/icons-react';
 import { useEffect, useId, useRef, useState, type SyntheticEvent } from 'react';
 import { Link, Navigate } from 'react-router';
-import { OrganizationType, Province, Role, Sector } from '@/api/generated/model';
+import { ActivityType, OrganizationType, Province, Role, Sector } from '@/api/generated/model';
 import { LabelWithHint } from '@/components/form/LabelWithHint';
 import { OrganizationTypePicker } from '@/features/organizations/components/OrganizationTypePicker';
 import { cuitProblem, type CuitProblem } from '@/features/organizations/cuit';
-import { PROVINCE_LABELS, SECTOR_LABELS } from '@/features/organizations/labels';
+import {
+  ACTIVITY_TYPE_LABELS,
+  PROVINCE_LABELS,
+  SECTOR_LABELS,
+} from '@/features/organizations/labels';
 import { RegistrationError, useRegistration } from './api/useRegistration';
 import styles from './RegisterPage.module.css';
 import { ROLE_HOME } from './roleHome';
@@ -32,6 +38,7 @@ type Step = 'account' | 'organization' | 'done';
 interface AccountForm {
   firstName: string;
   lastName: string;
+  registrantRole: string;
   email: string;
   password: string;
   passwordConfirmation: string;
@@ -40,8 +47,10 @@ interface AccountForm {
 interface OrganizationForm {
   type: OrganizationType | null;
   name: string;
+  legalName: string;
   cuit: string;
-  sector: Sector | null;
+  activityTypes: ActivityType[];
+  sectors: Sector[];
   province: Province | null;
   district: string;
   locality: string;
@@ -61,6 +70,7 @@ const CARD_WIDTH = 560 + 2 * 36 + 2;
 const EMPTY_ACCOUNT: AccountForm = {
   firstName: '',
   lastName: '',
+  registrantRole: '',
   email: '',
   password: '',
   passwordConfirmation: '',
@@ -69,8 +79,10 @@ const EMPTY_ACCOUNT: AccountForm = {
 const EMPTY_ORGANIZATION: OrganizationForm = {
   type: null,
   name: '',
+  legalName: '',
   cuit: '',
-  sector: null,
+  activityTypes: [],
+  sectors: [],
   province: null,
   district: '',
   locality: '',
@@ -79,20 +91,21 @@ const EMPTY_ORGANIZATION: OrganizationForm = {
 };
 
 const SECTORS = Object.values(Sector);
+const ACTIVITY_TYPES = Object.values(ActivityType);
 const PROVINCES = Object.values(Province);
 const SECTOR_OPTIONS = SECTORS.map((value) => ({ value, label: SECTOR_LABELS[value] }));
 const PROVINCE_OPTIONS = PROVINCES.map((value) => ({ value, label: PROVINCE_LABELS[value] }));
 
 const EMAIL_HINT =
-  'Es tu usuario para ingresar. Con esta cuenta vas a poder administrar una o más organizaciones.';
+  'Es tu usuario para ingresar. Con esta cuenta vas a poder administrar una o más entidades.';
 const PASSWORD_HINT = `Usá al menos ${String(MIN_PASSWORD_LENGTH)} caracteres.`;
 const EMAIL_TAKEN =
-  'Ya hay una cuenta con este email. Si es tuya, ingresá y agregá la organización desde tu panel.';
+  'Ya hay una cuenta con este email. Si es tuya, ingresá y agregá la entidad desde tu panel.';
 const CUIT_ERRORS: Record<CuitProblem, string> = {
   format: 'Revisá el CUIT: son 11 números, por ejemplo 30-12345678-1.',
   'check-digit': 'Este CUIT no existe. Revisá que los números estén bien escritos.',
 };
-const CUIT_TAKEN = 'Ya hay una organización registrada con este CUIT.';
+const CUIT_TAKEN = 'Ya hay una entidad registrada con este CUIT.';
 const FORM_ERRORS: Record<RegistrationError['reason'], string> = {
   conflict: 'Algunos datos ya están registrados. Revisalos e intentá de nuevo.',
   invalid: 'Algunos datos no son válidos. Revisalos e intentá de nuevo.',
@@ -104,6 +117,7 @@ function validateAccount(form: AccountForm): Errors<AccountForm> {
   const errors: Errors<AccountForm> = {};
   if (!form.firstName.trim()) errors.firstName = 'Ingresá tu nombre.';
   if (!form.lastName.trim()) errors.lastName = 'Ingresá tu apellido.';
+  if (!form.registrantRole.trim()) errors.registrantRole = 'Ingresá tu rol en la entidad.';
   if (!form.email.trim()) errors.email = 'Ingresá tu email.';
   else if (!/^\S+@\S+\.\S+$/.test(form.email.trim()))
     errors.email = 'Revisá el email: tiene que ser como tu@email.com.';
@@ -119,13 +133,16 @@ function validateAccount(form: AccountForm): Errors<AccountForm> {
 function validateOrganization(form: OrganizationForm): Errors<OrganizationForm> {
   const errors: Errors<OrganizationForm> = {};
   if (!form.type) errors.type = 'Elegí si es una cooperativa o una empresa recuperada.';
-  if (!form.name.trim()) errors.name = 'Ingresá el nombre de la organización.';
+  if (!form.name.trim()) errors.name = 'Ingresá el nombre de la entidad.';
+  if (!form.legalName.trim()) errors.legalName = 'Ingresá la razón social.';
   if (!form.cuit.trim()) errors.cuit = 'Ingresá el CUIT.';
   else {
     const problem = cuitProblem(form.cuit);
     if (problem) errors.cuit = CUIT_ERRORS[problem];
   }
-  if (!form.sector) errors.sector = 'Elegí un rubro.';
+  if (form.activityTypes.length === 0)
+    errors.activityTypes = 'Elegí al menos un tipo de actividad.';
+  if (form.sectors.length === 0) errors.sectors = 'Elegí al menos un rubro.';
   if (!form.province) errors.province = 'Elegí una provincia.';
   if (!form.district.trim()) errors.district = 'Ingresá el departamento, partido o comuna.';
   if (!form.locality.trim()) errors.locality = 'Ingresá la localidad o el barrio.';
@@ -187,8 +204,8 @@ export function RegisterPage() {
     event.preventDefault();
     const errors = validateOrganization(organization);
     setOrganizationErrors(errors);
-    const { type, sector, province } = organization;
-    if (hasErrors(errors) || !type || !sector || !province) return;
+    const { type, province } = organization;
+    if (hasErrors(errors) || !type || !province) return;
 
     setFormError(null);
     try {
@@ -201,9 +218,12 @@ export function RegisterPage() {
         },
         organization: {
           name: organization.name.trim(),
+          legalName: organization.legalName.trim(),
           type,
           cuit: organization.cuit.trim(),
-          sector,
+          activityTypes: organization.activityTypes,
+          sectors: organization.sectors,
+          registrantRole: account.registrantRole.trim(),
           address: {
             province,
             district: organization.district.trim(),
@@ -249,8 +269,8 @@ export function RegisterPage() {
           </Title>
           <Text c="dimmed" fz={16}>
             Te enviamos un email a <strong>{account.email.trim()}</strong> para que confirmes tu
-            cuenta. Cuando lo confirmes, el observatorio va a revisar el alta de tu organización y
-            te vamos a avisar por email.
+            cuenta. Cuando lo confirmes, el observatorio va a validar el alta de tu entidad y te
+            vamos a avisar por email.
           </Text>
           <Button component={Link} to={ROLE_HOME[Role.COOPERATIVE]} h={48} mt="xs">
             Ingresar a mi panel
@@ -274,7 +294,7 @@ export function RegisterPage() {
             <span className={styles.step} data-active={!isAccountStep || undefined} />
           </div>
           <Title order={1} fz={28} ref={headingRef} tabIndex={-1} className={styles.heading} mt={4}>
-            {isAccountStep ? 'Tu cuenta' : 'Tu organización'}
+            {isAccountStep ? 'Tu cuenta' : 'Tu entidad'}
           </Title>
         </Stack>
 
@@ -286,7 +306,7 @@ export function RegisterPage() {
                 <Anchor component={Link} to="/login" fw={600} inherit>
                   Ingresá
                 </Anchor>{' '}
-                y agregá la organización desde tu panel.
+                y agregá la entidad desde tu panel.
               </Alert>
               <Stack gap="md">
                 <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="md">
@@ -311,6 +331,17 @@ export function RegisterPage() {
                     }}
                   />
                 </SimpleGrid>
+                <TextInput
+                  label="Tu rol en la entidad"
+                  placeholder="Presidenta, tesorero, asociada…"
+                  autoComplete="organization-title"
+                  maxLength={100}
+                  value={account.registrantRole}
+                  error={accountErrors.registrantRole}
+                  onChange={(event) => {
+                    updateAccount('registrantRole', event.currentTarget.value);
+                  }}
+                />
                 <div>
                   <LabelWithHint htmlFor={emailId} label="Email" hint={EMAIL_HINT} />
                   <TextInput
@@ -378,7 +409,7 @@ export function RegisterPage() {
                   }}
                 />
                 <TextInput
-                  label="Nombre de la organización"
+                  label="Nombre de la entidad"
                   maxLength={200}
                   value={organization.name}
                   error={organizationErrors.name}
@@ -387,6 +418,16 @@ export function RegisterPage() {
                   }}
                 />
                 <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="md">
+                  <TextInput
+                    label="Razón social"
+                    placeholder="Cooperativa de Trabajo … Ltda."
+                    maxLength={200}
+                    value={organization.legalName}
+                    error={organizationErrors.legalName}
+                    onChange={(event) => {
+                      updateOrganization('legalName', event.currentTarget.value);
+                    }}
+                  />
                   <TextInput
                     label="CUIT"
                     inputMode="numeric"
@@ -398,20 +439,39 @@ export function RegisterPage() {
                       updateOrganization('cuit', event.currentTarget.value);
                     }}
                   />
-                  <Select
-                    label="Rubro"
-                    placeholder="Elegí un rubro"
-                    data={SECTOR_OPTIONS}
-                    value={organization.sector}
-                    error={organizationErrors.sector}
-                    onChange={(value) => {
-                      updateOrganization(
-                        'sector',
-                        SECTORS.find((sector) => sector === value) ?? null,
-                      );
-                    }}
-                  />
                 </SimpleGrid>
+                <Checkbox.Group
+                  label="Tipo de actividad"
+                  description="Podés elegir más de uno."
+                  value={organization.activityTypes}
+                  error={organizationErrors.activityTypes}
+                  onChange={(values) => {
+                    updateOrganization(
+                      'activityTypes',
+                      ACTIVITY_TYPES.filter((type) => values.includes(type)),
+                    );
+                  }}
+                >
+                  <Group gap="lg" mt="xs">
+                    {ACTIVITY_TYPES.map((type) => (
+                      <Checkbox key={type} value={type} label={ACTIVITY_TYPE_LABELS[type]} />
+                    ))}
+                  </Group>
+                </Checkbox.Group>
+                <MultiSelect
+                  label="Rubros"
+                  description="Podés elegir más de uno."
+                  placeholder={organization.sectors.length === 0 ? 'Elegí los rubros' : undefined}
+                  data={SECTOR_OPTIONS}
+                  value={organization.sectors}
+                  error={organizationErrors.sectors}
+                  onChange={(values) => {
+                    updateOrganization(
+                      'sectors',
+                      SECTORS.filter((sector) => values.includes(sector)),
+                    );
+                  }}
+                />
               </Stack>
               <Fieldset
                 variant="unstyled"
@@ -421,7 +481,7 @@ export function RegisterPage() {
                 styles={{ legend: { padding: 0 } }}
                 legend={
                   <Title order={2} fz={18} mb="sm">
-                    Dirección
+                    Dirección principal
                   </Title>
                 }
               >
@@ -511,7 +571,7 @@ export function RegisterPage() {
                   loading={registration.isPending}
                   loaderProps={{ type: 'dots' }}
                 >
-                  Crear cuenta y organización
+                  Crear cuenta y entidad
                 </Button>
               </Group>
             </Stack>

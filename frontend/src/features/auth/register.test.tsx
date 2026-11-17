@@ -31,6 +31,7 @@ async function fill(user: User, field: HTMLElement, value: string) {
 async function fillAccountStep(user = setupUser()) {
   await fill(user, await screen.findByLabelText('Nombre'), 'Ana');
   await fill(user, screen.getByLabelText('Apellido'), 'Pérez');
+  await fill(user, screen.getByLabelText('Tu rol en la entidad'), ' Presidenta ');
   await fill(user, screen.getByLabelText('Email'), 'ana@coop.local');
   await fill(user, screen.getByLabelText('Contraseña'), 'secret-password');
   await fill(user, screen.getByLabelText('Repetí la contraseña'), 'secret-password');
@@ -39,9 +40,18 @@ async function fillAccountStep(user = setupUser()) {
 
 async function fillOrganizationStep(cuit = '30-12345678-1', user = setupUser()) {
   await user.click(await screen.findByRole('radio', { name: /^Cooperativa/ }));
-  await fill(user, screen.getByLabelText('Nombre de la organización'), 'La Litoraleña');
+  await fill(user, screen.getByLabelText('Nombre de la entidad'), 'La Litoraleña');
+  await fill(
+    user,
+    screen.getByLabelText('Razón social'),
+    'Cooperativa de Trabajo La Litoraleña Ltda.',
+  );
   await fill(user, screen.getByLabelText('CUIT'), cuit);
-  await user.click(screen.getByRole('combobox', { name: 'Rubro' }));
+  // Picked out of order: the request lists them in a fixed order.
+  await user.click(screen.getByRole('checkbox', { name: 'Producto' }));
+  await user.click(screen.getByRole('checkbox', { name: 'Trabajo' }));
+  await user.click(screen.getByRole('combobox', { name: 'Rubros' }));
+  await user.click(await screen.findByRole('option', { name: 'Servicios' }));
   await user.click(await screen.findByRole('option', { name: 'Alimentos' }));
   // Typed, not pasted: this checks that the province list filters as the person writes.
   await user.type(screen.getByRole('combobox', { name: 'Provincia' }), 'Santa');
@@ -56,7 +66,7 @@ function requestBody(init: RequestInit | undefined): string {
 }
 
 async function submit() {
-  await setupUser().click(screen.getByRole('button', { name: 'Crear cuenta y organización' }));
+  await setupUser().click(screen.getByRole('button', { name: 'Crear cuenta y entidad' }));
 }
 
 describe('registration', () => {
@@ -70,7 +80,7 @@ describe('registration', () => {
     renderRoute('/register');
     expect(await screen.findByText('Paso 1 de 2')).toBeInTheDocument();
     await fillAccountStep();
-    expect(await screen.findByRole('heading', { level: 1, name: 'Tu organización' })).toHaveFocus();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Tu entidad' })).toHaveFocus();
     expect(screen.getByText('Paso 2 de 2')).toBeInTheDocument();
     await fillOrganizationStep();
     await submit();
@@ -83,7 +93,7 @@ describe('registration', () => {
       '/cooperative',
     );
     expect(screen.getByText(/Te enviamos un email a/)).toHaveTextContent(
-      'Te enviamos un email a ana@coop.local para que confirmes tu cuenta.',
+      'Te enviamos un email a ana@coop.local para que confirmes tu cuenta. Cuando lo confirmes, el observatorio va a validar el alta de tu entidad',
     );
     const registerCall = fetchMock.mock.calls.find(([url]) => url === '/api/auth/register');
     expect(JSON.parse(requestBody(registerCall?.[1]))).toEqual({
@@ -95,9 +105,12 @@ describe('registration', () => {
       },
       organization: {
         name: 'La Litoraleña',
+        legalName: 'Cooperativa de Trabajo La Litoraleña Ltda.',
         type: 'COOPERATIVE',
         cuit: '30-12345678-1',
-        sector: 'FOOD',
+        activityTypes: ['WORK', 'PRODUCT'],
+        sectors: ['FOOD', 'SERVICES'],
+        registrantRole: 'Presidenta',
         address: {
           province: 'SANTA_FE',
           district: 'Rosario',
@@ -138,6 +151,9 @@ describe('registration', () => {
 
     expect(screen.getByLabelText('Nombre')).toHaveAccessibleDescription('Ingresá tu nombre.');
     expect(screen.getByLabelText('Apellido')).toHaveAccessibleDescription('Ingresá tu apellido.');
+    expect(screen.getByLabelText('Tu rol en la entidad')).toHaveAccessibleDescription(
+      'Ingresá tu rol en la entidad.',
+    );
     expect(screen.getByLabelText('Email')).toHaveAttribute('aria-invalid', 'true');
     expect(screen.getByText('Ingresá tu email.')).toBeInTheDocument();
     expect(
@@ -150,7 +166,7 @@ describe('registration', () => {
     stubFetchRoutes({});
     const user = setupUser();
     const emailHint =
-      'Es tu usuario para ingresar. Con esta cuenta vas a poder administrar una o más organizaciones.';
+      'Es tu usuario para ingresar. Con esta cuenta vas a poder administrar una o más entidades.';
 
     renderRoute('/register');
     const emailLabel = await screen.findByText('Email', { selector: 'label' });
@@ -173,6 +189,8 @@ describe('registration', () => {
     await user.click(await screen.findByLabelText('Nombre'));
     await user.tab();
     expect(screen.getByLabelText('Apellido')).toHaveFocus();
+    await user.tab();
+    expect(screen.getByLabelText('Tu rol en la entidad')).toHaveFocus();
     await user.tab();
     expect(screen.getByLabelText('Email')).toHaveFocus();
     await user.tab();
@@ -199,7 +217,7 @@ describe('registration', () => {
     expect(screen.getByText('Las contraseñas no coinciden.')).toBeInTheDocument();
   });
 
-  it('rejects a CUIT with a wrong check digit and a missing sector before calling the API', async () => {
+  it('rejects a CUIT with a wrong check digit and the missing fields before calling the API', async () => {
     const fetchMock = stubFetchRoutes({});
     const user = setupUser();
 
@@ -214,7 +232,9 @@ describe('registration', () => {
     expect(
       screen.getByText('Elegí si es una cooperativa o una empresa recuperada.'),
     ).toBeInTheDocument();
-    expect(screen.getByText('Elegí un rubro.')).toBeInTheDocument();
+    expect(screen.getByText('Ingresá la razón social.')).toBeInTheDocument();
+    expect(screen.getByText('Elegí al menos un tipo de actividad.')).toBeInTheDocument();
+    expect(screen.getByText('Elegí al menos un rubro.')).toBeInTheDocument();
     expect(screen.getByText('Elegí una provincia.')).toBeInTheDocument();
     expect(screen.getByText('Ingresá el departamento, partido o comuna.')).toBeInTheDocument();
     expect(screen.getByText('Ingresá la localidad o el barrio.')).toBeInTheDocument();
@@ -228,7 +248,7 @@ describe('registration', () => {
 
     renderRoute('/register');
     await fillAccountStep(user);
-    const group = await screen.findByRole('radiogroup', { name: 'Tipo de organización' });
+    const group = await screen.findByRole('radiogroup', { name: 'Tipo de entidad' });
     const cooperative = within(group).getByRole('radio', { name: /^Cooperativa/ });
     const ert = within(group).getByRole('radio', { name: /^Empresa recuperada/ });
     expect(cooperative).toHaveAttribute('tabindex', '0');
@@ -254,7 +274,7 @@ describe('registration', () => {
 
     renderRoute('/register');
     await fillAccountStep(user);
-    const address = await screen.findByRole('group', { name: 'Dirección' });
+    const address = await screen.findByRole('group', { name: 'Dirección principal' });
     expect(within(address).getByRole('combobox', { name: 'Provincia' })).toBeInTheDocument();
     for (const label of [
       'Departamento/Partido/Comuna',
@@ -313,7 +333,7 @@ describe('registration', () => {
     await submit();
 
     expect(
-      await screen.findByText('Ya hay una organización registrada con este CUIT.'),
+      await screen.findByText('Ya hay una entidad registrada con este CUIT.'),
     ).toBeInTheDocument();
     expect(screen.getByLabelText('CUIT')).toHaveAttribute('aria-invalid', 'true');
   });
@@ -355,7 +375,7 @@ describe('registration', () => {
     await expectNoA11yViolations(container);
 
     await fillAccountStep();
-    await screen.findByRole('heading', { level: 1, name: 'Tu organización' });
+    await screen.findByRole('heading', { level: 1, name: 'Tu entidad' });
     await expectNoA11yViolations(container);
 
     await fillOrganizationStep();

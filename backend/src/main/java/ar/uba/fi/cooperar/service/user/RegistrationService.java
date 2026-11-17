@@ -81,12 +81,15 @@ public class RegistrationService {
         String name = newOrganization.name().trim();
         Organization organization = new Organization(
                 name,
+                newOrganization.legalName().trim(),
                 slugs.uniqueFor(name),
                 newOrganization.type(),
                 cuit,
-                newOrganization.sector(),
+                newOrganization.sectors(),
+                newOrganization.activityTypes(),
                 newOrganization.address(),
                 account,
+                newOrganization.registrantRole().trim(),
                 clock.instant());
         try {
             // The organization references the account that registered it, and the link between both needs the two

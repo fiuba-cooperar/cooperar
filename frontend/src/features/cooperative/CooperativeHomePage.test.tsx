@@ -54,7 +54,7 @@ describe('cooperative panel', () => {
         body: {
           name: 'La Litoraleña',
           slug: 'la-litoralena',
-          sector: 'TEXTILE',
+          sectors: ['TEXTILE'],
           district: 'Avellaneda',
           locality: 'Avellaneda',
           province: 'BUENOS_AIRES',
@@ -175,7 +175,7 @@ describe('cooperative panel', () => {
 
     renderRoute('/cooperative');
 
-    expect(await screen.findByText(/Todavía no tenés ninguna organización/)).toBeInTheDocument();
+    expect(await screen.findByText(/Todavía no tenés ninguna entidad/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Cooperativa/ })).not.toBeInTheDocument();
   });
 

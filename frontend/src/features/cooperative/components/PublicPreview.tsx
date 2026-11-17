@@ -12,9 +12,11 @@ function PublicDetails({ slug }: { slug: string }) {
 
   return (
     <Group gap={8} className={styles.details}>
-      <Badge variant="light" tt="none" fz={12} fw={600}>
-        {SECTOR_LABELS[profile.sector]}
-      </Badge>
+      {profile.sectors.map((sector) => (
+        <Badge key={sector} variant="light" tt="none" fz={12} fw={600}>
+          {SECTOR_LABELS[sector]}
+        </Badge>
+      ))}
       <Text size="sm" c="dimmed">
         {profile.locality}, {PROVINCE_LABELS[profile.province]}
       </Text>

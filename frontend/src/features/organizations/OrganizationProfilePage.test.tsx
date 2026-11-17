@@ -8,7 +8,7 @@ import { renderRoute } from '@/test/render';
 const fullProfile = {
   slug: 'la-cacerola',
   name: 'La Cacerola',
-  sector: 'FOOD',
+  sectors: ['FOOD'],
   province: 'CITY_OF_BUENOS_AIRES',
   district: 'Comuna 5',
   locality: 'Almagro',
@@ -65,14 +65,14 @@ describe('OrganizationProfilePage', () => {
     renderRoute('/organizations/la-cacerola');
 
     expect(await screen.findByRole('heading', { name: 'Productos y servicios' })).toBeVisible();
-    expect(screen.getByText('Esta organización todavía no cargó productos.')).toBeVisible();
+    expect(screen.getByText('Esta entidad todavía no cargó productos.')).toBeVisible();
   });
 
   it('leaves out the sections the organization has no data for', async () => {
     stubFetchJson({
       slug: 'sin-datos',
       name: 'Sin Datos',
-      sector: 'OTHER',
+      sectors: ['OTHER'],
       province: 'SANTA_FE',
       district: 'Rosario',
       locality: 'Centro',
@@ -82,9 +82,7 @@ describe('OrganizationProfilePage', () => {
     renderRoute('/organizations/sin-datos');
 
     await screen.findByRole('heading', { level: 1, name: 'Sin Datos' });
-    expect(
-      screen.queryByRole('heading', { name: 'Sobre la organización' }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Sobre la entidad' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /@/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Ubicación' })).not.toBeInTheDocument();
   });

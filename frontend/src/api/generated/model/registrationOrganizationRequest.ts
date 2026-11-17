@@ -5,11 +5,17 @@
  * Open observatory of worker-recovered companies and worker cooperatives
  * OpenAPI spec version: v1
  */
+import type { ActivityType } from './activityType';
 import type { OrganizationType } from './organizationType';
 import type { RegistrationAddressRequest } from './registrationAddressRequest';
 import type { Sector } from './sector';
 
 export interface RegistrationOrganizationRequest {
+  /**
+   * What the organization offers: labor, services or products
+   * @minItems 1
+   */
+  activityTypes: ActivityType[];
   address: RegistrationAddressRequest;
   /**
    * With or without dashes; the check digit is validated
@@ -17,10 +23,23 @@ export interface RegistrationOrganizationRequest {
    */
   cuit: string;
   /**
+   * Razón social, as registered with the tax authority
+   * @minLength 0
+   * @maxLength 200
+   */
+  legalName: string;
+  /**
    * @minLength 0
    * @maxLength 200
    */
   name: string;
-  sector: Sector;
+  /**
+   * Role in the organization of the person registering it
+   * @minLength 0
+   * @maxLength 100
+   */
+  registrantRole: string;
+  /** @minItems 1 */
+  sectors: Sector[];
   type: OrganizationType;
 }

@@ -1,4 +1,10 @@
-import { OrganizationStatus, OrganizationType, Province, Sector } from '@/api/generated/model';
+import {
+  ActivityType,
+  OrganizationStatus,
+  OrganizationType,
+  Province,
+  Sector,
+} from '@/api/generated/model';
 
 export const ORGANIZATION_TYPE_LABELS: Record<OrganizationType, string> = {
   [OrganizationType.COOPERATIVE]: 'Cooperativa',
@@ -9,6 +15,12 @@ export const ORGANIZATION_STATUS_LABELS: Record<OrganizationStatus, string> = {
   [OrganizationStatus.PENDING]: 'Pendiente de aprobación',
   [OrganizationStatus.APPROVED]: 'Aprobada',
   [OrganizationStatus.REJECTED]: 'Rechazada',
+};
+
+export const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
+  [ActivityType.WORK]: 'Trabajo',
+  [ActivityType.SERVICE]: 'Servicio',
+  [ActivityType.PRODUCT]: 'Producto',
 };
 
 export const SECTOR_LABELS: Record<Sector, string> = {

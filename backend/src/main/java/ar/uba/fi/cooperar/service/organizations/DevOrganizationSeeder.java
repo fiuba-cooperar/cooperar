@@ -1,5 +1,6 @@
 package ar.uba.fi.cooperar.service.organizations;
 
+import ar.uba.fi.cooperar.domain.organizations.ActivityType;
 import ar.uba.fi.cooperar.domain.organizations.Address;
 import ar.uba.fi.cooperar.domain.organizations.Cuit;
 import ar.uba.fi.cooperar.domain.organizations.Organization;
@@ -15,6 +16,7 @@ import ar.uba.fi.cooperar.repository.user.UserAccountRepository;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -44,7 +46,8 @@ public class DevOrganizationSeeder implements ApplicationRunner {
     private record Sample(
             String name,
             String cuit,
-            Sector sector,
+            Set<Sector> sectors,
+            Set<ActivityType> activityTypes,
             Address address,
             String description,
             String phone,
@@ -56,7 +59,8 @@ public class DevOrganizationSeeder implements ApplicationRunner {
             new Sample(
                     "Cooperativa Ejemplo Textil",
                     "30000000015",
-                    Sector.TEXTILE,
+                    Set.of(Sector.TEXTILE),
+                    Set.of(ActivityType.PRODUCT, ActivityType.WORK),
                     new Address(Province.BUENOS_AIRES, "Avellaneda", "Avellaneda", "Av. Ejemplo 123", null),
                     "Cooperativa ficticia para desarrollo.",
                     "11 0000-0001",
@@ -66,7 +70,8 @@ public class DevOrganizationSeeder implements ApplicationRunner {
             new Sample(
                     "Cooperativa Ejemplo Alimentos",
                     "30000000023",
-                    Sector.FOOD,
+                    Set.of(Sector.FOOD, Sector.SERVICES),
+                    Set.of(ActivityType.PRODUCT, ActivityType.SERVICE),
                     new Address(
                             Province.CITY_OF_BUENOS_AIRES,
                             "Comuna 1",
@@ -82,7 +87,8 @@ public class DevOrganizationSeeder implements ApplicationRunner {
             new Sample(
                     "Cooperativa Ejemplo Gráfica",
                     "30000000031",
-                    Sector.PRINTING,
+                    Set.of(Sector.PRINTING),
+                    Set.of(ActivityType.SERVICE),
                     new Address(Province.CORDOBA, "Capital", "Córdoba", "Calle Ficticia 789", null),
                     null,
                     null,
@@ -118,12 +124,15 @@ public class DevOrganizationSeeder implements ApplicationRunner {
             }
             Organization organization = new Organization(
                     sample.name(),
+                    sample.name(),
                     slug,
                     OrganizationType.COOPERATIVE,
                     new Cuit(sample.cuit()),
-                    sample.sector(),
+                    sample.sectors(),
+                    sample.activityTypes(),
                     sample.address(),
                     account,
+                    null,
                     now);
             organization.approve(account.getId(), now);
             organization.updateProfile(new OrganizationProfile(

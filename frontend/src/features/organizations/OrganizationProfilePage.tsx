@@ -56,7 +56,11 @@ function Profile({ profile }: { profile: OrganizationProfileResponse }) {
             <Stack gap="xs" miw={0}>
               <Title order={1}>{profile.name}</Title>
               <Group gap="sm">
-                <Badge variant="light">{SECTOR_LABELS[profile.sector]}</Badge>
+                {profile.sectors.map((sector) => (
+                  <Badge key={sector} variant="light">
+                    {SECTOR_LABELS[sector]}
+                  </Badge>
+                ))}
                 <Text c="dimmed">{place}</Text>
               </Group>
             </Stack>
@@ -86,7 +90,7 @@ function Profile({ profile }: { profile: OrganizationProfileResponse }) {
             {profile.description && (
               <Paper component="section" withBorder radius="lg" p="lg" aria-labelledby="about">
                 <Title order={2} size="h3" id="about" mb="xs">
-                  Sobre la organización
+                  Sobre la entidad
                 </Title>
                 <Text className={styles.description}>{profile.description}</Text>
               </Paper>
@@ -96,7 +100,7 @@ function Profile({ profile }: { profile: OrganizationProfileResponse }) {
                 Productos y servicios
               </Title>
               {/* TODO(#21) */}
-              <Text c="dimmed">Esta organización todavía no cargó productos.</Text>
+              <Text c="dimmed">Esta entidad todavía no cargó productos.</Text>
             </section>
           </Stack>
         </Grid.Col>

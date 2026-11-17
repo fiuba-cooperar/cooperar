@@ -3,6 +3,7 @@ package ar.uba.fi.cooperar.web.user;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import ar.uba.fi.cooperar.IntegrationTest;
+import ar.uba.fi.cooperar.domain.organizations.ActivityType;
 import ar.uba.fi.cooperar.domain.organizations.Address;
 import ar.uba.fi.cooperar.domain.organizations.Cuit;
 import ar.uba.fi.cooperar.domain.organizations.Organization;
@@ -18,6 +19,7 @@ import com.jayway.jsonpath.JsonPath;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -190,11 +192,14 @@ class AuthIntegrationTest {
     private static Organization organization(String name, String cuit) {
         return new Organization(
                 name,
+                name,
                 Slugs.fromName(name),
                 OrganizationType.COOPERATIVE,
                 Cuit.parse(cuit),
-                Sector.OTHER,
+                Set.of(Sector.OTHER),
+                Set.of(ActivityType.WORK),
                 new Address(Province.SANTA_FE, "Rosario", "Centro", "Rivadavia 100", null),
+                null,
                 null,
                 Instant.now());
     }

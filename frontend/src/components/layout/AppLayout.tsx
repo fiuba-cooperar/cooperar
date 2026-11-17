@@ -54,7 +54,7 @@ function AccountActions({ onNavigate }: { onNavigate?: () => void }) {
         Ingresar
       </Button>
       <Button component={Link} to={REGISTER_PATH} h={44} px={18} fz={15} onClick={onNavigate}>
-        Registrá tu organización
+        Registrá tu entidad
       </Button>
     </>
   );
@@ -82,7 +82,7 @@ export function AppLayout() {
   const isRegisterPage = pathname === REGISTER_PATH;
   const focusedAction = isLoginPage ? (
     <Button component={Link} to={REGISTER_PATH} {...FOCUSED_ACTION_PROPS}>
-      Registrá tu organización
+      Registrá tu entidad
     </Button>
   ) : isRegisterPage ? (
     <Button component={Link} to="/login" variant="outline" {...FOCUSED_ACTION_PROPS}>

@@ -6,6 +6,7 @@
  * OpenAPI spec version: v1
  */
 
+export * from './activityType';
 export * from './addressResponse';
 export * from './currentUserResponse';
 export * from './geoPoint';

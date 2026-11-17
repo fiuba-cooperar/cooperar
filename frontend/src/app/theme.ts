@@ -2,6 +2,7 @@ import {
   createTheme,
   Input,
   InputWrapper,
+  MultiSelect,
   Select,
   Title,
   type CSSVariablesResolver,
@@ -53,6 +54,9 @@ export const theme = createTheme({
     Title: Title.extend({ styles: { root: { letterSpacing: '-0.02em' } } }),
     TextInput: { defaultProps: { size: 'md' } },
     PasswordInput: { defaultProps: { size: 'md' } },
+    // The group's size also sets its description and its checkboxes, so they match the other fields.
+    CheckboxGroup: { defaultProps: { size: 'md' } },
+    Checkbox: { defaultProps: { size: 'md' } },
     // A plain chevron like the mocks, instead of Mantine's up-and-down arrows.
     Select: Select.extend({
       defaultProps: {
@@ -63,6 +67,23 @@ export const theme = createTheme({
           'aria-hidden': true,
         }),
         rightSectionPointerEvents: 'none',
+      },
+    }),
+    // Same size and chevron as Select. Its field grows with the pills, so it takes 48px as a minimum
+    // instead of a fixed height, and centers its single row of pills or placeholder.
+    MultiSelect: MultiSelect.extend({
+      defaultProps: {
+        size: 'md',
+        rightSection: createElement(IconChevronDown, {
+          size: 18,
+          stroke: 2.2,
+          'aria-hidden': true,
+        }),
+        rightSectionPointerEvents: 'none',
+      },
+      styles: {
+        input: { height: 'auto', minHeight: 48, display: 'flex', alignItems: 'center' },
+        pillsList: { flex: 1 },
       },
     }),
   },

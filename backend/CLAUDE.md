@@ -40,7 +40,7 @@ Hoy existen estos módulos:
 
 - `health`.
 - `user`: cuentas, registro, confirmación del email, login y sesión (en `web`, `service`, `domain` y `repository`).
-- `organizations`: la entidad `Organization` (tabla `organizations`) con los datos del alta, los value objects `Cuit` y `Address` (embebido; por ahora se escribe a mano salvo la provincia, y la geocodificación llega con la #13), los enums `OrganizationType` (cooperativa o ERT), `Sector`, `Province` y `OrganizationStatus`, y la revisión del alta por el admin (`OrganizationReviewService`, `/api/admin/organizations`). El resto de la ficha llega con la #3 y la #14.
+- `organizations`: la entidad `Organization` (tabla `organizations`) con los datos del alta, los value objects `Cuit` y `Address` (embebido; por ahora se escribe a mano salvo la provincia, y la geocodificación llega con la #13), los enums `OrganizationType` (cooperativa o ERT), `Sector` y `ActivityType` (una organización tiene uno o más de cada uno, en `organization_sectors` y `organization_activity_types`), `Province` y `OrganizationStatus`, la razón social y el rol de quien la registró, y la revisión del alta por el admin (`OrganizationReviewService`, `/api/admin/organizations`). El resto de la ficha llega con la #3 y la #14.
 - La ficha pública de `organizations` (`GET /api/organizations/{slug}`) solo muestra las organizaciones aprobadas y deja afuera el CUIT y las referencias de la dirección. Con el perfil `dev` se cargan al arrancar tres organizaciones ficticias de ejemplo, ya aprobadas, y una cuenta para registrarlas.
 - `notifications` (solo en `service`): `AccountNotifications` arma los emails en español y los manda por la interfaz `EmailSender`, cuya implementación SMTP está en `integration/smtp`.
 

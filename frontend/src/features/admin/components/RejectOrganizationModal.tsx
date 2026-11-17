@@ -34,8 +34,8 @@ export function RejectOrganizationModal({
       <form onSubmit={handleSubmit} noValidate>
         <Stack gap="md">
           <Text size="sm">
-            La cuenta que registró la organización va a ver este motivo en su panel y en el email
-            que le enviamos.
+            La cuenta que registró la entidad va a ver este motivo en su panel y en el email que le
+            enviamos.
           </Text>
           <Textarea
             label="Motivo"

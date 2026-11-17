@@ -1,6 +1,6 @@
 /** Sections of the public site, in menu order. None of them exists yet, so they render a "coming soon" page. */
 export const PUBLIC_SECTIONS = [
-  { path: '/organizations', label: 'Empresas' },
+  { path: '/organizations', label: 'Entidades' },
   { path: '/catalog', label: 'Catálogo' },
   { path: '/map', label: 'Mapa' },
   { path: '/fairs', label: 'Ferias' },

@@ -7,7 +7,7 @@ import { stubFetchRoutes } from '@/test/http';
 import { renderRoute } from '@/test/render';
 
 const MENU = [
-  ['Empresas', '/organizations'],
+  ['Entidades', '/organizations'],
   ['Catálogo', '/catalog'],
   ['Mapa', '/map'],
   ['Ferias', '/fairs'],
@@ -30,7 +30,7 @@ describe('public site', () => {
         '/login',
       );
       expect(
-        within(screen.getByRole('banner')).getByRole('link', { name: 'Registrá tu organización' }),
+        within(screen.getByRole('banner')).getByRole('link', { name: 'Registrá tu entidad' }),
       ).toHaveAttribute('href', '/register');
       expect(within(screen.getByRole('contentinfo')).getByText(/FIUBA/)).toBeInTheDocument();
       unmount();
@@ -127,7 +127,7 @@ describe('public site', () => {
     renderRoute('/');
 
     await userEvent.click(
-      within(screen.getByRole('banner')).getByRole('link', { name: 'Registrá tu organización' }),
+      within(screen.getByRole('banner')).getByRole('link', { name: 'Registrá tu entidad' }),
     );
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Tu cuenta' })).toBeInTheDocument();

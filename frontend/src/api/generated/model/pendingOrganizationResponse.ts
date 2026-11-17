@@ -5,19 +5,23 @@
  * Open observatory of worker-recovered companies and worker cooperatives
  * OpenAPI spec version: v1
  */
+import type { ActivityType } from './activityType';
 import type { AddressResponse } from './addressResponse';
 import type { OrganizationType } from './organizationType';
 import type { RegistrantResponse } from './registrantResponse';
 import type { Sector } from './sector';
 
 export interface PendingOrganizationResponse {
+  activityTypes: ActivityType[];
   address: AddressResponse;
   /** The 11 digits, without dashes */
   cuit: string;
   id: string;
+  /** Missing for organizations registered before it was asked for */
+  legalName?: string;
   name: string;
   registeredAt: string;
   registeredBy: RegistrantResponse;
-  sector: Sector;
+  sectors: Sector[];
   type: OrganizationType;
 }

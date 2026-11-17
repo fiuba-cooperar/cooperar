@@ -18,7 +18,7 @@ export interface OrganizationProfileResponse {
   name: string;
   phone?: string;
   province: Province;
-  sector: Sector;
+  sectors: Sector[];
   slug: string;
   street: string;
 }

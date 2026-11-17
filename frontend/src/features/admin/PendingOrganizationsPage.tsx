@@ -13,7 +13,7 @@ import { RejectOrganizationModal } from './components/RejectOrganizationModal';
 import styles from './PendingOrganizationsPage.module.css';
 
 const REVIEW_ERRORS: Record<ReviewError['reason'], string> = {
-  'already-reviewed': 'Otra persona del observatorio ya revisó esta organización.',
+  'already-reviewed': 'Otra persona del observatorio ya revisó esta entidad.',
   unavailable: 'No pudimos guardar la revisión por un problema de conexión. Intentá de nuevo.',
 };
 
@@ -47,8 +47,7 @@ export function PendingOrganizationsPage() {
       <Stack gap={6}>
         <Title order={1}>Altas pendientes</Title>
         <Text c="dimmed">
-          Organizaciones que se registraron y confirmaron su email, de la más antigua a la más
-          nueva.
+          Entidades que se registraron y confirmaron su email, de la más antigua a la más nueva.
         </Text>
       </Stack>
       <Text role="status" fw={600}>

@@ -17,9 +17,11 @@ const ADMIN = {
 const LITORALENA = {
   id: 'c1',
   name: 'La Litoraleña',
+  legalName: 'Cooperativa de Trabajo La Litoraleña Ltda.',
   type: 'COOPERATIVE',
   cuit: '30123456781',
-  sector: 'FOOD',
+  sectors: ['FOOD', 'SERVICES'],
+  activityTypes: ['WORK', 'PRODUCT'],
   address: {
     province: 'SANTA_FE',
     district: 'Rosario',
@@ -28,7 +30,12 @@ const LITORALENA = {
     additionalReferences: 'Portón verde',
   },
   registeredAt: '2026-10-28T15:00:00Z',
-  registeredBy: { firstName: 'Ana', lastName: 'Pérez', email: 'ana@coop.local' },
+  registeredBy: {
+    firstName: 'Ana',
+    lastName: 'Pérez',
+    email: 'ana@coop.local',
+    role: 'Presidenta',
+  },
 };
 
 const TEXTIL = {
@@ -36,7 +43,10 @@ const TEXTIL = {
   id: 'c2',
   name: 'Textil Sur',
   type: 'COOPERATIVE',
+  legalName: undefined,
   address: { ...LITORALENA.address, additionalReferences: undefined },
+  // Registered before the legal name and the role were asked for.
+  registeredBy: { firstName: 'Beto', lastName: 'Gómez', email: 'beto@coop.local' },
 };
 
 function signInWithQueue(queue: object[], routes: Parameters<typeof stubFetchRoutes>[0] = {}) {
@@ -60,17 +70,24 @@ describe('pending organizations', () => {
 
     const card = await screen.findByRole('article', { name: 'La Litoraleña' });
     expect(within(card).getByText('Cooperativa')).toBeInTheDocument();
+    expect(
+      within(card).getByText('Cooperativa de Trabajo La Litoraleña Ltda.'),
+    ).toBeInTheDocument();
     expect(within(card).getByText('30-12345678-1')).toBeInTheDocument();
-    expect(within(card).getByText('Alimentos')).toBeInTheDocument();
+    expect(within(card).getByText('Trabajo, Producto')).toBeInTheDocument();
+    expect(within(card).getByText('Alimentos, Servicios')).toBeInTheDocument();
     expect(within(card).getByText('Rivadavia 100, Centro, Rosario, Santa Fe')).toBeInTheDocument();
     expect(within(card).getByText('Portón verde')).toBeInTheDocument();
     expect(within(card).getByText('28 de octubre de 2026')).toBeInTheDocument();
-    expect(within(card).getByText('Ana Pérez (ana@coop.local)')).toBeInTheDocument();
+    expect(within(card).getByText('Ana Pérez, Presidenta (ana@coop.local)')).toBeInTheDocument();
     expect(
       screen
         .getAllByRole('article')
         .map((article) => within(article).getByRole('heading').textContent),
     ).toEqual(['La Litoraleña', 'Textil Sur']);
+    const textil = screen.getByRole('article', { name: 'Textil Sur' });
+    expect(within(textil).queryByText('Razón social')).not.toBeInTheDocument();
+    expect(within(textil).getByText('Beto Gómez (beto@coop.local)')).toBeInTheDocument();
     expect(
       within(screen.getByRole('article', { name: 'Textil Sur' })).queryByText('Referencias'),
     ).not.toBeInTheDocument();
@@ -131,7 +148,7 @@ describe('pending organizations', () => {
     await userEvent.click(within(card).getByRole('button', { name: 'Aprobar' }));
 
     expect(
-      await screen.findByText('Otra persona del observatorio ya revisó esta organización.'),
+      await screen.findByText('Otra persona del observatorio ya revisó esta entidad.'),
     ).toBeInTheDocument();
   });
 

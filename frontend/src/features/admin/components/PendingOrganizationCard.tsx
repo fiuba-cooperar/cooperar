@@ -2,6 +2,7 @@ import { Badge, Button, Group, Paper, Stack, Text, Title } from '@mantine/core';
 import type { PendingOrganizationResponse } from '@/api/generated/model';
 import { formatCuit } from '@/features/organizations/cuit';
 import {
+  ACTIVITY_TYPE_LABELS,
   ORGANIZATION_TYPE_LABELS,
   PROVINCE_LABELS,
   SECTOR_LABELS,
@@ -28,10 +29,20 @@ export function PendingOrganizationCard({
   const { address, registeredBy } = organization;
   const headingId = `pending-${organization.id}`;
   const details = [
+    ...(organization.legalName
+      ? [{ term: 'Razón social', description: organization.legalName }]
+      : []),
     { term: 'CUIT', description: formatCuit(organization.cuit) },
-    { term: 'Rubro', description: SECTOR_LABELS[organization.sector] },
     {
-      term: 'Dirección',
+      term: 'Tipo de actividad',
+      description: organization.activityTypes.map((type) => ACTIVITY_TYPE_LABELS[type]).join(', '),
+    },
+    {
+      term: 'Rubros',
+      description: organization.sectors.map((sector) => SECTOR_LABELS[sector]).join(', '),
+    },
+    {
+      term: 'Dirección principal',
       description: [
         address.street,
         address.locality,
@@ -45,7 +56,9 @@ export function PendingOrganizationCard({
     { term: 'Registrada el', description: DATE_FORMAT.format(new Date(organization.registeredAt)) },
     {
       term: 'Registrada por',
-      description: `${registeredBy.firstName} ${registeredBy.lastName} (${registeredBy.email})`,
+      description: `${registeredBy.firstName} ${registeredBy.lastName}${
+        registeredBy.role ? `, ${registeredBy.role}` : ''
+      } (${registeredBy.email})`,
     },
   ];
 

@@ -1,7 +1,9 @@
 package ar.uba.fi.cooperar.domain.organizations;
 
 import ar.uba.fi.cooperar.domain.user.UserAccount;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -12,6 +14,10 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 import org.locationtech.jts.geom.Point;
 
@@ -29,6 +35,10 @@ public class Organization {
     @Column(nullable = false)
     private String name;
 
+    /** Missing for organizations registered before it was asked for. */
+    @Column(name = "legal_name")
+    private String legalName;
+
     /** Fixed at creation: renaming the organization must not break links that were already shared. */
     @Column(nullable = false, unique = true, updatable = false)
     private String slug;
@@ -40,9 +50,17 @@ public class Organization {
     @Column(nullable = false)
     private String cuit;
 
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "organization_sectors", joinColumns = @JoinColumn(name = "organization_id"))
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Sector sector;
+    @Column(name = "sector")
+    private Set<Sector> sectors = new HashSet<>();
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "organization_activity_types", joinColumns = @JoinColumn(name = "organization_id"))
+    @Enumerated(EnumType.STRING)
+    @Column(name = "activity_type")
+    private Set<ActivityType> activityTypes = new HashSet<>();
 
     @Embedded
     private Address address;
@@ -63,6 +81,10 @@ public class Organization {
     @JoinColumn(name = "registered_by")
     private UserAccount registeredBy;
 
+    /** Free text: the role in the organization of the person who registered it. Missing for older registrations. */
+    @Column(name = "registrant_role")
+    private String registrantRole;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -79,22 +101,34 @@ public class Organization {
 
     public Organization(
             String name,
+            String legalName,
             String slug,
             OrganizationType type,
             Cuit cuit,
-            Sector sector,
+            Set<Sector> sectors,
+            Set<ActivityType> activityTypes,
             Address address,
             UserAccount registeredBy,
+            String registrantRole,
             Instant createdAt) {
+        if (sectors.isEmpty()) {
+            throw new IllegalArgumentException("An organization needs at least one sector");
+        }
+        if (activityTypes.isEmpty()) {
+            throw new IllegalArgumentException("An organization needs at least one activity type");
+        }
         this.id = UUID.randomUUID();
         this.name = name;
+        this.legalName = legalName;
         this.slug = slug;
         this.type = type;
         this.cuit = cuit.digits();
-        this.sector = sector;
+        this.sectors.addAll(sectors);
+        this.activityTypes.addAll(activityTypes);
         this.address = address;
         this.status = OrganizationStatus.PENDING;
         this.registeredBy = registeredBy;
+        this.registrantRole = registrantRole;
         this.createdAt = createdAt;
     }
 
@@ -148,8 +182,18 @@ public class Organization {
         return new Cuit(cuit);
     }
 
-    public Sector getSector() {
-        return sector;
+    public String getLegalName() {
+        return legalName;
+    }
+
+    /** In the order the enum declares them, so every view lists them the same way. */
+    public Set<Sector> getSectors() {
+        return ordered(sectors, Sector.class);
+    }
+
+    /** In the order the enum declares them, so every view lists them the same way. */
+    public Set<ActivityType> getActivityTypes() {
+        return ordered(activityTypes, ActivityType.class);
     }
 
     public Address getAddress() {
@@ -181,11 +225,21 @@ public class Organization {
         return registeredBy;
     }
 
+    public String getRegistrantRole() {
+        return registrantRole;
+    }
+
     public Instant getCreatedAt() {
         return createdAt;
     }
 
     public String getRejectionReason() {
         return rejectionReason;
+    }
+
+    private static <E extends Enum<E>> Set<E> ordered(Collection<E> values, Class<E> type) {
+        Set<E> copy = EnumSet.noneOf(type);
+        copy.addAll(values);
+        return copy;
     }
 }

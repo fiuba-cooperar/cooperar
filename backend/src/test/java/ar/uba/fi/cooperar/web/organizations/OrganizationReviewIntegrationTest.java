@@ -72,11 +72,14 @@ class OrganizationReviewIntegrationTest {
                   "id": "%s",
                   "name": "La Litoraleña",
                   "type": "ERT",
+                  "legalName": "Cooperativa de Trabajo La Litoraleña Ltda.",
                   "cuit": "30123456781",
-                  "sector": "FOOD",
+                  "sectors": ["FOOD", "TEXTILE"],
+                  "activityTypes": ["WORK", "PRODUCT"],
                   "address": {"province": "SANTA_FE", "district": "Rosario", "locality": "Centro",
                               "street": "Rivadavia 100", "additionalReferences": null},
-                  "registeredBy": {"firstName": "Ana", "lastName": "Pérez", "email": "ana@coop.local"}
+                  "registeredBy": {"firstName": "Ana", "lastName": "Pérez", "email": "ana@coop.local",
+                                   "role": "Presidenta"}
                 }]
                 """.formatted(organizationId));
     }
@@ -182,9 +185,12 @@ class OrganizationReviewIntegrationTest {
                   "account": {"firstName": "Ana", "lastName": "Pérez", "email": "%s", "password": "secret-password"},
                   "organization": {
                     "name": "%s",
+                    "legalName": "Cooperativa de Trabajo La Litoraleña Ltda.",
                     "type": "ERT",
                     "cuit": "%s",
-                    "sector": "FOOD",
+                    "sectors": ["TEXTILE", "FOOD"],
+                    "activityTypes": ["PRODUCT", "WORK"],
+                    "registrantRole": "Presidenta",
                     "address": {"province": "SANTA_FE", "district": "Rosario", "locality": "Centro",
                                 "street": "Rivadavia 100"}
                   }

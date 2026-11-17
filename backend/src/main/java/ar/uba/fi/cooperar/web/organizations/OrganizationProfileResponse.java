@@ -5,6 +5,7 @@ import ar.uba.fi.cooperar.domain.organizations.Organization;
 import ar.uba.fi.cooperar.domain.organizations.Province;
 import ar.uba.fi.cooperar.domain.organizations.Sector;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.Set;
 import org.locationtech.jts.geom.Point;
 
 /**
@@ -15,7 +16,7 @@ import org.locationtech.jts.geom.Point;
 public record OrganizationProfileResponse(
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String slug,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String name,
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Sector sector,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Set<Sector> sectors,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Province province,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String district,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String locality,
@@ -42,7 +43,7 @@ public record OrganizationProfileResponse(
         return new OrganizationProfileResponse(
                 organization.getSlug(),
                 organization.getName(),
-                organization.getSector(),
+                organization.getSectors(),
                 address.province(),
                 address.district(),
                 address.locality(),

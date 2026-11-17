@@ -3,6 +3,7 @@ package ar.uba.fi.cooperar.web.organizations;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import ar.uba.fi.cooperar.IntegrationTest;
+import ar.uba.fi.cooperar.domain.organizations.ActivityType;
 import ar.uba.fi.cooperar.domain.organizations.Address;
 import ar.uba.fi.cooperar.domain.organizations.Cuit;
 import ar.uba.fi.cooperar.domain.organizations.Organization;
@@ -15,6 +16,7 @@ import ar.uba.fi.cooperar.domain.user.UserAccount;
 import ar.uba.fi.cooperar.repository.organizations.OrganizationRepository;
 import ar.uba.fi.cooperar.repository.user.UserAccountRepository;
 import java.time.Instant;
+import java.util.Set;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
@@ -58,7 +60,7 @@ class OrganizationProfileIntegrationTest {
                         {
                           "slug": "la-cacerola",
                           "name": "La Cacerola",
-                          "sector": "FOOD",
+                          "sectors": ["FOOD", "SERVICES"],
                           "province": "CITY_OF_BUENOS_AIRES",
                           "district": "Comuna 5",
                           "locality": "Almagro",
@@ -82,7 +84,7 @@ class OrganizationProfileIntegrationTest {
                 .containsOnlyKeys(
                         "slug",
                         "name",
-                        "sector",
+                        "sectors",
                         "province",
                         "district",
                         "locality",
@@ -137,12 +139,15 @@ class OrganizationProfileIntegrationTest {
     private static Organization organization(String name, String slug, String cuit, UserAccount registeredBy) {
         return new Organization(
                 name,
+                name + " Ltda.",
                 slug,
                 OrganizationType.COOPERATIVE,
                 Cuit.parse(cuit),
-                Sector.FOOD,
+                Set.of(Sector.FOOD, Sector.SERVICES),
+                Set.of(ActivityType.PRODUCT),
                 new Address(Province.CITY_OF_BUENOS_AIRES, "Comuna 5", "Almagro", "Gascón 1234", "Portón verde"),
                 registeredBy,
+                "Tesorera",
                 Instant.now());
     }
 }

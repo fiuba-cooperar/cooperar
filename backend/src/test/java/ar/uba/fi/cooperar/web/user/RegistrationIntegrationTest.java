@@ -128,6 +128,25 @@ class RegistrationIntegrationTest {
     }
 
     @Test
+    void requiresAtLeastOneSectorAndOneActivityType() {
+        String body = body("ana@coop.local", "30-12345678-1", "secret-password");
+
+        assertThat(post("/api/auth/register", body.replace("[\"FOOD\"]", "[]"))).hasStatus(HttpStatus.BAD_REQUEST);
+        assertThat(post("/api/auth/register", body.replace("[\"PRODUCT\"]", "[]")))
+                .hasStatus(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void requiresTheLegalNameAndTheRegistrantRole() {
+        String body = body("ana@coop.local", "30-12345678-1", "secret-password");
+
+        assertThat(post("/api/auth/register", body.replace("Cooperativa de Trabajo La Litoraleña Ltda.", " ")))
+                .hasStatus(HttpStatus.BAD_REQUEST);
+        assertThat(post("/api/auth/register", body.replace("\"Presidenta\"", "\"\"")))
+                .hasStatus(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     void rejectsMissingFieldsAndShortPasswords() {
         assertThat(post("/api/auth/register", "{}")).hasStatus(HttpStatus.BAD_REQUEST);
         assertThat(post("/api/auth/register", body("ana@coop.local", "30-12345678-1", "short")))
@@ -154,9 +173,12 @@ class RegistrationIntegrationTest {
                   "account": {"firstName": "Ana", "lastName": "Pérez", "email": "%s", "password": "%s"},
                   "organization": {
                     "name": "La Litoraleña",
+                    "legalName": "Cooperativa de Trabajo La Litoraleña Ltda.",
                     "type": "ERT",
                     "cuit": "%s",
-                    "sector": "FOOD",
+                    "sectors": ["FOOD"],
+                    "activityTypes": ["PRODUCT"],
+                    "registrantRole": "Presidenta",
                     "address": {
                       "province": "SANTA_FE",
                       "district": "Rosario",

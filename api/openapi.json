@@ -310,6 +310,10 @@
   },
   "components" : {
     "schemas" : {
+      "ActivityType" : {
+        "type" : "string",
+        "enum" : [ "WORK", "SERVICE", "PRODUCT" ]
+      },
       "AddressResponse" : {
         "type" : "object",
         "properties" : {
@@ -437,8 +441,12 @@
           "province" : {
             "$ref" : "#/components/schemas/Province"
           },
-          "sector" : {
-            "$ref" : "#/components/schemas/Sector"
+          "sectors" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Sector"
+            },
+            "uniqueItems" : true
           },
           "slug" : {
             "type" : "string"
@@ -447,7 +455,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "district", "locality", "name", "province", "sector", "slug", "street" ]
+        "required" : [ "district", "locality", "name", "province", "sectors", "slug", "street" ]
       },
       "OrganizationStatus" : {
         "type" : "string",
@@ -484,6 +492,13 @@
       "PendingOrganizationResponse" : {
         "type" : "object",
         "properties" : {
+          "activityTypes" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ActivityType"
+            },
+            "uniqueItems" : true
+          },
           "address" : {
             "$ref" : "#/components/schemas/AddressResponse"
           },
@@ -495,6 +510,10 @@
             "type" : "string",
             "format" : "uuid"
           },
+          "legalName" : {
+            "type" : "string",
+            "description" : "Missing for organizations registered before it was asked for"
+          },
           "name" : {
             "type" : "string"
           },
@@ -505,14 +524,18 @@
           "registeredBy" : {
             "$ref" : "#/components/schemas/RegistrantResponse"
           },
-          "sector" : {
-            "$ref" : "#/components/schemas/Sector"
+          "sectors" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Sector"
+            },
+            "uniqueItems" : true
           },
           "type" : {
             "$ref" : "#/components/schemas/OrganizationType"
           }
         },
-        "required" : [ "address", "cuit", "id", "name", "registeredAt", "registeredBy", "sector", "type" ]
+        "required" : [ "activityTypes", "address", "cuit", "id", "name", "registeredAt", "registeredBy", "sectors", "type" ]
       },
       "Province" : {
         "type" : "string",
@@ -539,6 +562,10 @@
           },
           "lastName" : {
             "type" : "string"
+          },
+          "role" : {
+            "type" : "string",
+            "description" : "Role in the organization; missing for organizations registered before it was asked for"
           }
         },
         "required" : [ "email", "firstName", "lastName" ]
@@ -606,6 +633,15 @@
       "RegistrationOrganizationRequest" : {
         "type" : "object",
         "properties" : {
+          "activityTypes" : {
+            "type" : "array",
+            "description" : "What the organization offers: labor, services or products",
+            "items" : {
+              "$ref" : "#/components/schemas/ActivityType"
+            },
+            "minItems" : 1,
+            "uniqueItems" : true
+          },
           "address" : {
             "$ref" : "#/components/schemas/RegistrationAddressRequest"
           },
@@ -615,19 +651,36 @@
             "example" : "30-12345678-1",
             "minLength" : 1
           },
+          "legalName" : {
+            "type" : "string",
+            "description" : "Razón social, as registered with the tax authority",
+            "maxLength" : 200,
+            "minLength" : 0
+          },
           "name" : {
             "type" : "string",
             "maxLength" : 200,
             "minLength" : 0
           },
-          "sector" : {
-            "$ref" : "#/components/schemas/Sector"
+          "registrantRole" : {
+            "type" : "string",
+            "description" : "Role in the organization of the person registering it",
+            "maxLength" : 100,
+            "minLength" : 0
+          },
+          "sectors" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Sector"
+            },
+            "minItems" : 1,
+            "uniqueItems" : true
           },
           "type" : {
             "$ref" : "#/components/schemas/OrganizationType"
           }
         },
-        "required" : [ "address", "cuit", "name", "sector", "type" ]
+        "required" : [ "activityTypes", "address", "cuit", "legalName", "name", "registrantRole", "sectors", "type" ]
       },
       "RegistrationRequest" : {
         "type" : "object",

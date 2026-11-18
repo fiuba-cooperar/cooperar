@@ -7,16 +7,21 @@ import ar.uba.fi.cooperar.domain.organizations.ActivityType;
 import ar.uba.fi.cooperar.domain.organizations.Address;
 import ar.uba.fi.cooperar.domain.organizations.Organization;
 import ar.uba.fi.cooperar.domain.organizations.OrganizationDetails;
-import ar.uba.fi.cooperar.domain.organizations.OrganizationProfile;
 import ar.uba.fi.cooperar.domain.organizations.OrganizationType;
+import ar.uba.fi.cooperar.domain.organizations.ProfileActivity;
+import ar.uba.fi.cooperar.domain.organizations.ProfileContact;
+import ar.uba.fi.cooperar.domain.organizations.ProfileIdentification;
 import ar.uba.fi.cooperar.domain.organizations.Province;
 import ar.uba.fi.cooperar.domain.organizations.RegistrationRequest;
+import ar.uba.fi.cooperar.domain.organizations.ResponseTime;
 import ar.uba.fi.cooperar.domain.organizations.Sector;
+import ar.uba.fi.cooperar.domain.organizations.Visibility;
 import ar.uba.fi.cooperar.domain.user.Role;
 import ar.uba.fi.cooperar.domain.user.UserAccount;
 import ar.uba.fi.cooperar.repository.organizations.OrganizationRepository;
 import ar.uba.fi.cooperar.repository.organizations.RegistrationRequestRepository;
 import ar.uba.fi.cooperar.repository.user.UserAccountRepository;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Set;
 import org.assertj.core.api.InstanceOfAssertFactories;
@@ -51,11 +56,28 @@ class OrganizationProfileIntegrationTest {
     @Test
     void returnsThePublicProfileWithoutAToken() {
         Organization organization = approved("La Cacerola", "la-cacerola", "30-71234567-1");
-        organization.updateProfile(new OrganizationProfile(
-                "Panificados",
+        organization.updateActivity(
+                new ProfileActivity(
+                        Set.of(Sector.FOOD, Sector.SERVICES),
+                        Set.of(ActivityType.PRODUCT),
+                        "Panificados",
+                        2003,
+                        12,
+                        Visibility.PUBLIC),
+                2026);
+        organization.updateLocation(
+                organization.getAddress(), Visibility.PUBLIC, WGS84.createPoint(new Coordinate(-58.42, -34.6)));
+        organization.updateContact(new ProfileContact(
                 "11 1234-5678",
+                Visibility.PUBLIC,
+                "11 8765-4321",
+                Visibility.PUBLIC,
                 "contacto@example.org",
-                WGS84.createPoint(new Coordinate(-58.42, -34.6))));
+                Visibility.PUBLIC,
+                "https://lacacerola.example.org",
+                "@lacacerola",
+                "Lunes a viernes de 8 a 17",
+                ResponseTime.ONE_DAY));
         organizations.saveAndFlush(organization);
 
         assertThat(mvc.get().uri("/api/organizations/la-cacerola"))
@@ -65,17 +87,72 @@ class OrganizationProfileIntegrationTest {
                         {
                           "slug": "la-cacerola",
                           "name": "La Cacerola",
+                          "type": "COOPERATIVE",
+                          "legalName": null,
                           "sectors": ["FOOD", "SERVICES"],
+                          "activityTypes": ["PRODUCT"],
                           "province": "CITY_OF_BUENOS_AIRES",
                           "district": "Comuna 5",
                           "locality": "Almagro",
                           "street": "Gascón 1234",
+                          "additionalReferences": "Portón verde",
                           "description": "Panificados",
+                          "startYear": 2003,
+                          "workerCount": 12,
                           "phone": "11 1234-5678",
+                          "whatsapp": "11 8765-4321",
                           "email": "contacto@example.org",
-                          "location": {"latitude": -34.6, "longitude": -58.42}
+                          "website": "https://lacacerola.example.org",
+                          "socialMedia": "@lacacerola",
+                          "openingHours": "Lunes a viernes de 8 a 17",
+                          "responseTime": "ONE_DAY",
+                          "location": {"latitude": -34.6, "longitude": -58.42, "approximate": false}
                         }
                         """);
+    }
+
+    @Test
+    void leavesOutEveryFieldTheOrganizationMadePrivate() {
+        Organization organization = approved("Reservada", "reservada", "30-71234567-1");
+        organization.updateIdentification(
+                new ProfileIdentification("Reservada", "Reservada Ltda.", Visibility.PRIVATE));
+        organization.updateActivity(
+                new ProfileActivity(
+                        Set.of(Sector.FOOD), Set.of(ActivityType.PRODUCT), null, null, 12, Visibility.PRIVATE),
+                2026);
+        organization.updateLocation(
+                organization.getAddress(),
+                Visibility.PRIVATE,
+                WGS84.createPoint(new Coordinate(-58.368443, -34.617608)));
+        organization.updateContact(new ProfileContact(
+                "11 1234-5678",
+                Visibility.PRIVATE,
+                "11 8765-4321",
+                Visibility.PRIVATE,
+                "contacto@example.org",
+                Visibility.PRIVATE,
+                null,
+                null,
+                null,
+                null));
+        organizations.saveAndFlush(organization);
+
+        String body = new String(
+                mvc.get()
+                        .uri("/api/organizations/reservada")
+                        .exchange()
+                        .getResponse()
+                        .getContentAsByteArray(),
+                StandardCharsets.UTF_8);
+
+        assertThat(body)
+                .doesNotContain("Reservada Ltda.", "11 1234-5678", "11 8765-4321", "contacto@example.org")
+                .doesNotContain("Gascón", "Portón", "30712345671", "-34.617608", "-58.368443");
+        assertThat(mvc.get().uri("/api/organizations/reservada")).bodyJson().isLenientlyEqualTo("""
+                {"legalName": null, "workerCount": null, "street": null, "additionalReferences": null,
+                 "phone": null, "whatsapp": null, "email": null,
+                 "location": {"latitude": -34.62, "longitude": -58.37, "approximate": true}}
+                """);
     }
 
     @Test
@@ -89,14 +166,25 @@ class OrganizationProfileIntegrationTest {
                 .containsOnlyKeys(
                         "slug",
                         "name",
+                        "type",
+                        "legalName",
                         "sectors",
+                        "activityTypes",
                         "province",
                         "district",
                         "locality",
                         "street",
+                        "additionalReferences",
                         "description",
+                        "startYear",
+                        "workerCount",
                         "phone",
+                        "whatsapp",
                         "email",
+                        "website",
+                        "socialMedia",
+                        "openingHours",
+                        "responseTime",
                         "location");
     }
 

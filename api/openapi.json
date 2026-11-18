@@ -339,6 +339,188 @@
         "tags" : [ "auth" ]
       }
     },
+    "/api/cooperative/organizations/{id}/profile" : {
+      "get" : {
+        "operationId" : "getManagedOrganizationProfile",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CooperativeOrganizationProfileResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "The whole profile of an organization the account manages, private fields included",
+        "tags" : [ "cooperative-organization-profile" ]
+      }
+    },
+    "/api/cooperative/organizations/{id}/profile/activity" : {
+      "put" : {
+        "description" : "Answers 400 when the start year is in the future.",
+        "operationId" : "updateProfileActivity",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ProfileActivityRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CooperativeOrganizationProfileResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Save the sectors, what the organization offers, its description and its size",
+        "tags" : [ "cooperative-organization-profile" ]
+      }
+    },
+    "/api/cooperative/organizations/{id}/profile/contact" : {
+      "put" : {
+        "operationId" : "updateProfileContact",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ProfileContactRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CooperativeOrganizationProfileResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Save the contact details, the opening hours and the usual response time",
+        "tags" : [ "cooperative-organization-profile" ]
+      }
+    },
+    "/api/cooperative/organizations/{id}/profile/identification" : {
+      "put" : {
+        "operationId" : "updateProfileIdentification",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ProfileIdentificationRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CooperativeOrganizationProfileResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Save the name and the legal name; the slug stays the same",
+        "tags" : [ "cooperative-organization-profile" ]
+      }
+    },
+    "/api/cooperative/organizations/{id}/profile/location" : {
+      "put" : {
+        "description" : "Without a `point`, a changed address is located again; if it cannot be found, the profile is saved without a point.",
+        "operationId" : "updateProfileLocation",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ProfileLocationRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CooperativeOrganizationProfileResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Save the address and the point on the map",
+        "tags" : [ "cooperative-organization-profile" ]
+      }
+    },
     "/api/cooperative/registration-requests" : {
       "get" : {
         "operationId" : "listRegistrationRequestsSent",
@@ -669,6 +851,39 @@
         },
         "required" : [ "activityTypes", "address", "cuit", "id", "name", "registeredAt", "reviews", "sectors", "status", "submittedAt", "type" ]
       },
+      "CooperativeOrganizationProfileResponse" : {
+        "type" : "object",
+        "properties" : {
+          "activity" : {
+            "$ref" : "#/components/schemas/ProfileActivityResponse"
+          },
+          "contact" : {
+            "$ref" : "#/components/schemas/ProfileContactResponse"
+          },
+          "cuit" : {
+            "type" : "string",
+            "description" : "11 digits; validated by the observatory and always private"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "identification" : {
+            "$ref" : "#/components/schemas/ProfileIdentificationResponse"
+          },
+          "location" : {
+            "$ref" : "#/components/schemas/ProfileLocationResponse"
+          },
+          "slug" : {
+            "type" : "string"
+          },
+          "type" : {
+            "$ref" : "#/components/schemas/OrganizationType",
+            "description" : "Validated by the observatory; always public"
+          }
+        },
+        "required" : [ "activity", "contact", "cuit", "id", "identification", "location", "slug", "type" ]
+      },
       "CooperativeRegistrationRequestResponse" : {
         "type" : "object",
         "properties" : {
@@ -800,7 +1015,25 @@
         },
         "required" : [ "outcome", "reviewedAt" ]
       },
-      "GeoPoint" : {
+      "GeoPointRequest" : {
+        "type" : "object",
+        "properties" : {
+          "latitude" : {
+            "type" : "number",
+            "format" : "double",
+            "maximum" : 90,
+            "minimum" : -90
+          },
+          "longitude" : {
+            "type" : "number",
+            "format" : "double",
+            "maximum" : 180,
+            "minimum" : -180
+          }
+        },
+        "required" : [ "latitude", "longitude" ]
+      },
+      "GeoPointResponse" : {
         "type" : "object",
         "properties" : {
           "latitude" : {
@@ -848,6 +1081,17 @@
       "OrganizationProfileResponse" : {
         "type" : "object",
         "properties" : {
+          "activityTypes" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ActivityType"
+            },
+            "uniqueItems" : true
+          },
+          "additionalReferences" : {
+            "type" : "string",
+            "description" : "Only along with the street"
+          },
           "description" : {
             "type" : "string"
           },
@@ -857,13 +1101,19 @@
           "email" : {
             "type" : "string"
           },
+          "legalName" : {
+            "type" : "string"
+          },
           "locality" : {
             "type" : "string"
           },
           "location" : {
-            "$ref" : "#/components/schemas/GeoPoint"
+            "$ref" : "#/components/schemas/PublicLocation"
           },
           "name" : {
+            "type" : "string"
+          },
+          "openingHours" : {
             "type" : "string"
           },
           "phone" : {
@@ -871,6 +1121,9 @@
           },
           "province" : {
             "$ref" : "#/components/schemas/Province"
+          },
+          "responseTime" : {
+            "$ref" : "#/components/schemas/ResponseTime"
           },
           "sectors" : {
             "type" : "array",
@@ -882,11 +1135,32 @@
           "slug" : {
             "type" : "string"
           },
-          "street" : {
+          "socialMedia" : {
             "type" : "string"
+          },
+          "startYear" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "street" : {
+            "type" : "string",
+            "description" : "Missing when the organization keeps it private"
+          },
+          "type" : {
+            "$ref" : "#/components/schemas/OrganizationType"
+          },
+          "website" : {
+            "type" : "string"
+          },
+          "whatsapp" : {
+            "type" : "string"
+          },
+          "workerCount" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         },
-        "required" : [ "district", "locality", "name", "province", "sectors", "slug", "street" ]
+        "required" : [ "activityTypes", "district", "locality", "name", "province", "sectors", "slug", "type" ]
       },
       "OrganizationSummary" : {
         "type" : "object",
@@ -909,9 +1183,260 @@
         "type" : "string",
         "enum" : [ "COOPERATIVE", "ERT" ]
       },
+      "ProfileActivityRequest" : {
+        "type" : "object",
+        "properties" : {
+          "activityTypes" : {
+            "type" : "array",
+            "description" : "What the organization offers: labor, services or products",
+            "items" : {
+              "$ref" : "#/components/schemas/ActivityType"
+            },
+            "minItems" : 1,
+            "uniqueItems" : true
+          },
+          "description" : {
+            "type" : "string",
+            "maxLength" : 1500,
+            "minLength" : 0
+          },
+          "sectors" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Sector"
+            },
+            "minItems" : 1,
+            "uniqueItems" : true
+          },
+          "startYear" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "When it began working as a cooperative (for an ERT, when it was recovered); it cannot be in the future",
+            "minimum" : 1800
+          },
+          "workerCount" : {
+            "type" : "integer",
+            "format" : "int32",
+            "exclusiveMinimum" : 0,
+            "maximum" : 1000000
+          },
+          "workerCountVisibility" : {
+            "$ref" : "#/components/schemas/Visibility"
+          }
+        },
+        "required" : [ "activityTypes", "sectors", "workerCountVisibility" ]
+      },
+      "ProfileActivityResponse" : {
+        "type" : "object",
+        "properties" : {
+          "activityTypes" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ActivityType"
+            },
+            "uniqueItems" : true
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "sectors" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Sector"
+            },
+            "uniqueItems" : true
+          },
+          "startYear" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "workerCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "workerCountVisibility" : {
+            "$ref" : "#/components/schemas/Visibility"
+          }
+        },
+        "required" : [ "activityTypes", "sectors", "workerCountVisibility" ]
+      },
+      "ProfileContactRequest" : {
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "type" : "string",
+            "format" : "email",
+            "maxLength" : 200,
+            "minLength" : 0
+          },
+          "emailVisibility" : {
+            "$ref" : "#/components/schemas/Visibility"
+          },
+          "openingHours" : {
+            "type" : "string",
+            "maxLength" : 200,
+            "minLength" : 0
+          },
+          "phone" : {
+            "type" : "string",
+            "maxLength" : 50,
+            "minLength" : 0
+          },
+          "phoneVisibility" : {
+            "$ref" : "#/components/schemas/Visibility"
+          },
+          "responseTime" : {
+            "$ref" : "#/components/schemas/ResponseTime"
+          },
+          "socialMedia" : {
+            "type" : "string",
+            "description" : "Social media accounts or links, as free text",
+            "maxLength" : 200,
+            "minLength" : 0
+          },
+          "website" : {
+            "type" : "string",
+            "example" : "https://example.org",
+            "maxLength" : 300,
+            "minLength" : 0,
+            "pattern" : "^(https?://\\S+)?$"
+          },
+          "whatsapp" : {
+            "type" : "string",
+            "maxLength" : 50,
+            "minLength" : 0
+          },
+          "whatsappVisibility" : {
+            "$ref" : "#/components/schemas/Visibility"
+          }
+        },
+        "required" : [ "emailVisibility", "phoneVisibility", "whatsappVisibility" ]
+      },
+      "ProfileContactResponse" : {
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "type" : "string"
+          },
+          "emailVisibility" : {
+            "$ref" : "#/components/schemas/Visibility"
+          },
+          "openingHours" : {
+            "type" : "string"
+          },
+          "phone" : {
+            "type" : "string"
+          },
+          "phoneVisibility" : {
+            "$ref" : "#/components/schemas/Visibility"
+          },
+          "responseTime" : {
+            "$ref" : "#/components/schemas/ResponseTime"
+          },
+          "socialMedia" : {
+            "type" : "string"
+          },
+          "website" : {
+            "type" : "string"
+          },
+          "whatsapp" : {
+            "type" : "string"
+          },
+          "whatsappVisibility" : {
+            "$ref" : "#/components/schemas/Visibility"
+          }
+        },
+        "required" : [ "emailVisibility", "phoneVisibility", "whatsappVisibility" ]
+      },
+      "ProfileIdentificationRequest" : {
+        "type" : "object",
+        "properties" : {
+          "legalName" : {
+            "type" : "string",
+            "description" : "Razón social, as registered with the tax authority",
+            "maxLength" : 200,
+            "minLength" : 0
+          },
+          "legalNameVisibility" : {
+            "$ref" : "#/components/schemas/Visibility"
+          },
+          "name" : {
+            "type" : "string",
+            "maxLength" : 200,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "legalName", "legalNameVisibility", "name" ]
+      },
+      "ProfileIdentificationResponse" : {
+        "type" : "object",
+        "properties" : {
+          "legalName" : {
+            "type" : "string",
+            "description" : "Missing for organizations registered before it was asked for"
+          },
+          "legalNameVisibility" : {
+            "$ref" : "#/components/schemas/Visibility"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "legalNameVisibility", "name" ]
+      },
+      "ProfileLocationRequest" : {
+        "type" : "object",
+        "properties" : {
+          "address" : {
+            "$ref" : "#/components/schemas/RegistrationAddressRequest"
+          },
+          "point" : {
+            "$ref" : "#/components/schemas/GeoPointRequest",
+            "description" : "Where the organization placed the pin. Without it, a changed address is located again and an unchanged one keeps its point."
+          },
+          "streetVisibility" : {
+            "$ref" : "#/components/schemas/Visibility",
+            "description" : "A private street also hides the additional references and the exact point"
+          }
+        },
+        "required" : [ "address", "streetVisibility" ]
+      },
+      "ProfileLocationResponse" : {
+        "type" : "object",
+        "properties" : {
+          "address" : {
+            "$ref" : "#/components/schemas/RegistrationAddressResponse"
+          },
+          "point" : {
+            "$ref" : "#/components/schemas/GeoPointResponse",
+            "description" : "Missing when the address could not be located"
+          },
+          "streetVisibility" : {
+            "$ref" : "#/components/schemas/Visibility"
+          }
+        },
+        "required" : [ "address", "streetVisibility" ]
+      },
       "Province" : {
         "type" : "string",
         "enum" : [ "BUENOS_AIRES", "CITY_OF_BUENOS_AIRES", "CATAMARCA", "CHACO", "CHUBUT", "CORDOBA", "CORRIENTES", "ENTRE_RIOS", "FORMOSA", "JUJUY", "LA_PAMPA", "LA_RIOJA", "MENDOZA", "MISIONES", "NEUQUEN", "RIO_NEGRO", "SALTA", "SAN_JUAN", "SAN_LUIS", "SANTA_CRUZ", "SANTA_FE", "SANTIAGO_DEL_ESTERO", "TIERRA_DEL_FUEGO", "TUCUMAN" ]
+      },
+      "PublicLocation" : {
+        "type" : "object",
+        "properties" : {
+          "approximate" : {
+            "type" : "boolean"
+          },
+          "latitude" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "longitude" : {
+            "type" : "number",
+            "format" : "double"
+          }
+        },
+        "required" : [ "approximate", "latitude", "longitude" ]
       },
       "RefreshTokenRequest" : {
         "type" : "object",
@@ -1171,6 +1696,10 @@
         },
         "required" : [ "message" ]
       },
+      "ResponseTime" : {
+        "type" : "string",
+        "enum" : [ "SAME_DAY", "ONE_DAY", "TWO_DAYS", "ONE_WEEK" ]
+      },
       "ReviewOutcome" : {
         "type" : "string",
         "enum" : [ "APPROVED", "REJECTED", "CHANGES_REQUESTED" ]
@@ -1230,6 +1759,10 @@
           }
         },
         "required" : [ "token" ]
+      },
+      "Visibility" : {
+        "type" : "string",
+        "enum" : [ "PUBLIC", "PRIVATE" ]
       }
     },
     "securitySchemes" : {

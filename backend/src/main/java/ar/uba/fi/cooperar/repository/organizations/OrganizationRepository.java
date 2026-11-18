@@ -18,6 +18,13 @@ public interface OrganizationRepository extends JpaRepository<Organization, UUID
 
     boolean existsBySlug(String slug);
 
+    /** The organization, only if the account manages it. */
+    @Query("""
+            select organization from UserAccount account join account.organizations organization
+            where account.id = :accountId and organization.id = :id
+            """)
+    Optional<Organization> findManagedBy(UUID id, UUID accountId);
+
     /**
      * The organizations of the given type, with the given activity type and in the given sector, by name; a null filter
      * leaves that criterion out. Sectors and activity types are loaded along, since every row shows them.

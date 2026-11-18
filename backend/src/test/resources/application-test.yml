@@ -13,3 +13,6 @@ cooperar:
   notifications:
     public-url: http://localhost:5173
     from: CooperAR <no-reply@test.local>
+  # Tests that need a point stub the Geocoder; nothing reaches Nominatim.
+  geocoding:
+    provider: none

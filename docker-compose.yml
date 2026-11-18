@@ -37,6 +37,8 @@ services:
       MAIL_HOST: mailpit
       MAIL_PORT: 1025
       PUBLIC_URL: ${PUBLIC_URL:-http://localhost:5173}
+      GEOCODING_PROVIDER: ${GEOCODING_PROVIDER:-nominatim}
+      NOMINATIM_URL: ${NOMINATIM_URL:-https://nominatim.openstreetmap.org}
     ports:
       - '${BACKEND_PORT:-8080}:8080'
     depends_on:

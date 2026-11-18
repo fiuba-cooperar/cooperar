@@ -47,6 +47,11 @@ cooperar:
     # Where people open the frontend; the links in the emails point here.
     public-url: ${PUBLIC_URL}
     from: ${MAIL_FROM}
+  geocoding:
+    # nominatim (the public instance by default, or a self-hosted one in NOMINATIM_URL) or none.
+    provider: ${GEOCODING_PROVIDER:nominatim}
+    nominatim:
+      base-url: ${NOMINATIM_URL:https://nominatim.openstreetmap.org}
 
 management:
   # An unreachable SMTP server must not take the API out of the load balancer: emails are best effort.

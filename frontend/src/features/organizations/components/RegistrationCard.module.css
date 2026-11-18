@@ -1,21 +1,30 @@
-.details {
+.history {
+  margin: 0;
+  padding: 0;
+  list-style: none;
   display: grid;
   gap: var(--mantine-spacing-xs);
-  margin: 0;
 }
 
-/* Term and description side by side from small screens up, stacked on phones. */
-.detail {
-  display: grid;
-  gap: 2px;
+/* A line on the left ties the decisions together as a timeline. */
+.historyItem {
+  padding-left: var(--mantine-spacing-sm);
+  border-left: 3px solid var(--mantine-color-default-border);
+}
 
-  @media (min-width: $mantine-breakpoint-sm) {
-    grid-template-columns: 140px 1fr;
-    gap: var(--mantine-spacing-md);
+.message {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.chevron {
+  transition: transform 150ms ease;
+
+  &[data-expanded] {
+    transform: rotate(180deg);
   }
 
-  dd {
-    margin: 0;
-    overflow-wrap: anywhere;
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
   }
 }

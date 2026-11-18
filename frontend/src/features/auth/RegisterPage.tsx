@@ -1,14 +1,10 @@
 import {
   Alert,
   Anchor,
-  Button,
-  Checkbox,
-  Fieldset,
   Group,
-  MultiSelect,
+  Button,
   Paper,
   PasswordInput,
-  Select,
   SimpleGrid,
   Stack,
   Text,
@@ -19,15 +15,18 @@ import {
 import { IconAlertCircle, IconCircleCheck } from '@tabler/icons-react';
 import { useEffect, useId, useRef, useState, type SyntheticEvent } from 'react';
 import { Link, Navigate } from 'react-router';
-import { ActivityType, OrganizationType, Province, Role, Sector } from '@/api/generated/model';
+import { Role } from '@/api/generated/model';
 import { LabelWithHint } from '@/components/form/LabelWithHint';
-import { OrganizationTypePicker } from '@/features/organizations/components/OrganizationTypePicker';
-import { cuitProblem, type CuitProblem } from '@/features/organizations/cuit';
+import { OrganizationRegistrationFields } from '@/features/organizations/components/OrganizationRegistrationFields';
 import {
-  ACTIVITY_TYPE_LABELS,
-  PROVINCE_LABELS,
-  SECTOR_LABELS,
-} from '@/features/organizations/labels';
+  CUIT_TAKEN,
+  EMPTY_ORGANIZATION,
+  hasErrors,
+  toRegistrationRequest,
+  validateOrganization,
+  type FormErrors,
+  type OrganizationForm,
+} from '@/features/organizations/registrationForm';
 import { RegistrationError, useRegistration } from './api/useRegistration';
 import styles from './RegisterPage.module.css';
 import { ROLE_HOME } from './roleHome';
@@ -44,23 +43,6 @@ interface AccountForm {
   passwordConfirmation: string;
 }
 
-interface OrganizationForm {
-  type: OrganizationType | null;
-  name: string;
-  legalName: string;
-  cuit: string;
-  activityTypes: ActivityType[];
-  sectors: Sector[];
-  province: Province | null;
-  district: string;
-  locality: string;
-  street: string;
-  additionalReferences: string;
-}
-
-// Cleared errors stay as undefined keys, so only check freshly validated objects with hasErrors.
-type Errors<T> = { [K in keyof T]?: string | undefined };
-
 // BCrypt on the backend only takes 72 bytes, which can be fewer than 72 characters.
 const MAX_PASSWORD_BYTES = 72;
 const MIN_PASSWORD_LENGTH = 8;
@@ -76,36 +58,11 @@ const EMPTY_ACCOUNT: AccountForm = {
   passwordConfirmation: '',
 };
 
-const EMPTY_ORGANIZATION: OrganizationForm = {
-  type: null,
-  name: '',
-  legalName: '',
-  cuit: '',
-  activityTypes: [],
-  sectors: [],
-  province: null,
-  district: '',
-  locality: '',
-  street: '',
-  additionalReferences: '',
-};
-
-const SECTORS = Object.values(Sector);
-const ACTIVITY_TYPES = Object.values(ActivityType);
-const PROVINCES = Object.values(Province);
-const SECTOR_OPTIONS = SECTORS.map((value) => ({ value, label: SECTOR_LABELS[value] }));
-const PROVINCE_OPTIONS = PROVINCES.map((value) => ({ value, label: PROVINCE_LABELS[value] }));
-
 const EMAIL_HINT =
   'Es tu usuario para ingresar. Con esta cuenta vas a poder administrar una o más entidades.';
 const PASSWORD_HINT = `Usá al menos ${String(MIN_PASSWORD_LENGTH)} caracteres.`;
 const EMAIL_TAKEN =
   'Ya hay una cuenta con este email. Si es tuya, ingresá y agregá la entidad desde tu panel.';
-const CUIT_ERRORS: Record<CuitProblem, string> = {
-  format: 'Revisá el CUIT: son 11 números, por ejemplo 30-12345678-1.',
-  'check-digit': 'Este CUIT no existe. Revisá que los números estén bien escritos.',
-};
-const CUIT_TAKEN = 'Ya hay una entidad registrada con este CUIT.';
 const FORM_ERRORS: Record<RegistrationError['reason'], string> = {
   conflict: 'Algunos datos ya están registrados. Revisalos e intentá de nuevo.',
   invalid: 'Algunos datos no son válidos. Revisalos e intentá de nuevo.',
@@ -113,8 +70,8 @@ const FORM_ERRORS: Record<RegistrationError['reason'], string> = {
     'No pudimos completar el registro por un problema de conexión. Intentá de nuevo en unos minutos.',
 };
 
-function validateAccount(form: AccountForm): Errors<AccountForm> {
-  const errors: Errors<AccountForm> = {};
+function validateAccount(form: AccountForm): FormErrors<AccountForm> {
+  const errors: FormErrors<AccountForm> = {};
   if (!form.firstName.trim()) errors.firstName = 'Ingresá tu nombre.';
   if (!form.lastName.trim()) errors.lastName = 'Ingresá tu apellido.';
   if (!form.registrantRole.trim()) errors.registrantRole = 'Ingresá tu rol en la entidad.';
@@ -130,38 +87,14 @@ function validateAccount(form: AccountForm): Errors<AccountForm> {
   return errors;
 }
 
-function validateOrganization(form: OrganizationForm): Errors<OrganizationForm> {
-  const errors: Errors<OrganizationForm> = {};
-  if (!form.type) errors.type = 'Elegí si es una cooperativa o una empresa recuperada.';
-  if (!form.name.trim()) errors.name = 'Ingresá el nombre de la entidad.';
-  if (!form.legalName.trim()) errors.legalName = 'Ingresá la razón social.';
-  if (!form.cuit.trim()) errors.cuit = 'Ingresá el CUIT.';
-  else {
-    const problem = cuitProblem(form.cuit);
-    if (problem) errors.cuit = CUIT_ERRORS[problem];
-  }
-  if (form.activityTypes.length === 0)
-    errors.activityTypes = 'Elegí al menos un tipo de actividad.';
-  if (form.sectors.length === 0) errors.sectors = 'Elegí al menos un rubro.';
-  if (!form.province) errors.province = 'Elegí una provincia.';
-  if (!form.district.trim()) errors.district = 'Ingresá el departamento, partido o comuna.';
-  if (!form.locality.trim()) errors.locality = 'Ingresá la localidad o el barrio.';
-  if (!form.street.trim()) errors.street = 'Ingresá la calle y el número.';
-  return errors;
-}
-
-function hasErrors(errors: object) {
-  return Object.keys(errors).length > 0;
-}
-
 export function RegisterPage() {
   const { user, login } = useAuth();
   const registration = useRegistration();
   const [step, setStep] = useState<Step>('account');
   const [account, setAccount] = useState(EMPTY_ACCOUNT);
   const [organization, setOrganization] = useState(EMPTY_ORGANIZATION);
-  const [accountErrors, setAccountErrors] = useState<Errors<AccountForm>>({});
-  const [organizationErrors, setOrganizationErrors] = useState<Errors<OrganizationForm>>({});
+  const [accountErrors, setAccountErrors] = useState<FormErrors<AccountForm>>({});
+  const [organizationErrors, setOrganizationErrors] = useState<FormErrors<OrganizationForm>>({});
   const [formError, setFormError] = useState<string | null>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const isFirstRender = useRef(true);
@@ -204,8 +137,8 @@ export function RegisterPage() {
     event.preventDefault();
     const errors = validateOrganization(organization);
     setOrganizationErrors(errors);
-    const { type, province } = organization;
-    if (hasErrors(errors) || !type || !province) return;
+    const body = toRegistrationRequest(organization, account.registrantRole);
+    if (hasErrors(errors) || !body) return;
 
     setFormError(null);
     try {
@@ -216,24 +149,7 @@ export function RegisterPage() {
           email: account.email.trim(),
           password: account.password,
         },
-        organization: {
-          name: organization.name.trim(),
-          legalName: organization.legalName.trim(),
-          type,
-          cuit: organization.cuit.trim(),
-          activityTypes: organization.activityTypes,
-          sectors: organization.sectors,
-          registrantRole: account.registrantRole.trim(),
-          address: {
-            province,
-            district: organization.district.trim(),
-            locality: organization.locality.trim(),
-            street: organization.street.trim(),
-            ...(organization.additionalReferences.trim() && {
-              additionalReferences: organization.additionalReferences.trim(),
-            }),
-          },
-        },
+        organization: body,
       });
     } catch (caught) {
       showRegistrationError(
@@ -400,155 +316,11 @@ export function RegisterPage() {
                   {formError}
                 </Alert>
               )}
-              <Stack gap="md">
-                <OrganizationTypePicker
-                  value={organization.type}
-                  error={organizationErrors.type}
-                  onChange={(type) => {
-                    updateOrganization('type', type);
-                  }}
-                />
-                <TextInput
-                  label="Nombre de la entidad"
-                  maxLength={200}
-                  value={organization.name}
-                  error={organizationErrors.name}
-                  onChange={(event) => {
-                    updateOrganization('name', event.currentTarget.value);
-                  }}
-                />
-                <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="md">
-                  <TextInput
-                    label="Razón social"
-                    placeholder="Cooperativa de Trabajo … Ltda."
-                    maxLength={200}
-                    value={organization.legalName}
-                    error={organizationErrors.legalName}
-                    onChange={(event) => {
-                      updateOrganization('legalName', event.currentTarget.value);
-                    }}
-                  />
-                  <TextInput
-                    label="CUIT"
-                    inputMode="numeric"
-                    placeholder="30-12345678-1"
-                    maxLength={15}
-                    value={organization.cuit}
-                    error={organizationErrors.cuit}
-                    onChange={(event) => {
-                      updateOrganization('cuit', event.currentTarget.value);
-                    }}
-                  />
-                </SimpleGrid>
-                <Checkbox.Group
-                  label="Tipo de actividad"
-                  description="Podés elegir más de uno."
-                  value={organization.activityTypes}
-                  error={organizationErrors.activityTypes}
-                  onChange={(values) => {
-                    updateOrganization(
-                      'activityTypes',
-                      ACTIVITY_TYPES.filter((type) => values.includes(type)),
-                    );
-                  }}
-                >
-                  <Group gap="lg" mt="xs">
-                    {ACTIVITY_TYPES.map((type) => (
-                      <Checkbox key={type} value={type} label={ACTIVITY_TYPE_LABELS[type]} />
-                    ))}
-                  </Group>
-                </Checkbox.Group>
-                <MultiSelect
-                  label="Rubros"
-                  description="Podés elegir más de uno."
-                  placeholder={organization.sectors.length === 0 ? 'Elegí los rubros' : undefined}
-                  data={SECTOR_OPTIONS}
-                  value={organization.sectors}
-                  error={organizationErrors.sectors}
-                  onChange={(values) => {
-                    updateOrganization(
-                      'sectors',
-                      SECTORS.filter((sector) => values.includes(sector)),
-                    );
-                  }}
-                />
-              </Stack>
-              <Fieldset
-                variant="unstyled"
-                // No inset or browser margin, so the address fields line up with the ones above.
-                p={0}
-                m={0}
-                styles={{ legend: { padding: 0 } }}
-                legend={
-                  <Title order={2} fz={18} mb="sm">
-                    Dirección principal
-                  </Title>
-                }
-              >
-                <Stack gap="md">
-                  <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="md">
-                    <Select
-                      label="Provincia"
-                      placeholder="Elegí una provincia"
-                      searchable
-                      nothingFoundMessage="No encontramos esa provincia"
-                      autoComplete="address-level1"
-                      data={PROVINCE_OPTIONS}
-                      value={organization.province}
-                      error={organizationErrors.province}
-                      onChange={(value) => {
-                        updateOrganization(
-                          'province',
-                          PROVINCES.find((province) => province === value) ?? null,
-                        );
-                      }}
-                    />
-                    <TextInput
-                      label="Departamento/Partido/Comuna"
-                      maxLength={100}
-                      value={organization.district}
-                      error={organizationErrors.district}
-                      onChange={(event) => {
-                        updateOrganization('district', event.currentTarget.value);
-                      }}
-                    />
-                  </SimpleGrid>
-                  <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="md">
-                    <TextInput
-                      label="Localidad/Barrio"
-                      autoComplete="address-level2"
-                      maxLength={100}
-                      value={organization.locality}
-                      error={organizationErrors.locality}
-                      onChange={(event) => {
-                        updateOrganization('locality', event.currentTarget.value);
-                      }}
-                    />
-                    <TextInput
-                      label="Calle y número"
-                      placeholder="Av. Rivadavia 1234"
-                      autoComplete="address-line1"
-                      maxLength={200}
-                      value={organization.street}
-                      error={organizationErrors.street}
-                      onChange={(event) => {
-                        updateOrganization('street', event.currentTarget.value);
-                      }}
-                    />
-                  </SimpleGrid>
-                  <TextInput
-                    label="Referencias adicionales (opcional)"
-                    placeholder="Piso, local, entre calles…"
-                    autoComplete="address-line2"
-                    maxLength={300}
-                    value={organization.additionalReferences}
-                    error={organizationErrors.additionalReferences}
-                    onChange={(event) => {
-                      updateOrganization('additionalReferences', event.currentTarget.value);
-                    }}
-                  />
-                </Stack>
-              </Fieldset>
+              <OrganizationRegistrationFields
+                value={organization}
+                errors={organizationErrors}
+                onChange={updateOrganization}
+              />
               <Group gap="sm">
                 <Button
                   variant="default"

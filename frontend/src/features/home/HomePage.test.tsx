@@ -64,7 +64,13 @@ describe('public site', () => {
     saveTokens({ accessToken: 'access-1', refreshToken: 'refresh-1' });
     stubFetchRoutes({
       'GET /api/me': {
-        body: { id: 'u1', email: 'a@test.local', role: 'ADMIN', organizations: [] },
+        body: {
+          id: 'u1',
+          email: 'a@test.local',
+          role: 'ADMIN',
+          organizations: [],
+          registrationRequests: [],
+        },
       },
     });
 

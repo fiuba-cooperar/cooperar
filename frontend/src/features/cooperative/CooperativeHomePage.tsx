@@ -2,11 +2,10 @@ import { Badge, Button, Group, Paper, Stack, Text, Title } from '@mantine/core';
 import { IconCircle } from '@tabler/icons-react';
 import { useEffect } from 'react';
 import { Link } from 'react-router';
-import { OrganizationStatus } from '@/api/generated/model';
 import { useAuth } from '@/features/auth/useAuth';
 import { displayName } from '@/features/auth/userName';
 import { EmailVerificationNotice } from './components/EmailVerificationNotice';
-import { OrganizationStatusCard } from './components/OrganizationStatusCard';
+import { RegistrationRequestCard } from './components/RegistrationRequestCard';
 import { PublicPreview } from './components/PublicPreview';
 import { COOPERATIVE_PRODUCTS_PATH, COOPERATIVE_PROFILE_PATH } from './cooperativeSections';
 import { useActiveOrganization } from './useActiveOrganization';
@@ -34,7 +33,7 @@ export function CooperativeHomePage() {
   const { user, refreshUser } = useAuth();
   const organization = useActiveOrganization();
 
-  // The review may have finished since the session started, so the statuses are reloaded on every visit.
+  // The review may have finished since the session started, so requests and organizations are reloaded on every visit.
   useEffect(() => {
     void refreshUser();
   }, [refreshUser]);
@@ -56,15 +55,20 @@ export function CooperativeHomePage() {
             </Text>
           ) : (
             <Text c="dimmed" size="md">
-              Todavía no tenés ninguna entidad asociada a tu cuenta.
+              {user.registrationRequests.length > 0
+                ? 'Cuando el observatorio apruebe tu solicitud, vas a poder administrar tu entidad desde acá.'
+                : 'Todavía no tenés ninguna entidad asociada a tu cuenta.'}
             </Text>
           )}
         </Stack>
         {!user.emailVerified && <EmailVerificationNotice email={user.email} />}
-        {/* An approved organization needs no card: the preview already links to its public profile. */}
-        {organization && organization.status !== OrganizationStatus.APPROVED && (
-          <OrganizationStatusCard organization={organization} emailVerified={user.emailVerified} />
-        )}
+        {user.registrationRequests.map((request) => (
+          <RegistrationRequestCard
+            key={request.id}
+            request={request}
+            emailVerified={user.emailVerified}
+          />
+        ))}
         {organization && (
           <Paper component="section" withBorder radius="lg" px={28} py={24} aria-labelledby="steps">
             <Group justify="space-between" align="baseline" gap="xs" mb="sm">

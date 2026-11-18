@@ -1,0 +1,5 @@
+/* The observatory's message keeps the line breaks it was written with. */
+.message {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}

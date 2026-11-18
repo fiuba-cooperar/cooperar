@@ -20,6 +20,10 @@ export function CooperativeLayout() {
   const organizations = user?.organizations ?? [];
   const organization = organizations.find(({ id }) => id === activeId) ?? organizations[0];
   const context: CooperativePanelContext = { organization };
+  // Until a request is approved there is no organization to manage, so the menu only leads home and to the requests.
+  const sections = organization
+    ? COOPERATIVE_SECTIONS
+    : COOPERATIVE_SECTIONS.filter((section) => 'alwaysVisible' in section);
 
   return (
     <AppShell
@@ -65,7 +69,7 @@ export function CooperativeLayout() {
         p={14}
       >
         <Stack gap={4} flex={1}>
-          {COOPERATIVE_SECTIONS.map(({ path, label, icon: Icon }) => (
+          {sections.map(({ path, label, icon: Icon }) => (
             <NavLink
               key={path}
               to={path}

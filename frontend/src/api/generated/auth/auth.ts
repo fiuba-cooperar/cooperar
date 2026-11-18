@@ -395,7 +395,7 @@ export const getRegisterUrl = () => {
 
 /**
  * Answers 409 with a `conflicts` list (`EMAIL`, `CUIT`) when either is already registered.
- * @summary Create an account together with its first organization
+ * @summary Create an account together with the request to add its first organization
  */
 export const register = async (
   registrationRequest: RegistrationRequest,
@@ -469,7 +469,7 @@ export type RegisterMutationError = unknown;
 export type RegisterMutationVariables = { data: RegistrationRequest };
 
 /**
- * @summary Create an account together with its first organization
+ * @summary Create an account together with the request to add its first organization
  */
 export const useRegister = <TError = unknown, TContext = unknown>(
   options?: {

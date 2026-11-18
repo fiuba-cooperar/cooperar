@@ -1,6 +1,8 @@
-import { Badge, Menu, Text, UnstyledButton } from '@mantine/core';
+import { Menu, Text, UnstyledButton } from '@mantine/core';
 import { IconCheck, IconChevronDown } from '@tabler/icons-react';
+import { Link } from 'react-router';
 import type { OrganizationSummary } from '@/api/generated/model';
+import { NEW_REGISTRATION_REQUEST_PATH } from '../cooperativeSections';
 import styles from './OrganizationSwitcher.module.css';
 
 function organizationInitials(name: string): string {
@@ -13,7 +15,7 @@ function organizationInitials(name: string): string {
     .toUpperCase();
 }
 
-/** Header selector of the organization being managed, with the entry to add another one. */
+/** Header selector of the organization being managed, with the entry to request adding another one. */
 export function OrganizationSwitcher({
   organizations,
   active,
@@ -70,15 +72,7 @@ export function OrganizationSwitcher({
           );
         })}
         <Menu.Divider />
-        {/* TODO(#67): link to the "add a cooperative" flow. */}
-        <Menu.Item
-          disabled
-          rightSection={
-            <Badge variant="light" size="sm">
-              Próximamente
-            </Badge>
-          }
-        >
+        <Menu.Item component={Link} to={NEW_REGISTRATION_REQUEST_PATH}>
           + Agregar cooperativa
         </Menu.Item>
       </Menu.Dropdown>

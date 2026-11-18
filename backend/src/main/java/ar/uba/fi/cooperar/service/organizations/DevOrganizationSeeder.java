@@ -2,8 +2,8 @@ package ar.uba.fi.cooperar.service.organizations;
 
 import ar.uba.fi.cooperar.domain.organizations.ActivityType;
 import ar.uba.fi.cooperar.domain.organizations.Address;
-import ar.uba.fi.cooperar.domain.organizations.Cuit;
 import ar.uba.fi.cooperar.domain.organizations.Organization;
+import ar.uba.fi.cooperar.domain.organizations.OrganizationDetails;
 import ar.uba.fi.cooperar.domain.organizations.OrganizationProfile;
 import ar.uba.fi.cooperar.domain.organizations.OrganizationType;
 import ar.uba.fi.cooperar.domain.organizations.Province;
@@ -32,7 +32,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Fictitious organizations so the public profile can be seen locally before profiles can be edited (#13). Only runs in
+ * Fictitious organizations, created as if their requests had been approved, so the public profile can be seen locally
+ * before profiles can be edited (#13). Only runs in
  * the dev profile: production data must come from public sources (#10).
  */
 @Component
@@ -123,18 +124,18 @@ public class DevOrganizationSeeder implements ApplicationRunner {
                 continue;
             }
             Organization organization = new Organization(
-                    sample.name(),
-                    sample.name(),
                     slug,
-                    OrganizationType.COOPERATIVE,
-                    new Cuit(sample.cuit()),
-                    sample.sectors(),
-                    sample.activityTypes(),
-                    sample.address(),
+                    new OrganizationDetails(
+                            sample.name(),
+                            sample.name(),
+                            OrganizationType.COOPERATIVE,
+                            sample.cuit(),
+                            sample.sectors(),
+                            sample.activityTypes(),
+                            sample.address(),
+                            null),
                     account,
-                    null,
                     now);
-            organization.approve(account.getId(), now);
             organization.updateProfile(new OrganizationProfile(
                     sample.description(),
                     sample.phone(),
@@ -145,7 +146,7 @@ public class DevOrganizationSeeder implements ApplicationRunner {
         }
     }
 
-    /** Goes through the same review as a real sign-up. Nobody needs to sign in with it, so its password is random. */
+    /** Nobody needs to sign in with it, so its password is random. */
     private UserAccount createSampleAccount(Instant now) {
         UserAccount account = new UserAccount(
                 SAMPLE_ACCOUNT_EMAIL, passwordEncoder.encode(UUID.randomUUID().toString()), Role.COOPERATIVE);

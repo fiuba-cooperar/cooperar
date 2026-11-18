@@ -1,9 +1,11 @@
 package ar.uba.fi.cooperar.web.user;
 
 import ar.uba.fi.cooperar.domain.organizations.Organization;
-import ar.uba.fi.cooperar.domain.organizations.OrganizationStatus;
+import ar.uba.fi.cooperar.domain.organizations.RegistrationRequest;
+import ar.uba.fi.cooperar.domain.organizations.RegistrationStatus;
 import ar.uba.fi.cooperar.domain.user.Role;
 import ar.uba.fi.cooperar.domain.user.UserAccount;
+import ar.uba.fi.cooperar.service.user.CurrentUser;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Comparator;
 import java.util.List;
@@ -23,10 +25,18 @@ public record CurrentUserResponse(
 
         @Schema(
                 requiredMode = Schema.RequiredMode.REQUIRED,
-                description = "Until it is confirmed, the account's organizations do not reach the review")
+                description = "Until it is confirmed, the account's registration requests do not reach the review")
         boolean emailVerified,
 
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) List<OrganizationSummary> organizations) {
+        @Schema(
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                description = "The organizations the account manages, all of them approved and public")
+        List<OrganizationSummary> organizations,
+
+        @Schema(
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                description = "The requests the account sent that did not become an organization, newest first")
+        List<RegistrationRequestSummary> registrationRequests) {
 
     public record OrganizationSummary(
             @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
@@ -36,25 +46,34 @@ public record CurrentUserResponse(
             String name,
 
             @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Path segment of the public profile")
-            String slug,
-
-            @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-            OrganizationStatus status,
-
-            @Schema(description = "Only for rejected organizations")
-            String rejectionReason) {
+            String slug) {
 
         static OrganizationSummary from(Organization organization) {
-            return new OrganizationSummary(
-                    organization.getId(),
-                    organization.getName(),
-                    organization.getSlug(),
-                    organization.getStatus(),
-                    organization.getRejectionReason());
+            return new OrganizationSummary(organization.getId(), organization.getName(), organization.getSlug());
         }
     }
 
-    static CurrentUserResponse from(UserAccount user) {
+    public record RegistrationRequestSummary(
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+            UUID id,
+
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+            String name,
+
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+            RegistrationStatus status,
+
+            @Schema(description = "Only for rejected requests and those the observatory asked to correct")
+            String reviewMessage) {
+
+        static RegistrationRequestSummary from(RegistrationRequest request) {
+            return new RegistrationRequestSummary(
+                    request.getId(), request.getName(), request.getStatus(), request.getReviewMessage());
+        }
+    }
+
+    static CurrentUserResponse from(CurrentUser current) {
+        UserAccount user = current.account();
         List<OrganizationSummary> organizations = user.getOrganizations().stream()
                 .sorted(Comparator.comparing(Organization::getName))
                 .map(OrganizationSummary::from)
@@ -66,6 +85,9 @@ public record CurrentUserResponse(
                 user.getLastName(),
                 user.getRole(),
                 user.isEmailVerified(),
-                organizations);
+                organizations,
+                current.unapprovedRequests().stream()
+                        .map(RegistrationRequestSummary::from)
+                        .toList());
     }
 }

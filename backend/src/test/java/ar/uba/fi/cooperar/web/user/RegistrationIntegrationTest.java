@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import ar.uba.fi.cooperar.IntegrationTest;
 import ar.uba.fi.cooperar.domain.organizations.Address;
 import ar.uba.fi.cooperar.domain.organizations.Province;
-import ar.uba.fi.cooperar.repository.organizations.OrganizationRepository;
+import ar.uba.fi.cooperar.repository.organizations.RegistrationRequestRepository;
 import com.jayway.jsonpath.JsonPath;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -27,15 +27,15 @@ class RegistrationIntegrationTest {
     private MockMvcTester mvc;
 
     @Autowired
-    private OrganizationRepository organizations;
+    private RegistrationRequestRepository requests;
 
     @Test
-    void registersAnAccountThatCanLogInAndManagesTheNewOrganization() {
+    void registersAnAccountThatCanLogInAndSeeItsRequestUnderReview() {
         var registration = register("ana@coop.local", "30-12345678-1");
 
         assertThat(registration).hasStatus(HttpStatus.CREATED);
         assertThat(field(registration, "accountId")).isNotBlank();
-        String organizationId = field(registration, "organizationId");
+        String requestId = field(registration, "registrationRequestId");
 
         var login = post("/api/auth/login", """
                 {"email": "ana@coop.local", "password": "secret-password"}
@@ -46,14 +46,20 @@ class RegistrationIntegrationTest {
         assertThat(me).hasStatusOk().bodyJson().isLenientlyEqualTo("""
                 {"email": "ana@coop.local", "firstName": "Ana", "lastName": "Pérez", "role": "COOPERATIVE"}
                 """);
-        assertThat(me).bodyJson().extractingPath("$.organizations[*].id").isEqualTo(List.of(organizationId));
-        assertThat(me).bodyJson().extractingPath("$.organizations[*].name").isEqualTo(List.of("La Litoraleña"));
-        assertThat(me).bodyJson().extractingPath("$.organizations[*].slug").isEqualTo(List.of("la-litoralena"));
+        // The organization only exists once the observatory approves the request.
+        assertThat(me).bodyJson().extractingPath("$.organizations").isEqualTo(List.of());
+        assertThat(me).bodyJson().extractingPath("$.registrationRequests[*].id").isEqualTo(List.of(requestId));
+        assertThat(me)
+                .bodyJson()
+                .extractingPath("$.registrationRequests[*].name")
+                .isEqualTo(List.of("La Litoraleña"));
+        assertThat(me)
+                .bodyJson()
+                .extractingPath("$.registrationRequests[*].status")
+                .isEqualTo(List.of("PENDING"));
 
-        Address address = organizations
-                .findById(UUID.fromString(organizationId))
-                .orElseThrow()
-                .getAddress();
+        Address address =
+                requests.findById(UUID.fromString(requestId)).orElseThrow().getAddress();
         assertThat(address)
                 .isEqualTo(new Address(Province.SANTA_FE, "Rosario", "Centro", "Rivadavia 100", "Portón verde"));
     }

@@ -5,15 +5,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 import ar.uba.fi.cooperar.IntegrationTest;
 import ar.uba.fi.cooperar.domain.organizations.ActivityType;
 import ar.uba.fi.cooperar.domain.organizations.Address;
-import ar.uba.fi.cooperar.domain.organizations.Cuit;
 import ar.uba.fi.cooperar.domain.organizations.Organization;
+import ar.uba.fi.cooperar.domain.organizations.OrganizationDetails;
 import ar.uba.fi.cooperar.domain.organizations.OrganizationProfile;
 import ar.uba.fi.cooperar.domain.organizations.OrganizationType;
 import ar.uba.fi.cooperar.domain.organizations.Province;
+import ar.uba.fi.cooperar.domain.organizations.RegistrationRequest;
 import ar.uba.fi.cooperar.domain.organizations.Sector;
 import ar.uba.fi.cooperar.domain.user.Role;
 import ar.uba.fi.cooperar.domain.user.UserAccount;
 import ar.uba.fi.cooperar.repository.organizations.OrganizationRepository;
+import ar.uba.fi.cooperar.repository.organizations.RegistrationRequestRepository;
 import ar.uba.fi.cooperar.repository.user.UserAccountRepository;
 import java.time.Instant;
 import java.util.Set;
@@ -39,6 +41,9 @@ class OrganizationProfileIntegrationTest {
 
     @Autowired
     private OrganizationRepository organizations;
+
+    @Autowired
+    private RegistrationRequestRepository requests;
 
     @Autowired
     private UserAccountRepository users;
@@ -96,20 +101,21 @@ class OrganizationProfileIntegrationTest {
     }
 
     @Test
-    void hidesAnOrganizationAwaitingReview() {
-        organizations.saveAndFlush(organization("Pendiente", "pendiente", "30-71234567-1", verifiedAccount()));
+    void aRequestUnderReviewHasNoPublicProfile() {
+        requests.saveAndFlush(new RegistrationRequest(
+                new OrganizationDetails(
+                        "Pendiente",
+                        "Pendiente Ltda.",
+                        OrganizationType.COOPERATIVE,
+                        "30-71234567-1",
+                        Set.of(Sector.FOOD),
+                        Set.of(ActivityType.PRODUCT),
+                        new Address(Province.CITY_OF_BUENOS_AIRES, "Comuna 5", "Almagro", "Gascón 1234", null),
+                        "Tesorera"),
+                verifiedAccount(),
+                Instant.now()));
 
         assertThat(mvc.get().uri("/api/organizations/pendiente")).hasStatus(HttpStatus.NOT_FOUND);
-    }
-
-    @Test
-    void hidesARejectedOrganization() {
-        UserAccount account = verifiedAccount();
-        Organization organization = organization("Rechazada", "rechazada", "30-71234567-1", account);
-        organization.reject("Datos incompletos", account.getId(), Instant.now());
-        organizations.saveAndFlush(organization);
-
-        assertThat(mvc.get().uri("/api/organizations/rechazada")).hasStatus(HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -125,9 +131,7 @@ class OrganizationProfileIntegrationTest {
 
     private Organization approved(String name, String slug, String cuit) {
         UserAccount account = verifiedAccount();
-        Organization organization = organization(name, slug, cuit, account);
-        organization.approve(account.getId(), Instant.now());
-        return organization;
+        return organization(name, slug, cuit, account);
     }
 
     private UserAccount verifiedAccount() {
@@ -138,16 +142,18 @@ class OrganizationProfileIntegrationTest {
 
     private static Organization organization(String name, String slug, String cuit, UserAccount registeredBy) {
         return new Organization(
-                name,
-                name + " Ltda.",
                 slug,
-                OrganizationType.COOPERATIVE,
-                Cuit.parse(cuit),
-                Set.of(Sector.FOOD, Sector.SERVICES),
-                Set.of(ActivityType.PRODUCT),
-                new Address(Province.CITY_OF_BUENOS_AIRES, "Comuna 5", "Almagro", "Gascón 1234", "Portón verde"),
+                new OrganizationDetails(
+                        name,
+                        name + " Ltda.",
+                        OrganizationType.COOPERATIVE,
+                        cuit,
+                        Set.of(Sector.FOOD, Sector.SERVICES),
+                        Set.of(ActivityType.PRODUCT),
+                        new Address(
+                                Province.CITY_OF_BUENOS_AIRES, "Comuna 5", "Almagro", "Gascón 1234", "Portón verde"),
+                        "Tesorera"),
                 registeredBy,
-                "Tesorera",
                 Instant.now());
     }
 }

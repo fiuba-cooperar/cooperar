@@ -1,12 +1,13 @@
 package ar.uba.fi.cooperar.service.user;
 
 import ar.uba.fi.cooperar.domain.organizations.Cuit;
-import ar.uba.fi.cooperar.domain.organizations.Organization;
+import ar.uba.fi.cooperar.domain.organizations.OrganizationDetails;
+import ar.uba.fi.cooperar.domain.organizations.RegistrationRequest;
 import ar.uba.fi.cooperar.domain.user.Role;
 import ar.uba.fi.cooperar.domain.user.UserAccount;
-import ar.uba.fi.cooperar.repository.organizations.OrganizationRepository;
+import ar.uba.fi.cooperar.repository.organizations.RegistrationRequestRepository;
 import ar.uba.fi.cooperar.repository.user.UserAccountRepository;
-import ar.uba.fi.cooperar.service.organizations.OrganizationSlugs;
+import ar.uba.fi.cooperar.service.organizations.CuitAvailability;
 import ar.uba.fi.cooperar.service.user.RegistrationConflictException.Field;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
@@ -20,8 +21,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Self-service sign-up: creates the account and its first organization together, and emails the link to confirm the
- * account. The organization stays pending until the observatory reviews it.
+ * Self-service sign-up: creates the account together with the request to add its first organization, and emails the
+ * link to confirm the account. The organization only exists once the observatory approves the request.
  */
 @Service
 public class RegistrationService {
@@ -32,29 +33,29 @@ public class RegistrationService {
     private static final Logger log = LoggerFactory.getLogger(RegistrationService.class);
 
     private final UserAccountRepository users;
-    private final OrganizationRepository organizations;
-    private final OrganizationSlugs slugs;
+    private final RegistrationRequestRepository requests;
+    private final CuitAvailability cuits;
     private final PasswordEncoder passwordEncoder;
     private final EmailVerificationService emailVerification;
     private final Clock clock;
 
     public RegistrationService(
             UserAccountRepository users,
-            OrganizationRepository organizations,
-            OrganizationSlugs slugs,
+            RegistrationRequestRepository requests,
+            CuitAvailability cuits,
             PasswordEncoder passwordEncoder,
             EmailVerificationService emailVerification,
             Clock clock) {
         this.users = users;
-        this.organizations = organizations;
-        this.slugs = slugs;
+        this.requests = requests;
+        this.cuits = cuits;
         this.passwordEncoder = passwordEncoder;
         this.emailVerification = emailVerification;
         this.clock = clock;
     }
 
     @Transactional
-    public Registration register(NewAccount newAccount, NewOrganization newOrganization) {
+    public Registration register(NewAccount newAccount, OrganizationDetails newOrganization) {
         Cuit cuit = Cuit.parse(newOrganization.cuit());
         String email = UserAccount.normalizeEmail(newAccount.email());
         if (newAccount.password().getBytes(StandardCharsets.UTF_8).length > MAX_PASSWORD_BYTES) {
@@ -65,7 +66,7 @@ public class RegistrationService {
         if (users.existsByEmail(email)) {
             conflicts.add(Field.EMAIL);
         }
-        if (organizations.existsByCuit(cuit.digits())) {
+        if (cuits.isTaken(cuit)) {
             conflicts.add(Field.CUIT);
         }
         if (!conflicts.isEmpty()) {
@@ -78,33 +79,19 @@ public class RegistrationService {
                 email,
                 passwordEncoder.encode(newAccount.password()),
                 Role.COOPERATIVE);
-        String name = newOrganization.name().trim();
-        Organization organization = new Organization(
-                name,
-                newOrganization.legalName().trim(),
-                slugs.uniqueFor(name),
-                newOrganization.type(),
-                cuit,
-                newOrganization.sectors(),
-                newOrganization.activityTypes(),
-                newOrganization.address(),
-                account,
-                newOrganization.registrantRole().trim(),
-                clock.instant());
+        RegistrationRequest request = new RegistrationRequest(newOrganization, account, clock.instant());
         try {
-            // The organization references the account that registered it, and the link between both needs the two
-            // rows, so the account goes first and the link last. Entities with an assigned id are merged, so the
-            // link goes on the managed copies that save returns.
-            UserAccount savedAccount = users.saveAndFlush(account);
-            savedAccount.getOrganizations().add(organizations.saveAndFlush(organization));
+            // The request references the account that sent it, so the account goes first.
+            users.saveAndFlush(account);
+            requests.saveAndFlush(request);
         } catch (DataIntegrityViolationException e) {
             // A concurrent registration took the email or the CUIT between the checks above and the insert.
             throw new RegistrationConflictException(conflictsOf(e));
         }
         emailVerification.sendLink(account);
 
-        log.info("Registered account {} with organization {}", account.getId(), organization.getId());
-        return new Registration(account.getId(), organization.getId());
+        log.info("Registered account {} with registration request {}", account.getId(), request.getId());
+        return new Registration(account.getId(), request.getId());
     }
 
     private static Set<Field> conflictsOf(DataIntegrityViolationException e) {
@@ -112,7 +99,7 @@ public class RegistrationService {
         if (message.contains("users_email_key")) {
             return EnumSet.of(Field.EMAIL);
         }
-        if (message.contains("organizations_cuit_key")) {
+        if (message.contains("registration_requests_open_cuit_key")) {
             return EnumSet.of(Field.CUIT);
         }
         throw e;

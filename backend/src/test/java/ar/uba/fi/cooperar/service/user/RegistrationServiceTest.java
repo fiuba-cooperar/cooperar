@@ -12,16 +12,18 @@ import static org.mockito.Mockito.when;
 import ar.uba.fi.cooperar.domain.organizations.ActivityType;
 import ar.uba.fi.cooperar.domain.organizations.Address;
 import ar.uba.fi.cooperar.domain.organizations.InvalidCuitException;
-import ar.uba.fi.cooperar.domain.organizations.Organization;
-import ar.uba.fi.cooperar.domain.organizations.OrganizationStatus;
+import ar.uba.fi.cooperar.domain.organizations.OrganizationDetails;
 import ar.uba.fi.cooperar.domain.organizations.OrganizationType;
 import ar.uba.fi.cooperar.domain.organizations.Province;
+import ar.uba.fi.cooperar.domain.organizations.RegistrationRequest;
+import ar.uba.fi.cooperar.domain.organizations.RegistrationStatus;
 import ar.uba.fi.cooperar.domain.organizations.Sector;
 import ar.uba.fi.cooperar.domain.user.Role;
 import ar.uba.fi.cooperar.domain.user.UserAccount;
 import ar.uba.fi.cooperar.repository.organizations.OrganizationRepository;
+import ar.uba.fi.cooperar.repository.organizations.RegistrationRequestRepository;
 import ar.uba.fi.cooperar.repository.user.UserAccountRepository;
-import ar.uba.fi.cooperar.service.organizations.OrganizationSlugs;
+import ar.uba.fi.cooperar.service.organizations.CuitAvailability;
 import ar.uba.fi.cooperar.service.user.RegistrationConflictException.Field;
 import java.sql.SQLException;
 import java.time.Clock;
@@ -37,7 +39,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 class RegistrationServiceTest {
 
     private static final NewAccount ACCOUNT = new NewAccount(" Ana ", " Pérez ", " Ana@Coop.Local ", "secret-password");
-    private static final NewOrganization ORGANIZATION = new NewOrganization(
+    private static final OrganizationDetails ORGANIZATION = new OrganizationDetails(
             " La Litoraleña ",
             " Cooperativa de Trabajo La Litoraleña Ltda. ",
             OrganizationType.COOPERATIVE,
@@ -49,13 +51,14 @@ class RegistrationServiceTest {
 
     private final UserAccountRepository users = mock(UserAccountRepository.class);
     private final OrganizationRepository organizations = mock(OrganizationRepository.class);
+    private final RegistrationRequestRepository requests = mock(RegistrationRequestRepository.class);
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
     private final EmailVerificationService emailVerification = mock(EmailVerificationService.class);
     private final Instant now = Instant.parse("2026-10-30T12:00:00Z");
     private final RegistrationService service = new RegistrationService(
             users,
-            organizations,
-            new OrganizationSlugs(organizations),
+            requests,
+            new CuitAvailability(organizations, requests),
             encoder,
             emailVerification,
             Clock.fixed(now, ZoneOffset.UTC));
@@ -63,11 +66,11 @@ class RegistrationServiceTest {
     @BeforeEach
     void saveReturnsTheEntity() {
         when(users.saveAndFlush(any())).then(returnsFirstArg());
-        when(organizations.saveAndFlush(any())).then(returnsFirstArg());
+        when(requests.saveAndFlush(any())).then(returnsFirstArg());
     }
 
     @Test
-    void createsACooperativeAccountLinkedToTheNewOrganization() {
+    void createsACooperativeAccountWithARequestForItsOrganization() {
         Registration registration = service.register(ACCOUNT, ORGANIZATION);
 
         ArgumentCaptor<UserAccount> account = ArgumentCaptor.forClass(UserAccount.class);
@@ -79,9 +82,12 @@ class RegistrationServiceTest {
         assertThat(saved.getLastName()).isEqualTo("Pérez");
         assertThat(encoder.matches("secret-password", saved.getPasswordHash())).isTrue();
 
-        Organization organization = saved.getOrganizations().iterator().next();
+        assertThat(saved.getOrganizations()).isEmpty();
+
+        ArgumentCaptor<RegistrationRequest> request = ArgumentCaptor.forClass(RegistrationRequest.class);
+        verify(requests).saveAndFlush(request.capture());
+        RegistrationRequest organization = request.getValue();
         assertThat(organization.getName()).isEqualTo("La Litoraleña");
-        assertThat(organization.getSlug()).isEqualTo("la-litoralena");
         assertThat(organization.getType()).isEqualTo(OrganizationType.COOPERATIVE);
         assertThat(organization.getCuit().digits()).isEqualTo("30123456781");
         assertThat(organization.getLegalName()).isEqualTo("Cooperativa de Trabajo La Litoraleña Ltda.");
@@ -90,24 +96,22 @@ class RegistrationServiceTest {
         assertThat(organization.getRegistrantRole()).isEqualTo("Presidenta");
         assertThat(organization.getAddress())
                 .isEqualTo(new Address(Province.SANTA_FE, "Rosario", "Centro", "Rivadavia 100", null));
-        assertThat(organization.getStatus()).isEqualTo(OrganizationStatus.PENDING);
+        assertThat(organization.getStatus()).isEqualTo(RegistrationStatus.PENDING);
         assertThat(organization.getRegisteredBy()).isSameAs(saved);
         assertThat(organization.getCreatedAt()).isEqualTo(now);
-        verify(organizations).saveAndFlush(organization);
         verify(emailVerification).sendLink(saved);
 
         assertThat(registration).isEqualTo(new Registration(saved.getId(), organization.getId()));
     }
 
     @Test
-    void numbersTheSlugWhenAnotherOrganizationHasTheSameName() {
-        when(organizations.existsBySlug("la-litoralena")).thenReturn(true);
+    void doesNotTakeTheCuitOfARequestStillUnderReview() {
+        when(requests.existsOpenWithCuit(any(), any())).thenReturn(true);
 
-        service.register(ACCOUNT, ORGANIZATION);
-
-        ArgumentCaptor<Organization> organization = ArgumentCaptor.forClass(Organization.class);
-        verify(organizations).saveAndFlush(organization.capture());
-        assertThat(organization.getValue().getSlug()).isEqualTo("la-litoralena-2");
+        assertThatThrownBy(() -> service.register(ACCOUNT, ORGANIZATION))
+                .isInstanceOfSatisfying(
+                        RegistrationConflictException.class,
+                        e -> assertThat(e.getFields()).containsExactly(Field.CUIT));
     }
 
     @Test
@@ -148,7 +152,7 @@ class RegistrationServiceTest {
 
     @Test
     void translatesAUniqueViolationOnTheCuit() {
-        when(organizations.saveAndFlush(any())).thenThrow(uniqueViolation("organizations_cuit_key"));
+        when(requests.saveAndFlush(any())).thenThrow(uniqueViolation("registration_requests_open_cuit_key"));
 
         assertThatThrownBy(() -> service.register(ACCOUNT, ORGANIZATION))
                 .isInstanceOfSatisfying(
@@ -166,7 +170,7 @@ class RegistrationServiceTest {
 
     @Test
     void rejectsAnInvalidCuit() {
-        NewOrganization invalid = new NewOrganization(
+        OrganizationDetails invalid = new OrganizationDetails(
                 "Coop",
                 "Coop Ltda.",
                 OrganizationType.ERT,

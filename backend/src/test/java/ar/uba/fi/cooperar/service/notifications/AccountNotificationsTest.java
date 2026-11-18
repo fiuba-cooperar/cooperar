@@ -7,8 +7,8 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-import ar.uba.fi.cooperar.domain.organizations.OrganizationStatus;
-import ar.uba.fi.cooperar.service.organizations.OrganizationReviewed;
+import ar.uba.fi.cooperar.domain.organizations.ReviewOutcome;
+import ar.uba.fi.cooperar.service.organizations.RegistrationReviewed;
 import ar.uba.fi.cooperar.service.user.VerificationEmailRequested;
 import java.net.URI;
 import java.util.UUID;
@@ -39,8 +39,8 @@ class AccountNotificationsTest {
 
     @Test
     void announcesAnApproval() {
-        notifications.onOrganizationReviewed(new OrganizationReviewed(
-                ACCOUNT, "ana@coop.local", "Ana", "La Litoraleña", OrganizationStatus.APPROVED, null));
+        notifications.onRegistrationReviewed(new RegistrationReviewed(
+                ACCOUNT, "ana@coop.local", "Ana", "La Litoraleña", ReviewOutcome.APPROVED, null));
 
         EmailMessage message = sent();
         assertThat(message.subject()).isEqualTo("Aprobamos el alta de La Litoraleña");
@@ -49,12 +49,28 @@ class AccountNotificationsTest {
 
     @Test
     void includesTheReasonOfARejection() {
-        notifications.onOrganizationReviewed(new OrganizationReviewed(
-                ACCOUNT, "ana@coop.local", null, "La Litoraleña", OrganizationStatus.REJECTED, "CUIT duplicado"));
+        notifications.onRegistrationReviewed(new RegistrationReviewed(
+                ACCOUNT, "ana@coop.local", null, "La Litoraleña", ReviewOutcome.REJECTED, "CUIT duplicado"));
 
         EmailMessage message = sent();
         assertThat(message.subject()).isEqualTo("Revisamos el alta de La Litoraleña");
         assertThat(message.body()).startsWith("Hola:").contains("no aprobó el alta de La Litoraleña", "CUIT duplicado");
+    }
+
+    @Test
+    void includesWhatToCorrectWhenAskingForChanges() {
+        notifications.onRegistrationReviewed(new RegistrationReviewed(
+                ACCOUNT,
+                "ana@coop.local",
+                "Ana",
+                "La Litoraleña",
+                ReviewOutcome.CHANGES_REQUESTED,
+                "Falta la razón social"));
+
+        EmailMessage message = sent();
+        assertThat(message.subject()).isEqualTo("Necesitamos más información sobre el alta de La Litoraleña");
+        assertThat(message.body())
+                .contains("Falta la razón social", "corregí la solicitud", "https://cooperar.example/login");
     }
 
     @Test

@@ -14,6 +14,7 @@ const ADMIN = {
   role: 'ADMIN',
   emailVerified: true,
   organizations: [],
+  registrationRequests: [],
 };
 
 function signInAs(user: object) {
@@ -55,7 +56,7 @@ describe('admin panel', () => {
       within(menu)
         .getAllByRole('link')
         .map((link) => link.textContent),
-    ).toEqual(['Inicio', 'Altas pendientes', 'Cooperativas', 'Ver el sitio público']);
+    ).toEqual(['Inicio', 'Solicitudes', 'Entidades', 'Ver el sitio público']);
     expect(within(menu).getByRole('link', { name: 'Inicio' })).toHaveAttribute(
       'aria-current',
       'page',
@@ -82,9 +83,7 @@ describe('admin panel', () => {
 
     renderRoute('/admin/organizations');
 
-    expect(
-      await screen.findByRole('heading', { level: 1, name: 'Cooperativas' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Entidades' })).toBeInTheDocument();
     expect(screen.getByText('Próximamente')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Volver al inicio' })).toHaveAttribute(
       'href',
@@ -92,7 +91,7 @@ describe('admin panel', () => {
     );
     expect(
       within(screen.getByRole('navigation', { name: 'Panel del observatorio' })).getByRole('link', {
-        name: 'Cooperativas',
+        name: 'Entidades',
       }),
     ).toHaveAttribute('aria-current', 'page');
   });

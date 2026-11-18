@@ -5,8 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import ar.uba.fi.cooperar.IntegrationTest;
 import ar.uba.fi.cooperar.domain.organizations.ActivityType;
 import ar.uba.fi.cooperar.domain.organizations.Address;
-import ar.uba.fi.cooperar.domain.organizations.Cuit;
 import ar.uba.fi.cooperar.domain.organizations.Organization;
+import ar.uba.fi.cooperar.domain.organizations.OrganizationDetails;
 import ar.uba.fi.cooperar.domain.organizations.OrganizationType;
 import ar.uba.fi.cooperar.domain.organizations.Province;
 import ar.uba.fi.cooperar.domain.organizations.Sector;
@@ -108,7 +108,8 @@ class AuthIntegrationTest {
                         {"email": "coop@test.local", "role": "COOPERATIVE", "emailVerified": false}
                         """);
         assertThat(me).bodyJson().extractingPath("$.organizations[*].name").isEqualTo(List.of("Alfa", "Zeta"));
-        assertThat(me).bodyJson().extractingPath("$.organizations[*].status").isEqualTo(List.of("PENDING", "PENDING"));
+        assertThat(me).bodyJson().extractingPath("$.organizations[*].slug").isEqualTo(List.of("alfa", "zeta"));
+        assertThat(me).bodyJson().extractingPath("$.registrationRequests").isEqualTo(List.of());
     }
 
     @Test
@@ -182,7 +183,7 @@ class AuthIntegrationTest {
         String admin = field(login(ADMIN_EMAIL, ADMIN_PASSWORD), "accessToken");
         String organization = field(login("coop@test.local", "coop-password"), "accessToken");
 
-        String pending = "/api/admin/organizations/pending";
+        String pending = "/api/admin/registration-requests?status=PENDING";
         assertThat(mvc.get().uri(pending).header(HttpHeaders.AUTHORIZATION, "Bearer " + admin))
                 .hasStatusOk();
         assertThat(mvc.get().uri(pending).header(HttpHeaders.AUTHORIZATION, "Bearer " + organization))
@@ -191,15 +192,16 @@ class AuthIntegrationTest {
 
     private static Organization organization(String name, String cuit) {
         return new Organization(
-                name,
-                name,
                 Slugs.fromName(name),
-                OrganizationType.COOPERATIVE,
-                Cuit.parse(cuit),
-                Set.of(Sector.OTHER),
-                Set.of(ActivityType.WORK),
-                new Address(Province.SANTA_FE, "Rosario", "Centro", "Rivadavia 100", null),
-                null,
+                new OrganizationDetails(
+                        name,
+                        name,
+                        OrganizationType.COOPERATIVE,
+                        cuit,
+                        Set.of(Sector.OTHER),
+                        Set.of(ActivityType.WORK),
+                        new Address(Province.SANTA_FE, "Rosario", "Centro", "Rivadavia 100", null),
+                        null),
                 null,
                 Instant.now());
     }

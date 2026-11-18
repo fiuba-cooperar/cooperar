@@ -19,6 +19,9 @@ window.ResizeObserver = class {
   disconnect = vi.fn();
 };
 
+// A Select that opens with a value scrolls the selected option into view.
+Element.prototype.scrollIntoView = () => undefined;
+
 afterEach(() => {
   cleanup();
   localStorage.clear();

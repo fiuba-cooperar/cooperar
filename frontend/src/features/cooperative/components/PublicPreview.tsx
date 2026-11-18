@@ -1,7 +1,7 @@
 import { Badge, Button, Group, Paper, Stack, Text, Title } from '@mantine/core';
 import { IconExternalLink } from '@tabler/icons-react';
 import { Link } from 'react-router';
-import { OrganizationStatus, type OrganizationSummary } from '@/api/generated/model';
+import type { OrganizationSummary } from '@/api/generated/model';
 import { useOrganizationProfile } from '@/features/organizations/api/useOrganizationProfile';
 import { PROVINCE_LABELS, SECTOR_LABELS } from '@/features/organizations/labels';
 import styles from './PublicPreview.module.css';
@@ -24,10 +24,8 @@ function PublicDetails({ slug }: { slug: string }) {
   );
 }
 
-/** Summary of how the organization looks in the public profile, with the link to it once approved. */
+/** Summary of how the organization looks in the public profile, with the link to it. */
 export function PublicPreview({ organization }: { organization: OrganizationSummary }) {
-  const approved = organization.status === OrganizationStatus.APPROVED;
-
   return (
     <Paper
       component="aside"
@@ -49,23 +47,17 @@ export function PublicPreview({ organization }: { organization: OrganizationSumm
           <Text fw={700} fz={17}>
             {organization.name}
           </Text>
-          {approved && <PublicDetails slug={organization.slug} />}
+          <PublicDetails slug={organization.slug} />
         </Stack>
-        {approved ? (
-          <Button
-            component={Link}
-            to={`/organizations/${organization.slug}`}
-            variant="light"
-            fullWidth
-            rightSection={<IconExternalLink size={18} aria-hidden />}
-          >
-            Ver mi ficha pública
-          </Button>
-        ) : (
-          <Text size="sm" c="dimmed">
-            Todavía no es visible en el sitio público.
-          </Text>
-        )}
+        <Button
+          component={Link}
+          to={`/organizations/${organization.slug}`}
+          variant="light"
+          fullWidth
+          rightSection={<IconExternalLink size={18} aria-hidden />}
+        >
+          Ver mi ficha pública
+        </Button>
       </Stack>
     </Paper>
   );

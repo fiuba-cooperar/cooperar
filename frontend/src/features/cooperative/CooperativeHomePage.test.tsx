@@ -14,17 +14,16 @@ const ACCOUNT = {
   role: 'COOPERATIVE',
   emailVerified: true,
   organizations: [
-    { id: 'c1', name: 'La Litoraleña', slug: 'la-litoralena', status: 'APPROVED' },
-    { id: 'c2', name: 'Textil Sur', slug: 'textil-sur', status: 'PENDING' },
-    {
-      id: 'c3',
-      name: 'Gráfica Norte',
-      slug: 'grafica-norte',
-      status: 'REJECTED',
-      rejectionReason: 'El CUIT no coincide',
-    },
+    { id: 'c1', name: 'La Litoraleña', slug: 'la-litoralena' },
+    { id: 'c2', name: 'Textil Sur', slug: 'textil-sur' },
   ],
+  registrationRequests: [],
 };
+
+// Signed up, but the observatory has not approved the request yet: there is no organization to manage.
+function withRequests(...registrationRequests: object[]) {
+  return { ...ACCOUNT, organizations: [], registrationRequests };
+}
 
 function signInAs(user: object, routes: Parameters<typeof stubFetchRoutes>[0] = {}) {
   saveTokens({ accessToken: 'access-1', refreshToken: 'refresh-1' });
@@ -83,32 +82,96 @@ describe('cooperative panel', () => {
     await userEvent.click(await screen.findByRole('button', { name: /La Litoraleña/ }));
     await userEvent.click(await screen.findByRole('menuitem', { name: 'Textil Sur' }));
 
-    const pending = await screen.findByRole('article', { name: 'Textil Sur' });
-    expect(within(pending).getByText('Pendiente de aprobación')).toBeInTheDocument();
-    expect(within(pending).getByText(/está revisando el alta/)).toBeInTheDocument();
-    expect(screen.getByText(/Estás administrando/)).toHaveTextContent('Textil Sur');
-    expect(screen.getByRole('complementary', { name: 'Así te ve el público' })).toHaveTextContent(
-      'Todavía no es visible en el sitio público.',
-    );
-    expect(screen.queryByRole('link', { name: 'Ver mi ficha pública' })).not.toBeInTheDocument();
+    expect(await screen.findByText(/Estás administrando/)).toHaveTextContent('Textil Sur');
+    expect(
+      within(screen.getByRole('complementary', { name: 'Así te ve el público' })).getByRole(
+        'link',
+        { name: 'Ver mi ficha pública' },
+      ),
+    ).toHaveAttribute('href', '/organizations/textil-sur');
+  });
 
-    await userEvent.click(screen.getByRole('button', { name: /Textil Sur/ }));
-    await userEvent.click(await screen.findByRole('menuitem', { name: 'Gráfica Norte' }));
+  it('shows only the home and the requests in the menu while the first request is under review', async () => {
+    signedIn(withRequests({ id: 'r1', name: 'Textil Sur', status: 'PENDING' }));
+
+    renderRoute('/cooperative');
+
+    const card = await screen.findByRole('article', { name: 'Textil Sur' });
+    expect(within(card).getByText('Pendiente de aprobación')).toBeInTheDocument();
+    expect(within(card).getByText(/está revisando la solicitud/)).toBeInTheDocument();
+    expect(screen.getByText(/Cuando el observatorio apruebe tu solicitud/)).toBeInTheDocument();
+    const menu = screen.getByRole('navigation', { name: 'Panel de la cooperativa' });
+    expect(
+      within(menu)
+        .getAllByRole('link')
+        .map((link) => link.textContent),
+    ).toEqual(['Inicio', 'Solicitudes de alta']);
+    expect(screen.queryByRole('button', { name: /Textil Sur/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('region', { name: 'Completá tu presencia en el observatorio' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows why a request was rejected', async () => {
+    signedIn(
+      withRequests({
+        id: 'r3',
+        name: 'Gráfica Norte',
+        status: 'REJECTED',
+        reviewMessage: 'El CUIT no coincide',
+      }),
+    );
+
+    renderRoute('/cooperative');
 
     const rejected = await screen.findByRole('article', { name: 'Gráfica Norte' });
     expect(within(rejected).getByText('Rechazada')).toBeInTheDocument();
     expect(within(rejected).getByText('El CUIT no coincide')).toBeInTheDocument();
+    expect(
+      within(rejected).getByRole('link', { name: 'Ver los datos en mis solicitudes' }),
+    ).toHaveAttribute('href', '/cooperative/registration-requests');
   });
 
-  it('lists adding a cooperative as coming soon in the switcher', async () => {
+  it('says the observatory asked for changes, with a link to see them and correct', async () => {
+    signedIn(
+      withRequests({
+        id: 'r4',
+        name: 'Metalúrgica Oeste',
+        status: 'CHANGES_REQUESTED',
+        reviewMessage: 'Falta la razón social',
+      }),
+    );
+
+    renderRoute('/cooperative');
+
+    const card = await screen.findByRole('article', { name: 'Metalúrgica Oeste' });
+    expect(within(card).getByText('Solicitud de cambios')).toBeInTheDocument();
+    expect(
+      within(card).getByText(
+        'Para aprobar la solicitud, el observatorio necesita que revises algunos datos.',
+      ),
+    ).toBeInTheDocument();
+    // What was asked for is read along with the form, not here.
+    expect(within(card).queryByText('Falta la razón social')).not.toBeInTheDocument();
+    expect(
+      within(card).getByRole('link', { name: 'Ver cambios solicitados y corregir' }),
+    ).toHaveAttribute('href', '/cooperative/registration-requests/r4');
+    expect(
+      within(card).queryByRole('link', { name: 'Ver los datos en mis solicitudes' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('leads from the switcher to a new registration request', async () => {
     signedIn();
 
     renderRoute('/cooperative');
     await userEvent.click(await screen.findByRole('button', { name: /La Litoraleña/ }));
 
-    const add = await screen.findByRole('menuitem', { name: /Agregar cooperativa/ });
-    expect(add).toBeDisabled();
-    expect(add).toHaveTextContent('Próximamente');
+    expect(await screen.findByRole('menuitem', { name: /Agregar cooperativa/ })).toHaveAttribute(
+      'href',
+      '/cooperative/registration-requests/new',
+    );
   });
 
   it('shows the side menu and marks the current section', async () => {
@@ -121,7 +184,7 @@ describe('cooperative panel', () => {
       within(menu)
         .getAllByRole('link')
         .map((link) => link.textContent),
-    ).toEqual(['Inicio', 'Mi ficha', 'Productos y servicios', 'Equipo']);
+    ).toEqual(['Inicio', 'Mi ficha', 'Productos y servicios', 'Equipo', 'Solicitudes de alta']);
     expect(within(menu).getByRole('link', { name: 'Inicio' })).toHaveAttribute(
       'aria-current',
       'page',
@@ -171,7 +234,7 @@ describe('cooperative panel', () => {
   });
 
   it('says so when the account has no organization', async () => {
-    signedIn({ ...ACCOUNT, organizations: [] });
+    signedIn(withRequests());
 
     renderRoute('/cooperative');
 
@@ -203,9 +266,8 @@ describe('cooperative panel', () => {
   it('asks an unconfirmed account to confirm its email and resends the link', async () => {
     const fetchMock = signedIn(
       {
-        ...ACCOUNT,
+        ...withRequests({ id: 'r2', name: 'Textil Sur', status: 'PENDING' }),
         emailVerified: false,
-        organizations: [{ id: 'c2', name: 'Textil Sur', slug: 'textil-sur', status: 'PENDING' }],
       },
       { 'POST /api/me/email-verification': { status: 204 } },
     );
@@ -216,7 +278,7 @@ describe('cooperative panel', () => {
     expect(screen.getByText(/Te enviamos un enlace a/)).toHaveTextContent('ana@coop.local');
     expect(
       within(screen.getByRole('article', { name: 'Textil Sur' })).getByText(
-        'Cuando confirmes tu email, el observatorio va a revisar el alta.',
+        'Cuando confirmes tu email, el observatorio va a revisar la solicitud.',
       ),
     ).toBeInTheDocument();
 

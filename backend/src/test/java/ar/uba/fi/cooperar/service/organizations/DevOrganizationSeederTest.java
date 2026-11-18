@@ -11,7 +11,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import ar.uba.fi.cooperar.domain.organizations.Organization;
-import ar.uba.fi.cooperar.domain.organizations.OrganizationStatus;
 import ar.uba.fi.cooperar.repository.organizations.OrganizationRepository;
 import ar.uba.fi.cooperar.repository.user.UserAccountRepository;
 import java.time.Clock;
@@ -44,7 +43,6 @@ class DevOrganizationSeederTest {
         verify(organizations, times(3)).save(any(Organization.class));
         verify(organizations)
                 .save(argThat(organization -> organization.getSlug().equals("cooperativa-ejemplo-textil")
-                        && organization.getStatus() == OrganizationStatus.APPROVED
                         && organization.getLocation().getY() == -34.617608
                         && organization.getLocation().getX() == -58.368443));
         verify(organizations)

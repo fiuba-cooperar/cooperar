@@ -13,13 +13,15 @@ const ADMIN = {
   role: 'ADMIN',
   emailVerified: true,
   organizations: [],
+  registrationRequests: [],
 };
 const COOPERATIVE = {
   id: 'u2',
   email: 'coop@test.local',
   role: 'COOPERATIVE',
   emailVerified: true,
-  organizations: [{ id: 'c1', name: 'La Cooperativa', status: 'APPROVED' }],
+  organizations: [{ id: 'c1', name: 'La Cooperativa', slug: 'la-cooperativa' }],
+  registrationRequests: [],
 };
 
 async function fillAndSubmit(email: string, password: string) {

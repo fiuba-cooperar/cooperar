@@ -10,6 +10,6 @@ export interface RegistrantResponse {
   email: string;
   firstName: string;
   lastName: string;
-  /** Role in the organization; missing for organizations registered before it was asked for */
+  /** Role in the organization; missing for requests sent before it was asked for */
   role?: string;
 }

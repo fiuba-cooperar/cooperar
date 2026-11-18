@@ -6,17 +6,21 @@
  * OpenAPI spec version: v1
  */
 import type { OrganizationSummary } from './organizationSummary';
+import type { RegistrationRequestSummary } from './registrationRequestSummary';
 import type { Role } from './role';
 
 export interface CurrentUserResponse {
   email: string;
-  /** Until it is confirmed, the account's organizations do not reach the review */
+  /** Until it is confirmed, the account's registration requests do not reach the review */
   emailVerified: boolean;
   /** Missing for the initial admin when it was created without a name */
   firstName?: string;
   id: string;
   /** Missing for the initial admin when it was created without a name */
   lastName?: string;
+  /** The organizations the account manages, all of them approved and public */
   organizations: OrganizationSummary[];
+  /** The requests the account sent that did not become an organization, newest first */
+  registrationRequests: RegistrationRequestSummary[];
   role: Role;
 }

@@ -1,0 +1,8 @@
+.heading:focus {
+  outline: none;
+}
+
+.doneIcon {
+  color: var(--mantine-color-brand-6);
+  flex-shrink: 0;
+}

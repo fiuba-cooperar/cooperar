@@ -9,10 +9,25 @@
     "url" : "/"
   } ],
   "paths" : {
-    "/api/admin/organizations/pending" : {
+    "/api/admin/registration-requests" : {
       "get" : {
-        "description" : "Only organizations whose account has already confirmed its email.",
-        "operationId" : "listPendingOrganizations",
+        "description" : "Without `type`, of every organization type. Pending ones are only those whose account confirmed its email, the oldest submission first. The rest go from the latest decision back.",
+        "operationId" : "listRegistrationRequests",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "status",
+          "required" : true,
+          "schema" : {
+            "$ref" : "#/components/schemas/RegistrationStatus"
+          }
+        }, {
+          "in" : "query",
+          "name" : "type",
+          "required" : false,
+          "schema" : {
+            "$ref" : "#/components/schemas/OrganizationType"
+          }
+        } ],
         "responses" : {
           "200" : {
             "content" : {
@@ -20,7 +35,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/PendingOrganizationResponse"
+                    "$ref" : "#/components/schemas/AdminRegistrationRequestResponse"
                   }
                 }
               }
@@ -28,14 +43,42 @@
             "description" : "OK"
           }
         },
-        "summary" : "Organizations awaiting review, oldest first",
-        "tags" : [ "admin-organizations" ]
+        "summary" : "Registration requests with the given status, with every decision made on them",
+        "tags" : [ "admin-registration-requests" ]
       }
     },
-    "/api/admin/organizations/{id}/approve" : {
+    "/api/admin/registration-requests/counts" : {
+      "get" : {
+        "description" : "Without `type`, of every organization type.",
+        "operationId" : "countRegistrationRequests",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "type",
+          "required" : false,
+          "schema" : {
+            "$ref" : "#/components/schemas/OrganizationType"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RegistrationCountsResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "How many registration requests there are in each status",
+        "tags" : [ "admin-registration-requests" ]
+      }
+    },
+    "/api/admin/registration-requests/{id}/approve" : {
       "post" : {
-        "description" : "Answers 409 when the organization is not awaiting review.",
-        "operationId" : "approveOrganization",
+        "description" : "Answers 409 when the request is not awaiting review, or when an organization with that CUIT was approved meanwhile.",
+        "operationId" : "approveRegistrationRequest",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -50,14 +93,14 @@
             "description" : "OK"
           }
         },
-        "summary" : "Approve an organization, which makes it public",
-        "tags" : [ "admin-organizations" ]
+        "summary" : "Approve a request, which creates the organization and makes it public",
+        "tags" : [ "admin-registration-requests" ]
       }
     },
-    "/api/admin/organizations/{id}/reject" : {
+    "/api/admin/registration-requests/{id}/reject" : {
       "post" : {
-        "description" : "Answers 409 when the organization is not awaiting review.",
-        "operationId" : "rejectOrganization",
+        "description" : "Answers 409 when the request is not awaiting review.",
+        "operationId" : "rejectRegistrationRequest",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -82,8 +125,40 @@
             "description" : "OK"
           }
         },
-        "summary" : "Reject an organization with a reason that its account gets to see",
-        "tags" : [ "admin-organizations" ]
+        "summary" : "Reject a request with a reason that its account gets to see",
+        "tags" : [ "admin-registration-requests" ]
+      }
+    },
+    "/api/admin/registration-requests/{id}/request-changes" : {
+      "post" : {
+        "description" : "Answers 409 when the request is not awaiting review.",
+        "operationId" : "requestRegistrationChanges",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RequestChangesRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "summary" : "Ask the account to correct the request and send it again",
+        "tags" : [ "admin-registration-requests" ]
       }
     },
     "/api/auth/login" : {
@@ -192,7 +267,7 @@
             "description" : "Created"
           }
         },
-        "summary" : "Create an account together with its first organization",
+        "summary" : "Create an account together with the request to add its first organization",
         "tags" : [ "auth" ]
       }
     },
@@ -217,6 +292,122 @@
         },
         "summary" : "Confirm the account's email with the token from the emailed link",
         "tags" : [ "auth" ]
+      }
+    },
+    "/api/cooperative/registration-requests" : {
+      "get" : {
+        "operationId" : "listRegistrationRequestsSent",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/CooperativeRegistrationRequestResponse"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Every request the account sent, newest first",
+        "tags" : [ "cooperative-registration-requests" ]
+      },
+      "post" : {
+        "description" : "It reaches the review once the account has confirmed its email. Answers 409 with a `conflicts` list (`CUIT`) when another organization or request under review has that CUIT.",
+        "operationId" : "createRegistrationRequest",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RegistrationOrganizationRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CooperativeRegistrationRequestResponse"
+                }
+              }
+            },
+            "description" : "Created"
+          }
+        },
+        "summary" : "Send a request to add another organization",
+        "tags" : [ "cooperative-registration-requests" ]
+      }
+    },
+    "/api/cooperative/registration-requests/{id}" : {
+      "get" : {
+        "description" : "Answers 404 when the request does not exist or another account sent it.",
+        "operationId" : "getRegistrationRequest",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CooperativeRegistrationRequestResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "A registration request that the account sent",
+        "tags" : [ "cooperative-registration-requests" ]
+      },
+      "put" : {
+        "description" : "Answers 409 when the observatory did not ask for changes, or with a `conflicts` list (`CUIT`) when another organization or request under review has that CUIT.",
+        "operationId" : "resubmitRegistrationRequest",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RegistrationOrganizationRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CooperativeRegistrationRequestResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Correct the request as the observatory asked and send it back to the review",
+        "tags" : [ "cooperative-registration-requests" ]
       }
     },
     "/api/health" : {
@@ -314,26 +505,146 @@
         "type" : "string",
         "enum" : [ "WORK", "SERVICE", "PRODUCT" ]
       },
-      "AddressResponse" : {
+      "AdminRegistrationRequestResponse" : {
         "type" : "object",
         "properties" : {
-          "additionalReferences" : {
+          "activityTypes" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ActivityType"
+            },
+            "uniqueItems" : true
+          },
+          "address" : {
+            "$ref" : "#/components/schemas/RegistrationAddressResponse"
+          },
+          "cuit" : {
+            "type" : "string",
+            "description" : "The 11 digits, without dashes"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "legalName" : {
+            "type" : "string",
+            "description" : "Missing for requests sent before it was asked for"
+          },
+          "name" : {
             "type" : "string"
           },
-          "district" : {
-            "type" : "string"
+          "organizationId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "The organization created on approval; missing until then"
           },
-          "locality" : {
-            "type" : "string"
+          "registeredAt" : {
+            "type" : "string",
+            "format" : "date-time"
           },
-          "province" : {
-            "$ref" : "#/components/schemas/Province"
+          "registeredBy" : {
+            "$ref" : "#/components/schemas/RegistrantResponse",
+            "description" : "Missing if that account was deleted"
           },
-          "street" : {
-            "type" : "string"
+          "reviews" : {
+            "type" : "array",
+            "description" : "Every decision, oldest first",
+            "items" : {
+              "$ref" : "#/components/schemas/ReviewResponse"
+            }
+          },
+          "sectors" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Sector"
+            },
+            "uniqueItems" : true
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/RegistrationStatus"
+          },
+          "submittedAt" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "When it last went into the review: later than the registration if it was corrected"
+          },
+          "type" : {
+            "$ref" : "#/components/schemas/OrganizationType"
           }
         },
-        "required" : [ "district", "locality", "province", "street" ]
+        "required" : [ "activityTypes", "address", "cuit", "id", "name", "registeredAt", "reviews", "sectors", "status", "submittedAt", "type" ]
+      },
+      "CooperativeRegistrationRequestResponse" : {
+        "type" : "object",
+        "properties" : {
+          "activityTypes" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ActivityType"
+            },
+            "uniqueItems" : true
+          },
+          "address" : {
+            "$ref" : "#/components/schemas/RegistrationAddressResponse"
+          },
+          "cuit" : {
+            "type" : "string",
+            "description" : "The 11 digits, without dashes"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "legalName" : {
+            "type" : "string",
+            "description" : "Missing for requests sent before it was asked for"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "organizationSlug" : {
+            "type" : "string",
+            "description" : "Path segment of the public profile of the organization it became, once approved"
+          },
+          "registeredAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "registrantRole" : {
+            "type" : "string",
+            "description" : "Missing for requests sent before it was asked for"
+          },
+          "reviewMessage" : {
+            "type" : "string",
+            "description" : "Only for rejected requests and those the observatory asked to correct"
+          },
+          "reviews" : {
+            "type" : "array",
+            "description" : "Every decision, oldest first",
+            "items" : {
+              "$ref" : "#/components/schemas/DecisionResponse"
+            }
+          },
+          "sectors" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Sector"
+            },
+            "uniqueItems" : true
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/RegistrationStatus"
+          },
+          "submittedAt" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "When it last went into the review: later than the registration if it was corrected"
+          },
+          "type" : {
+            "$ref" : "#/components/schemas/OrganizationType"
+          }
+        },
+        "required" : [ "activityTypes", "address", "cuit", "id", "name", "registeredAt", "reviews", "sectors", "status", "submittedAt", "type" ]
       },
       "CurrentUserResponse" : {
         "type" : "object",
@@ -343,7 +654,7 @@
           },
           "emailVerified" : {
             "type" : "boolean",
-            "description" : "Until it is confirmed, the account's organizations do not reach the review"
+            "description" : "Until it is confirmed, the account's registration requests do not reach the review"
           },
           "firstName" : {
             "type" : "string",
@@ -359,15 +670,40 @@
           },
           "organizations" : {
             "type" : "array",
+            "description" : "The organizations the account manages, all of them approved and public",
             "items" : {
               "$ref" : "#/components/schemas/OrganizationSummary"
+            }
+          },
+          "registrationRequests" : {
+            "type" : "array",
+            "description" : "The requests the account sent that did not become an organization, newest first",
+            "items" : {
+              "$ref" : "#/components/schemas/RegistrationRequestSummary"
             }
           },
           "role" : {
             "$ref" : "#/components/schemas/Role"
           }
         },
-        "required" : [ "email", "emailVerified", "id", "organizations", "role" ]
+        "required" : [ "email", "emailVerified", "id", "organizations", "registrationRequests", "role" ]
+      },
+      "DecisionResponse" : {
+        "type" : "object",
+        "properties" : {
+          "message" : {
+            "type" : "string",
+            "description" : "Missing for approvals"
+          },
+          "outcome" : {
+            "$ref" : "#/components/schemas/ReviewOutcome"
+          },
+          "reviewedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "outcome", "reviewedAt" ]
       },
       "GeoPoint" : {
         "type" : "object",
@@ -457,10 +793,6 @@
         },
         "required" : [ "district", "locality", "name", "province", "sectors", "slug", "street" ]
       },
-      "OrganizationStatus" : {
-        "type" : "string",
-        "enum" : [ "PENDING", "APPROVED", "REJECTED" ]
-      },
       "OrganizationSummary" : {
         "type" : "object",
         "properties" : {
@@ -471,71 +803,16 @@
           "name" : {
             "type" : "string"
           },
-          "rejectionReason" : {
-            "type" : "string",
-            "description" : "Only for rejected organizations"
-          },
           "slug" : {
             "type" : "string",
             "description" : "Path segment of the public profile"
-          },
-          "status" : {
-            "$ref" : "#/components/schemas/OrganizationStatus"
           }
         },
-        "required" : [ "id", "name", "slug", "status" ]
+        "required" : [ "id", "name", "slug" ]
       },
       "OrganizationType" : {
         "type" : "string",
         "enum" : [ "COOPERATIVE", "ERT" ]
-      },
-      "PendingOrganizationResponse" : {
-        "type" : "object",
-        "properties" : {
-          "activityTypes" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/ActivityType"
-            },
-            "uniqueItems" : true
-          },
-          "address" : {
-            "$ref" : "#/components/schemas/AddressResponse"
-          },
-          "cuit" : {
-            "type" : "string",
-            "description" : "The 11 digits, without dashes"
-          },
-          "id" : {
-            "type" : "string",
-            "format" : "uuid"
-          },
-          "legalName" : {
-            "type" : "string",
-            "description" : "Missing for organizations registered before it was asked for"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "registeredAt" : {
-            "type" : "string",
-            "format" : "date-time"
-          },
-          "registeredBy" : {
-            "$ref" : "#/components/schemas/RegistrantResponse"
-          },
-          "sectors" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/Sector"
-            },
-            "uniqueItems" : true
-          },
-          "type" : {
-            "$ref" : "#/components/schemas/OrganizationType"
-          }
-        },
-        "required" : [ "activityTypes", "address", "cuit", "id", "name", "registeredAt", "registeredBy", "sectors", "type" ]
       },
       "Province" : {
         "type" : "string",
@@ -565,7 +842,7 @@
           },
           "role" : {
             "type" : "string",
-            "description" : "Role in the organization; missing for organizations registered before it was asked for"
+            "description" : "Role in the organization; missing for requests sent before it was asked for"
           }
         },
         "required" : [ "email", "firstName", "lastName" ]
@@ -629,6 +906,49 @@
           }
         },
         "required" : [ "district", "locality", "province", "street" ]
+      },
+      "RegistrationAddressResponse" : {
+        "type" : "object",
+        "properties" : {
+          "additionalReferences" : {
+            "type" : "string"
+          },
+          "district" : {
+            "type" : "string"
+          },
+          "locality" : {
+            "type" : "string"
+          },
+          "province" : {
+            "$ref" : "#/components/schemas/Province"
+          },
+          "street" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "district", "locality", "province", "street" ]
+      },
+      "RegistrationCountsResponse" : {
+        "type" : "object",
+        "properties" : {
+          "approved" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "changesRequested" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "pending" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "rejected" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "approved", "changesRequested", "pending", "rejected" ]
       },
       "RegistrationOrganizationRequest" : {
         "type" : "object",
@@ -694,6 +1014,26 @@
         },
         "required" : [ "account", "organization" ]
       },
+      "RegistrationRequestSummary" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "reviewMessage" : {
+            "type" : "string",
+            "description" : "Only for rejected requests and those the observatory asked to correct"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/RegistrationStatus"
+          }
+        },
+        "required" : [ "id", "name", "status" ]
+      },
       "RegistrationResponse" : {
         "type" : "object",
         "properties" : {
@@ -701,12 +1041,17 @@
             "type" : "string",
             "format" : "uuid"
           },
-          "organizationId" : {
+          "registrationRequestId" : {
             "type" : "string",
-            "format" : "uuid"
+            "format" : "uuid",
+            "description" : "The organization only exists once the observatory approves this request"
           }
         },
-        "required" : [ "accountId", "organizationId" ]
+        "required" : [ "accountId", "registrationRequestId" ]
+      },
+      "RegistrationStatus" : {
+        "type" : "string",
+        "enum" : [ "PENDING", "CHANGES_REQUESTED", "APPROVED", "REJECTED" ]
       },
       "RejectOrganizationRequest" : {
         "type" : "object",
@@ -718,6 +1063,43 @@
           }
         },
         "required" : [ "reason" ]
+      },
+      "RequestChangesRequest" : {
+        "type" : "object",
+        "properties" : {
+          "message" : {
+            "type" : "string",
+            "description" : "What the organization has to correct or add",
+            "maxLength" : 1000,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "message" ]
+      },
+      "ReviewOutcome" : {
+        "type" : "string",
+        "enum" : [ "APPROVED", "REJECTED", "CHANGES_REQUESTED" ]
+      },
+      "ReviewResponse" : {
+        "type" : "object",
+        "properties" : {
+          "message" : {
+            "type" : "string",
+            "description" : "Missing for approvals"
+          },
+          "outcome" : {
+            "$ref" : "#/components/schemas/ReviewOutcome"
+          },
+          "reviewedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "reviewerName" : {
+            "type" : "string",
+            "description" : "Full name of the admin, or the email if it has no name; missing if it was deleted"
+          }
+        },
+        "required" : [ "outcome", "reviewedAt" ]
       },
       "Role" : {
         "type" : "string",

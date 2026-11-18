@@ -1,6 +1,7 @@
+import type { MantineColor } from '@mantine/core';
 import {
   ActivityType,
-  OrganizationStatus,
+  RegistrationStatus,
   OrganizationType,
   Province,
   Sector,
@@ -11,10 +12,20 @@ export const ORGANIZATION_TYPE_LABELS: Record<OrganizationType, string> = {
   [OrganizationType.ERT]: 'Empresa recuperada',
 };
 
-export const ORGANIZATION_STATUS_LABELS: Record<OrganizationStatus, string> = {
-  [OrganizationStatus.PENDING]: 'Pendiente de aprobación',
-  [OrganizationStatus.APPROVED]: 'Aprobada',
-  [OrganizationStatus.REJECTED]: 'Rechazada',
+/** How the account that sent a registration request reads its status. */
+export const REGISTRATION_REQUEST_STATUS_LABELS: Record<RegistrationStatus, string> = {
+  [RegistrationStatus.PENDING]: 'Pendiente de aprobación',
+  [RegistrationStatus.APPROVED]: 'Aprobada',
+  [RegistrationStatus.REJECTED]: 'Rechazada',
+  [RegistrationStatus.CHANGES_REQUESTED]: 'Solicitud de cambios',
+};
+
+/** The same colors in the observatory's panel and in the organization's, so a status reads the same everywhere. */
+export const REGISTRATION_STATUS_COLORS: Record<RegistrationStatus, MantineColor> = {
+  [RegistrationStatus.PENDING]: 'yellow',
+  [RegistrationStatus.APPROVED]: 'green',
+  [RegistrationStatus.REJECTED]: 'red',
+  [RegistrationStatus.CHANGES_REQUESTED]: 'orange',
 };
 
 export const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {

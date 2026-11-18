@@ -4,10 +4,10 @@ import { AdminHomePage } from '@/features/admin/AdminHomePage';
 import { AdminLayout } from '@/features/admin/AdminLayout';
 import {
   ADMIN_HOME_PATH,
-  ADMIN_PENDING_ORGANIZATIONS_PATH,
+  ADMIN_REGISTRATIONS_PATH,
   ADMIN_SECTIONS,
 } from '@/features/admin/adminSections';
-import { PendingOrganizationsPage } from '@/features/admin/PendingOrganizationsPage';
+import { RegistrationsPage } from '@/features/admin/RegistrationsPage';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { RegisterPage } from '@/features/auth/RegisterPage';
 import { RequireRole } from '@/features/auth/RequireRole';
@@ -16,8 +16,14 @@ import { CooperativeHomePage } from '@/features/cooperative/CooperativeHomePage'
 import { CooperativeLayout } from '@/features/cooperative/CooperativeLayout';
 import {
   COOPERATIVE_HOME_PATH,
+  COOPERATIVE_REGISTRATION_REQUEST_PATH,
+  COOPERATIVE_REGISTRATION_REQUESTS_PATH,
   COOPERATIVE_SECTIONS,
+  NEW_REGISTRATION_REQUEST_PATH,
 } from '@/features/cooperative/cooperativeSections';
+import { CorrectRegistrationPage } from '@/features/cooperative/CorrectRegistrationPage';
+import { NewRegistrationRequestPage } from '@/features/cooperative/NewRegistrationRequestPage';
+import { RegistrationRequestsPage } from '@/features/cooperative/RegistrationRequestsPage';
 import { ForbiddenPage } from '@/features/errors/ForbiddenPage';
 import { NotFoundPage } from '@/features/errors/NotFoundPage';
 import { ComingSoonPage } from '@/features/home/ComingSoonPage';
@@ -52,9 +58,9 @@ export const routes: RouteObject[] = [
         element: <AdminLayout />,
         children: [
           { index: true, element: <AdminHomePage /> },
-          { path: ADMIN_PENDING_ORGANIZATIONS_PATH, element: <PendingOrganizationsPage /> },
+          { path: ADMIN_REGISTRATIONS_PATH, element: <RegistrationsPage /> },
           ...ADMIN_SECTIONS.filter(
-            ({ path }) => path !== ADMIN_HOME_PATH && path !== ADMIN_PENDING_ORGANIZATIONS_PATH,
+            ({ path }) => path !== ADMIN_HOME_PATH && path !== ADMIN_REGISTRATIONS_PATH,
           ).map(({ path, label }) => ({
             path,
             element: <ComingSoonPage title={label} homePath={ADMIN_HOME_PATH} />,
@@ -72,12 +78,16 @@ export const routes: RouteObject[] = [
         element: <CooperativeLayout />,
         children: [
           { index: true, element: <CooperativeHomePage /> },
-          ...COOPERATIVE_SECTIONS.filter(({ path }) => path !== COOPERATIVE_HOME_PATH).map(
-            ({ path, label }) => ({
-              path,
-              element: <ComingSoonPage title={label} homePath={COOPERATIVE_HOME_PATH} />,
-            }),
-          ),
+          { path: COOPERATIVE_REGISTRATION_REQUESTS_PATH, element: <RegistrationRequestsPage /> },
+          { path: NEW_REGISTRATION_REQUEST_PATH, element: <NewRegistrationRequestPage /> },
+          { path: COOPERATIVE_REGISTRATION_REQUEST_PATH, element: <CorrectRegistrationPage /> },
+          ...COOPERATIVE_SECTIONS.filter(
+            ({ path }) =>
+              path !== COOPERATIVE_HOME_PATH && path !== COOPERATIVE_REGISTRATION_REQUESTS_PATH,
+          ).map(({ path, label }) => ({
+            path,
+            element: <ComingSoonPage title={label} homePath={COOPERATIVE_HOME_PATH} />,
+          })),
         ],
       },
     ],

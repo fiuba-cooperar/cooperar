@@ -22,8 +22,8 @@ import java.util.UUID;
 import org.locationtech.jts.geom.Point;
 
 /**
- * A cooperative or ERT. It starts pending and the observatory approves or rejects it once the account that registered
- * it has confirmed its email; only approved organizations are public.
+ * A cooperative or ERT. It is created when the observatory approves its {@link RegistrationRequest}, so every
+ * organization is public.
  */
 @Entity
 @Table(name = "organizations")
@@ -73,10 +73,6 @@ public class Organization {
 
     private Point location;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private OrganizationStatus status;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "registered_by")
     private UserAccount registeredBy;
@@ -88,71 +84,37 @@ public class Organization {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    @Column(name = "rejection_reason")
-    private String rejectionReason;
-
-    @Column(name = "reviewed_by")
-    private UUID reviewedBy;
-
-    @Column(name = "reviewed_at")
-    private Instant reviewedAt;
-
     protected Organization() {}
 
-    public Organization(
-            String name,
-            String legalName,
-            String slug,
-            OrganizationType type,
-            Cuit cuit,
-            Set<Sector> sectors,
-            Set<ActivityType> activityTypes,
-            Address address,
-            UserAccount registeredBy,
-            String registrantRole,
-            Instant createdAt) {
-        if (sectors.isEmpty()) {
-            throw new IllegalArgumentException("An organization needs at least one sector");
-        }
-        if (activityTypes.isEmpty()) {
-            throw new IllegalArgumentException("An organization needs at least one activity type");
-        }
+    public Organization(String slug, OrganizationDetails details, UserAccount registeredBy, Instant createdAt) {
         this.id = UUID.randomUUID();
-        this.name = name;
-        this.legalName = legalName;
         this.slug = slug;
-        this.type = type;
-        this.cuit = cuit.digits();
-        this.sectors.addAll(sectors);
-        this.activityTypes.addAll(activityTypes);
-        this.address = address;
-        this.status = OrganizationStatus.PENDING;
+        apply(details);
         this.registeredBy = registeredBy;
-        this.registrantRole = registrantRole;
         this.createdAt = createdAt;
     }
 
-    /** Pending, and the account that registered it has confirmed its email. */
-    public boolean isAwaitingReview() {
-        return status == OrganizationStatus.PENDING && registeredBy != null && registeredBy.isEmailVerified();
-    }
-
-    public void approve(UUID reviewerId, Instant now) {
-        review(OrganizationStatus.APPROVED, null, reviewerId, now);
-    }
-
-    public void reject(String reason, UUID reviewerId, Instant now) {
-        review(OrganizationStatus.REJECTED, reason.trim(), reviewerId, now);
-    }
-
-    private void review(OrganizationStatus outcome, String reason, UUID reviewerId, Instant now) {
-        if (!isAwaitingReview()) {
-            throw new OrganizationNotAwaitingReviewException();
+    private void apply(OrganizationDetails details) {
+        if (details.sectors().isEmpty()) {
+            throw new IllegalArgumentException("An organization needs at least one sector");
         }
-        this.status = outcome;
-        this.rejectionReason = reason;
-        this.reviewedBy = reviewerId;
-        this.reviewedAt = now;
+        if (details.activityTypes().isEmpty()) {
+            throw new IllegalArgumentException("An organization needs at least one activity type");
+        }
+        this.name = details.name().trim();
+        this.legalName = trimmed(details.legalName());
+        this.type = details.type();
+        this.cuit = Cuit.parse(details.cuit()).digits();
+        this.sectors.clear();
+        this.sectors.addAll(details.sectors());
+        this.activityTypes.clear();
+        this.activityTypes.addAll(details.activityTypes());
+        this.address = details.address();
+        this.registrantRole = trimmed(details.registrantRole());
+    }
+
+    private static String trimmed(String value) {
+        return value == null ? null : value.trim();
     }
 
     public void updateProfile(OrganizationProfile profile) {
@@ -216,11 +178,7 @@ public class Organization {
         return location;
     }
 
-    public OrganizationStatus getStatus() {
-        return status;
-    }
-
-    /** The account that registered the organization; missing if that account was deleted. */
+    /** The account that sent the registration request; missing if that account was deleted. */
     public UserAccount getRegisteredBy() {
         return registeredBy;
     }
@@ -231,10 +189,6 @@ public class Organization {
 
     public Instant getCreatedAt() {
         return createdAt;
-    }
-
-    public String getRejectionReason() {
-        return rejectionReason;
     }
 
     private static <E extends Enum<E>> Set<E> ordered(Collection<E> values, Class<E> type) {

@@ -1,7 +1,6 @@
 package ar.uba.fi.cooperar.service.notifications;
 
-import ar.uba.fi.cooperar.domain.organizations.OrganizationStatus;
-import ar.uba.fi.cooperar.service.organizations.OrganizationReviewed;
+import ar.uba.fi.cooperar.service.organizations.RegistrationReviewed;
 import ar.uba.fi.cooperar.service.user.EmailVerificationService;
 import ar.uba.fi.cooperar.service.user.VerificationEmailRequested;
 import java.util.UUID;
@@ -52,29 +51,45 @@ public class AccountNotifications {
     }
 
     @TransactionalEventListener
-    public void onOrganizationReviewed(OrganizationReviewed event) {
+    public void onRegistrationReviewed(RegistrationReviewed event) {
         String panel = UriComponentsBuilder.fromUri(properties.publicUrl())
                 .path("/login")
                 .toUriString();
-        EmailMessage message = event.outcome() == OrganizationStatus.APPROVED
-                ? new EmailMessage(event.email(), "Aprobamos el alta de " + event.organizationName(), """
-                        %s
+        String greeting = greeting(event.firstName());
+        String name = event.organizationName();
+        EmailMessage message = switch (event.outcome()) {
+            case APPROVED ->
+                new EmailMessage(event.email(), "Aprobamos el alta de " + name, """
+                            %s
 
-                        El observatorio aprobó el alta de %s, que desde ahora es visible para el público en CooperAR.
+                            El observatorio aprobó el alta de %s, que desde ahora es visible para el público en \
+                            CooperAR.
 
-                        Ingresá a tu panel para completar su ficha: %s
-                        """.formatted(
-                                greeting(event.firstName()), event.organizationName(), panel))
-                : new EmailMessage(event.email(), "Revisamos el alta de " + event.organizationName(), """
-                        %s
+                            Ingresá a tu panel para completar su ficha: %s
+                            """.formatted(greeting, name, panel));
+            case REJECTED ->
+                new EmailMessage(event.email(), "Revisamos el alta de " + name, """
+                            %s
 
-                        El observatorio no aprobó el alta de %s por este motivo:
+                            El observatorio no aprobó el alta de %s por este motivo:
 
-                        %s
+                            %s
 
-                        Podés ver el estado de tu organización desde tu panel: %s
-                        """.formatted(
-                                greeting(event.firstName()), event.organizationName(), event.rejectionReason(), panel));
+                            Podés ver el estado de tu solicitud desde tu panel: %s
+                            """.formatted(
+                                greeting, name, event.message(), panel));
+            case CHANGES_REQUESTED ->
+                new EmailMessage(event.email(), "Necesitamos más información sobre el alta de " + name, """
+                            %s
+
+                            Para aprobar el alta de %s, el observatorio necesita que revises estos datos:
+
+                            %s
+
+                            Ingresá a tu panel, corregí la solicitud y reenviala: %s
+                            """.formatted(
+                                greeting, name, event.message(), panel));
+        };
         send(event.accountId(), "review", message);
     }
 

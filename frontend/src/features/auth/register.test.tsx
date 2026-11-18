@@ -12,7 +12,8 @@ const NEW_ACCOUNT = {
   email: 'ana@coop.local',
   role: 'COOPERATIVE',
   emailVerified: false,
-  organizations: [{ id: 'c1', name: 'La Litoraleña', status: 'PENDING' }],
+  organizations: [],
+  registrationRequests: [{ id: 'r1', name: 'La Litoraleña', status: 'PENDING' }],
 };
 
 // No pause between keystrokes: each one re-renders the whole form, and the default pause makes these tests slow.
@@ -69,60 +70,71 @@ async function submit() {
   await setupUser().click(screen.getByRole('button', { name: 'Crear cuenta y entidad' }));
 }
 
+// Filling in every field takes several seconds of simulated typing, more than the default 5 when the suite runs in
+// parallel.
+const FILL_IN_TIMEOUT = 20_000;
+
 describe('registration', () => {
-  it('creates the account and the organization, signs in and confirms on screen', async () => {
-    const fetchMock = stubFetchRoutes({
-      'POST /api/auth/register': { status: 201, body: { accountId: 'u1', organizationId: 'c1' } },
-      'POST /api/auth/login': { body: TOKENS },
-      'GET /api/me': { body: NEW_ACCOUNT },
-    });
-
-    renderRoute('/register');
-    expect(await screen.findByText('Paso 1 de 2')).toBeInTheDocument();
-    await fillAccountStep();
-    expect(await screen.findByRole('heading', { level: 1, name: 'Tu entidad' })).toHaveFocus();
-    expect(screen.getByText('Paso 2 de 2')).toBeInTheDocument();
-    await fillOrganizationStep();
-    await submit();
-
-    expect(
-      await screen.findByRole('heading', { level: 1, name: '¡Listo! Ya tenés tu cuenta' }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Ingresar a mi panel' })).toHaveAttribute(
-      'href',
-      '/cooperative',
-    );
-    expect(screen.getByText(/Te enviamos un email a/)).toHaveTextContent(
-      'Te enviamos un email a ana@coop.local para que confirmes tu cuenta. Cuando lo confirmes, el observatorio va a validar el alta de tu entidad',
-    );
-    const registerCall = fetchMock.mock.calls.find(([url]) => url === '/api/auth/register');
-    expect(JSON.parse(requestBody(registerCall?.[1]))).toEqual({
-      account: {
-        firstName: 'Ana',
-        lastName: 'Pérez',
-        email: 'ana@coop.local',
-        password: 'secret-password',
-      },
-      organization: {
-        name: 'La Litoraleña',
-        legalName: 'Cooperativa de Trabajo La Litoraleña Ltda.',
-        type: 'COOPERATIVE',
-        cuit: '30-12345678-1',
-        activityTypes: ['WORK', 'PRODUCT'],
-        sectors: ['FOOD', 'SERVICES'],
-        registrantRole: 'Presidenta',
-        address: {
-          province: 'SANTA_FE',
-          district: 'Rosario',
-          locality: 'Centro',
-          street: 'Rivadavia 100',
+  it(
+    'creates the account and the organization, signs in and confirms on screen',
+    async () => {
+      const fetchMock = stubFetchRoutes({
+        'POST /api/auth/register': {
+          status: 201,
+          body: { accountId: 'u1', registrationRequestId: 'r1' },
         },
-      },
-    });
-    await waitFor(() => {
-      expect(getAccessToken()).toBe('access-1');
-    });
-  });
+        'POST /api/auth/login': { body: TOKENS },
+        'GET /api/me': { body: NEW_ACCOUNT },
+      });
+
+      renderRoute('/register');
+      expect(await screen.findByText('Paso 1 de 2')).toBeInTheDocument();
+      await fillAccountStep();
+      expect(await screen.findByRole('heading', { level: 1, name: 'Tu entidad' })).toHaveFocus();
+      expect(screen.getByText('Paso 2 de 2')).toBeInTheDocument();
+      await fillOrganizationStep();
+      await submit();
+
+      expect(
+        await screen.findByRole('heading', { level: 1, name: '¡Listo! Ya tenés tu cuenta' }),
+      ).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Ingresar a mi panel' })).toHaveAttribute(
+        'href',
+        '/cooperative',
+      );
+      expect(screen.getByText(/Te enviamos un email a/)).toHaveTextContent(
+        'Te enviamos un email a ana@coop.local para que confirmes tu cuenta. Cuando lo confirmes, el observatorio va a validar el alta de tu entidad',
+      );
+      const registerCall = fetchMock.mock.calls.find(([url]) => url === '/api/auth/register');
+      expect(JSON.parse(requestBody(registerCall?.[1]))).toEqual({
+        account: {
+          firstName: 'Ana',
+          lastName: 'Pérez',
+          email: 'ana@coop.local',
+          password: 'secret-password',
+        },
+        organization: {
+          name: 'La Litoraleña',
+          legalName: 'Cooperativa de Trabajo La Litoraleña Ltda.',
+          type: 'COOPERATIVE',
+          cuit: '30-12345678-1',
+          activityTypes: ['WORK', 'PRODUCT'],
+          sectors: ['FOOD', 'SERVICES'],
+          registrantRole: 'Presidenta',
+          address: {
+            province: 'SANTA_FE',
+            district: 'Rosario',
+            locality: 'Centro',
+            street: 'Rivadavia 100',
+          },
+        },
+      });
+      await waitFor(() => {
+        expect(getAccessToken()).toBe('access-1');
+      });
+    },
+    FILL_IN_TIMEOUT,
+  );
 
   it('shows only the logo and a way to the login in the header, without menu or footer', async () => {
     stubFetchRoutes({});
@@ -266,7 +278,10 @@ describe('registration', () => {
 
   it('groups the address fields and sends the optional references only when typed', async () => {
     const fetchMock = stubFetchRoutes({
-      'POST /api/auth/register': { status: 201, body: { accountId: 'u1', organizationId: 'c1' } },
+      'POST /api/auth/register': {
+        status: 201,
+        body: { accountId: 'u1', registrationRequestId: 'r1' },
+      },
       'POST /api/auth/login': { body: TOKENS },
       'GET /api/me': { body: NEW_ACCOUNT },
     });
@@ -365,7 +380,10 @@ describe('registration', () => {
 
   it('has no accessibility violations on either step or on the confirmation', async () => {
     stubFetchRoutes({
-      'POST /api/auth/register': { status: 201, body: { accountId: 'u1', organizationId: 'c1' } },
+      'POST /api/auth/register': {
+        status: 201,
+        body: { accountId: 'u1', registrationRequestId: 'r1' },
+      },
       'POST /api/auth/login': { body: TOKENS },
       'GET /api/me': { body: NEW_ACCOUNT },
     });

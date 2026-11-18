@@ -1,8 +1,11 @@
 package ar.uba.fi.cooperar.shared.error;
 
+import ar.uba.fi.cooperar.domain.organizations.ChangesNotRequestedException;
 import ar.uba.fi.cooperar.domain.organizations.InvalidCuitException;
-import ar.uba.fi.cooperar.domain.organizations.OrganizationNotAwaitingReviewException;
+import ar.uba.fi.cooperar.domain.organizations.RegistrationNotAwaitingReviewException;
+import ar.uba.fi.cooperar.service.organizations.CuitAlreadyRegisteredException;
 import ar.uba.fi.cooperar.service.organizations.OrganizationNotFoundException;
+import ar.uba.fi.cooperar.service.organizations.RegistrationRequestNotFoundException;
 import ar.uba.fi.cooperar.service.user.AccountNotFoundException;
 import ar.uba.fi.cooperar.service.user.EmailAlreadyVerifiedException;
 import ar.uba.fi.cooperar.service.user.InvalidCredentialsException;
@@ -10,6 +13,7 @@ import ar.uba.fi.cooperar.service.user.InvalidRefreshTokenException;
 import ar.uba.fi.cooperar.service.user.InvalidVerificationTokenException;
 import ar.uba.fi.cooperar.service.user.PasswordTooLongException;
 import ar.uba.fi.cooperar.service.user.RegistrationConflictException;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -45,12 +49,16 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, exception.getMessage());
     }
 
-    @ExceptionHandler(OrganizationNotFoundException.class)
+    @ExceptionHandler({OrganizationNotFoundException.class, RegistrationRequestNotFoundException.class})
     public ProblemDetail handleNotFound(RuntimeException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());
     }
 
-    @ExceptionHandler({OrganizationNotAwaitingReviewException.class, EmailAlreadyVerifiedException.class})
+    @ExceptionHandler({
+        RegistrationNotAwaitingReviewException.class,
+        ChangesNotRequestedException.class,
+        EmailAlreadyVerifiedException.class
+    })
     public ProblemDetail handleStateConflict(RuntimeException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
     }
@@ -62,6 +70,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         problem.setProperty(
                 "conflicts",
                 exception.getFields().stream().map(Enum::name).sorted().toList());
+        return problem;
+    }
+
+    /** Same shape as a registration conflict, so the client points at the CUIT field in both forms. */
+    @ExceptionHandler(CuitAlreadyRegisteredException.class)
+    public ProblemDetail handleCuitConflict(CuitAlreadyRegisteredException exception) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
+        problem.setProperty("conflicts", List.of("CUIT"));
         return problem;
     }
 

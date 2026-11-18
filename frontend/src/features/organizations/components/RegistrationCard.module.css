@@ -1,0 +1,30 @@
+.history {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--mantine-spacing-xs);
+}
+
+/* A line on the left ties the decisions together as a timeline. */
+.historyItem {
+  padding-left: var(--mantine-spacing-sm);
+  border-left: 3px solid var(--mantine-color-default-border);
+}
+
+.message {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.chevron {
+  transition: transform 150ms ease;
+
+  &[data-expanded] {
+    transform: rotate(180deg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}

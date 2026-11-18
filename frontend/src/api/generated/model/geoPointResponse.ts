@@ -6,7 +6,7 @@
  * OpenAPI spec version: v1
  */
 
-export interface GeoPoint {
+export interface GeoPointResponse {
   latitude: number;
   longitude: number;
 }

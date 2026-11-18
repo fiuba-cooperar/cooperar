@@ -6,6 +6,11 @@ body {
   min-height: 100dvh;
 }
 
+/* Mantine components set their own display (Paper, Stack), which would beat the hidden attribute. */
+[hidden] {
+  display: none !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

@@ -7,6 +7,7 @@
  */
 
 export * from './activityType';
+export * from './adminOrganizationResponse';
 export * from './adminRegistrationRequestResponse';
 export * from './cooperativeRegistrationRequestResponse';
 export * from './countRegistrationRequestsParams';
@@ -15,6 +16,7 @@ export * from './decisionResponse';
 export * from './geoPoint';
 export * from './healthResponse';
 export * from './healthStatus';
+export * from './listOrganizationsParams';
 export * from './listRegistrationRequestsParams';
 export * from './loginRequest';
 export * from './organizationProfileResponse';

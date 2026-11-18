@@ -78,24 +78,6 @@ describe('admin panel', () => {
     expect(within(upcoming).queryByRole('link')).not.toBeInTheDocument();
   });
 
-  it('shows a coming soon page for the organizations section inside the panel', async () => {
-    signInAs(ADMIN);
-
-    renderRoute('/admin/organizations');
-
-    expect(await screen.findByRole('heading', { level: 1, name: 'Entidades' })).toBeInTheDocument();
-    expect(screen.getByText('Próximamente')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Volver al inicio' })).toHaveAttribute(
-      'href',
-      '/admin',
-    );
-    expect(
-      within(screen.getByRole('navigation', { name: 'Panel del observatorio' })).getByRole('link', {
-        name: 'Entidades',
-      }),
-    ).toHaveAttribute('aria-current', 'page');
-  });
-
   it('signs the admin out from the header', async () => {
     const fetchMock = signInAs(ADMIN);
 

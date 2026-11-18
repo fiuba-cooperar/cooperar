@@ -9,6 +9,51 @@
     "url" : "/"
   } ],
   "paths" : {
+    "/api/admin/organizations" : {
+      "get" : {
+        "description" : "Every filter is optional: without it, the list is not narrowed by that criterion.",
+        "operationId" : "listOrganizations",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "type",
+          "required" : false,
+          "schema" : {
+            "$ref" : "#/components/schemas/OrganizationType"
+          }
+        }, {
+          "in" : "query",
+          "name" : "activityType",
+          "required" : false,
+          "schema" : {
+            "$ref" : "#/components/schemas/ActivityType"
+          }
+        }, {
+          "in" : "query",
+          "name" : "sector",
+          "required" : false,
+          "schema" : {
+            "$ref" : "#/components/schemas/Sector"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/AdminOrganizationResponse"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "The organizations, by name, filtered by type, activity type and sector",
+        "tags" : [ "admin-organizations" ]
+      }
+    },
     "/api/admin/registration-requests" : {
       "get" : {
         "description" : "Without `type`, of every organization type. Pending ones are only those whose account confirmed its email, the oldest submission first. The rest go from the latest decision back.",
@@ -504,6 +549,56 @@
       "ActivityType" : {
         "type" : "string",
         "enum" : [ "WORK", "SERVICE", "PRODUCT" ]
+      },
+      "AdminOrganizationResponse" : {
+        "type" : "object",
+        "properties" : {
+          "activityTypes" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ActivityType"
+            },
+            "uniqueItems" : true
+          },
+          "address" : {
+            "$ref" : "#/components/schemas/RegistrationAddressResponse"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "When it was approved"
+          },
+          "cuit" : {
+            "type" : "string",
+            "description" : "The 11 digits, without dashes"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "legalName" : {
+            "type" : "string",
+            "description" : "Missing for organizations registered before it was asked for"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "sectors" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Sector"
+            },
+            "uniqueItems" : true
+          },
+          "slug" : {
+            "type" : "string",
+            "description" : "Path segment of its public profile"
+          },
+          "type" : {
+            "$ref" : "#/components/schemas/OrganizationType"
+          }
+        },
+        "required" : [ "activityTypes", "address", "createdAt", "cuit", "id", "name", "sectors", "slug", "type" ]
       },
       "AdminRegistrationRequestResponse" : {
         "type" : "object",

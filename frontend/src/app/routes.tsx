@@ -4,9 +4,10 @@ import { AdminHomePage } from '@/features/admin/AdminHomePage';
 import { AdminLayout } from '@/features/admin/AdminLayout';
 import {
   ADMIN_HOME_PATH,
+  ADMIN_ORGANIZATIONS_PATH,
   ADMIN_REGISTRATIONS_PATH,
-  ADMIN_SECTIONS,
 } from '@/features/admin/adminSections';
+import { OrganizationsPage } from '@/features/admin/OrganizationsPage';
 import { RegistrationsPage } from '@/features/admin/RegistrationsPage';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { RegisterPage } from '@/features/auth/RegisterPage';
@@ -59,12 +60,7 @@ export const routes: RouteObject[] = [
         children: [
           { index: true, element: <AdminHomePage /> },
           { path: ADMIN_REGISTRATIONS_PATH, element: <RegistrationsPage /> },
-          ...ADMIN_SECTIONS.filter(
-            ({ path }) => path !== ADMIN_HOME_PATH && path !== ADMIN_REGISTRATIONS_PATH,
-          ).map(({ path, label }) => ({
-            path,
-            element: <ComingSoonPage title={label} homePath={ADMIN_HOME_PATH} />,
-          })),
+          { path: ADMIN_ORGANIZATIONS_PATH, element: <OrganizationsPage /> },
         ],
       },
     ],

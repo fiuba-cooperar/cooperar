@@ -19,7 +19,7 @@ Esta regla vale en todas las sesiones y para todo el equipo:
 | Comentarios y mensajes en Dockerfiles, workflows de CI, `docker-compose.yml`, `Makefile`, `.env.example` y archivos de configuración | Textos de la interfaz que ve el usuario, en voseo rioplatense ("Buscá", "Volver al inicio") |
 | | Las respuestas de Claude en la conversación |
 
-Los términos del dominio se traducen siempre igual en el código: ficha → `profile`, consulta → `inquiry`, feria → `fair`, hito → `milestone`, relevamiento → `survey`, necesidad → `need`, cooperativa → `cooperative`, organización (cooperativa o ERT) → `organization`, alta (de una organización) → `registration`, solicitud de alta → `RegistrationRequest` (estado `RegistrationStatus`: `PENDING`, `CHANGES_REQUESTED`, `APPROVED`, `REJECTED`), aprobación/revisión de la solicitud → `review` (cada decisión del observatorio es un `RegistrationReview` con su `ReviewOutcome`), solicitar más información / «solicitud de cambios» → `request changes` / `CHANGES_REQUESTED`, reenviar la solicitud corregida → `resubmit`, aviso por email → `notification`, rubro → `sector` (una organización puede tener varios), tipo de actividad (trabajo, servicio o producto) → `ActivityType`, razón social → `legalName`, rol en la organización de quien la registra → `registrantRole`, departamento/partido/comuna → `district`, localidad/barrio → `locality`, tipo de organización (cooperativa o ERT) → `OrganizationType`. ERT y MIA se mantienen como siglas: `Ert`, `Mia`. Si aparece un término nuevo, se agrega a esta lista.
+Los términos del dominio se traducen siempre igual en el código: ficha → `profile`, consulta → `inquiry`, feria → `fair`, hito → `milestone`, relevamiento → `survey`, necesidad → `need`, cooperativa → `cooperative`, organización (cooperativa o ERT) → `organization`, alta (de una organización) → `registration`, solicitud de alta → `RegistrationRequest` (estado `RegistrationStatus`: `PENDING`, `CHANGES_REQUESTED`, `APPROVED`, `REJECTED`), aprobación/revisión de la solicitud → `review` (cada decisión del observatorio es un `RegistrationReview` con su `ReviewOutcome`), solicitar más información / «solicitud de cambios» → `request changes` / `CHANGES_REQUESTED`, reenviar la solicitud corregida → `resubmit`, aviso por email → `notification`, rubro → `sector` (una organización puede tener varios), tipo de actividad (trabajo, servicio o producto) → `ActivityType`, razón social → `legalName`, rol en la organización de quien la registra → `registrantRole`, departamento/partido/comuna → `district`, localidad/barrio → `locality`, tipo de organización (cooperativa o ERT) → `OrganizationType`, visibilidad de un campo de la ficha (público o privado) → `Visibility`, año de inicio → `startYear`, cantidad de trabajadores → `workerCount`, horarios de atención → `openingHours`, redes sociales → `socialMedia`, tiempo estimado de respuesta → `ResponseTime`, geocodificación → `geocoding` (`Geocoder`). ERT y MIA se mantienen como siglas: `Ert`, `Mia`. Si aparece un término nuevo, se agrega a esta lista.
 
 ## Perfiles
 
@@ -100,7 +100,7 @@ ar.uba.fi.cooperar
 └── shared/               Transversal: error (ProblemDetail), security, config
 ```
 
-Módulos previstos según las issues: `organizations` (fichas, privacidad), `catalog`, `inquiries`, `users`, `fairs`, `spaces`, `history`, `network` (necesidades, MIA, grafo), `surveys`, `metrics`, `search` y `content`. Hoy existen `health`, `user` (registro, confirmación del email, login y sesión), `organizations` (la solicitud de alta, que el observatorio aprueba, rechaza o devuelve para corregir, con el historial de esas decisiones, y la entidad `Organization`, cooperativa o ERT, que se crea recién al aprobarse la solicitud: tipo, nombre, CUIT, rubros y dirección) y `notifications` (emails a las cuentas, por SMTP). Cada módulo se crea con su primera issue: no se dejan paquetes vacíos. Detalle en `backend/CLAUDE.md`.
+Módulos previstos según las issues: `organizations` (fichas, privacidad), `catalog`, `inquiries`, `users`, `fairs`, `spaces`, `history`, `network` (necesidades, MIA, grafo), `surveys`, `metrics`, `search` y `content`. Hoy existen `health`, `user` (registro, confirmación del email, login y sesión), `organizations` (la solicitud de alta, que el observatorio aprueba, rechaza o devuelve para corregir, con el historial de esas decisiones, y la entidad `Organization`, cooperativa o ERT, que se crea recién al aprobarse la solicitud: tipo, nombre, CUIT, rubros y dirección, más el resto de la ficha, que la cooperativa edita por secciones eligiendo la visibilidad de los campos configurables) y `notifications` (emails a las cuentas, por SMTP). Cada módulo se crea con su primera issue: no se dejan paquetes vacíos. Detalle en `backend/CLAUDE.md`.
 
 ### Frontend (resumen)
 
@@ -193,11 +193,11 @@ La plataforma guarda datos de cooperativas y de personas (contactos, quienes env
 |---|---|
 | Alcance del MVP y priorización MoSCoW con la SEU | #2 |
 | Modelo de dominio y diagrama ER | #1 |
-| Campos de la ficha y su nivel de privacidad | #3 |
+| Campos de la ficha y su nivel de privacidad (hay una propuesta implementada en [`docs/campos-de-la-ficha.md`](docs/campos-de-la-ficha.md), a validar con la SEU) | #3 |
 | Fuente de los datos semilla | #4 |
 | Servidor SMTP de producción (el de la Facultad u otro autohospedado). El envío ya es por SMTP genérico y en desarrollo los emails van a Mailpit. | #12, #23 |
 | Almacenamiento de imágenes (disco local o compatible con S3 autohospedado, como MinIO) | #13 |
-| Geocodificación (Nominatim público con límites o instancia propia) | #13 |
+| Geocodificación: hoy se usa el Nominatim público (`GEOCODING_PROVIDER=nominatim`); para producción, instancia propia (`NOMINATIM_URL`) o el público con sus límites | #13 |
 | Librería de mapas (MapLibre o Leaflet) | #17 |
 | Modelo y proveedor de embeddings | #45, #48 |
 | Proveedor de LLM y uso de Spring AI para el asistente | #49, #51 |

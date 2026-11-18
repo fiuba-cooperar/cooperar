@@ -2,6 +2,7 @@ package ar.uba.fi.cooperar.shared.error;
 
 import ar.uba.fi.cooperar.domain.organizations.ChangesNotRequestedException;
 import ar.uba.fi.cooperar.domain.organizations.InvalidCuitException;
+import ar.uba.fi.cooperar.domain.organizations.InvalidStartYearException;
 import ar.uba.fi.cooperar.domain.organizations.RegistrationNotAwaitingReviewException;
 import ar.uba.fi.cooperar.service.organizations.CuitAlreadyRegisteredException;
 import ar.uba.fi.cooperar.service.organizations.OrganizationNotFoundException;
@@ -42,6 +43,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler({
         InvalidCuitException.class,
+        InvalidStartYearException.class,
         PasswordTooLongException.class,
         InvalidVerificationTokenException.class
     })

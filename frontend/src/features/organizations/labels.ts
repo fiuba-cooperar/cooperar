@@ -4,6 +4,7 @@ import {
   RegistrationStatus,
   OrganizationType,
   Province,
+  ResponseTime,
   Sector,
 } from '@/api/generated/model';
 
@@ -68,4 +69,12 @@ export const PROVINCE_LABELS: Record<Province, string> = {
   [Province.SANTIAGO_DEL_ESTERO]: 'Santiago del Estero',
   [Province.TIERRA_DEL_FUEGO]: 'Tierra del Fuego',
   [Province.TUCUMAN]: 'Tucumán',
+};
+
+/** How long the organization usually takes to answer, as it reads in its profile. */
+export const RESPONSE_TIME_LABELS: Record<ResponseTime, string> = {
+  [ResponseTime.SAME_DAY]: 'En el día',
+  [ResponseTime.ONE_DAY]: '24 horas',
+  [ResponseTime.TWO_DAYS]: '48 horas',
+  [ResponseTime.ONE_WEEK]: 'Una semana',
 };

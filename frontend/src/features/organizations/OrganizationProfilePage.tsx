@@ -17,7 +17,13 @@ import { useParams } from 'react-router';
 import type { OrganizationProfileResponse } from '@/api/generated/model';
 import { NotFoundPage } from '@/features/errors/NotFoundPage';
 import { useOrganizationProfile } from './api/useOrganizationProfile';
-import { PROVINCE_LABELS, SECTOR_LABELS } from './labels';
+import {
+  ACTIVITY_TYPE_LABELS,
+  ORGANIZATION_TYPE_LABELS,
+  PROVINCE_LABELS,
+  RESPONSE_TIME_LABELS,
+  SECTOR_LABELS,
+} from './labels';
 import styles from './OrganizationProfilePage.module.css';
 
 const LocationMap = lazy(() =>
@@ -40,8 +46,15 @@ export function OrganizationProfilePage() {
   return <Profile profile={profile} />;
 }
 
+function phoneHref(phone: string) {
+  return `tel:${phone.replace(/[^\d+]/g, '')}`;
+}
+
 function Profile({ profile }: { profile: OrganizationProfileResponse }) {
   const place = `${profile.locality}, ${PROVINCE_LABELS[profile.province]}`;
+  const address = profile.street
+    ? `${profile.street}, ${profile.locality}, ${profile.district}`
+    : `${profile.locality}, ${profile.district}`;
 
   return (
     <Stack gap="lg">
@@ -56,6 +69,7 @@ function Profile({ profile }: { profile: OrganizationProfileResponse }) {
             <Stack gap="xs" miw={0}>
               <Title order={1}>{profile.name}</Title>
               <Group gap="sm">
+                <Badge variant="light">{ORGANIZATION_TYPE_LABELS[profile.type]}</Badge>
                 {profile.sectors.map((sector) => (
                   <Badge key={sector} variant="light">
                     {SECTOR_LABELS[sector]}
@@ -87,14 +101,47 @@ function Profile({ profile }: { profile: OrganizationProfileResponse }) {
       <Grid gap="lg">
         <Grid.Col span={{ base: 12, md: 8 }}>
           <Stack gap="lg">
-            {profile.description && (
-              <Paper component="section" withBorder radius="lg" p="lg" aria-labelledby="about">
-                <Title order={2} size="h3" id="about" mb="xs">
-                  Sobre la entidad
-                </Title>
+            {/* Always there: every organization offers at least one activity type. */}
+            <Paper component="section" withBorder radius="lg" p="lg" aria-labelledby="about">
+              <Title order={2} size="h3" id="about" mb="xs">
+                Sobre la entidad
+              </Title>
+              {profile.description && (
                 <Text className={styles.description}>{profile.description}</Text>
-              </Paper>
-            )}
+              )}
+              <dl className={styles.facts}>
+                {profile.legalName && (
+                  <div>
+                    <dt>Razón social</dt>
+                    <dd>{profile.legalName}</dd>
+                  </div>
+                )}
+                {profile.startYear && (
+                  <div>
+                    <dt>Año de inicio</dt>
+                    <dd>{profile.startYear}</dd>
+                  </div>
+                )}
+                {profile.workerCount && (
+                  <div>
+                    <dt>Trabajadores</dt>
+                    <dd>{profile.workerCount}</dd>
+                  </div>
+                )}
+                <div>
+                  <dt>Qué ofrecen</dt>
+                  <dd>
+                    <Group gap={6}>
+                      {profile.activityTypes.map((type) => (
+                        <Badge key={type} variant="light">
+                          {ACTIVITY_TYPE_LABELS[type]}
+                        </Badge>
+                      ))}
+                    </Group>
+                  </dd>
+                </div>
+              </dl>
+            </Paper>
             <section aria-labelledby="products">
               <Title order={2} size="h3" id="products" mb="xs">
                 Productos y servicios
@@ -113,14 +160,26 @@ function Profile({ profile }: { profile: OrganizationProfileResponse }) {
               </Title>
               <dl className={styles.contact}>
                 <dt>Dirección</dt>
-                <dd>{`${profile.street}, ${profile.district}`}</dd>
+                <dd>{address}</dd>
+                {profile.additionalReferences && (
+                  <>
+                    <dt>Cómo llegar</dt>
+                    <dd>{profile.additionalReferences}</dd>
+                  </>
+                )}
                 {profile.phone && (
                   <>
                     <dt>Teléfono</dt>
                     <dd>
-                      <Anchor href={`tel:${profile.phone.replace(/[^\d+]/g, '')}`}>
-                        {profile.phone}
-                      </Anchor>
+                      <Anchor href={phoneHref(profile.phone)}>{profile.phone}</Anchor>
+                    </dd>
+                  </>
+                )}
+                {profile.whatsapp && (
+                  <>
+                    <dt>WhatsApp</dt>
+                    <dd>
+                      <Anchor href={phoneHref(profile.whatsapp)}>{profile.whatsapp}</Anchor>
                     </dd>
                   </>
                 )}
@@ -130,6 +189,34 @@ function Profile({ profile }: { profile: OrganizationProfileResponse }) {
                     <dd>
                       <Anchor href={`mailto:${profile.email}`}>{profile.email}</Anchor>
                     </dd>
+                  </>
+                )}
+                {profile.website && (
+                  <>
+                    <dt>Sitio web</dt>
+                    <dd>
+                      <Anchor href={profile.website} target="_blank" rel="noopener noreferrer">
+                        {profile.website.replace(/^https?:\/\//, '')}
+                      </Anchor>
+                    </dd>
+                  </>
+                )}
+                {profile.socialMedia && (
+                  <>
+                    <dt>Redes sociales</dt>
+                    <dd>{profile.socialMedia}</dd>
+                  </>
+                )}
+                {profile.openingHours && (
+                  <>
+                    <dt>Horarios de atención</dt>
+                    <dd>{profile.openingHours}</dd>
+                  </>
+                )}
+                {profile.responseTime && (
+                  <>
+                    <dt>Tiempo estimado de respuesta</dt>
+                    <dd>{RESPONSE_TIME_LABELS[profile.responseTime]}</dd>
                   </>
                 )}
               </dl>
@@ -143,11 +230,24 @@ function Profile({ profile }: { profile: OrganizationProfileResponse }) {
                   <LocationMap
                     latitude={profile.location.latitude}
                     longitude={profile.location.longitude}
-                    label={`Mapa con la ubicación de ${profile.name}`}
+                    approximate={profile.location.approximate}
+                    label={
+                      profile.location.approximate
+                        ? `Mapa con la zona de ${profile.name}`
+                        : `Mapa con la ubicación de ${profile.name}`
+                    }
                   />
                 </Suspense>
+                {profile.location.approximate && (
+                  <Text size="sm" c="dimmed" mt="xs">
+                    El mapa marca solo la zona: la entidad no publica su dirección exacta.
+                  </Text>
+                )}
               </Paper>
             )}
+            <Text size="sm" c="dimmed">
+              Solo se muestran los datos que la entidad eligió hacer públicos.
+            </Text>
           </Stack>
         </Grid.Col>
       </Grid>

@@ -16,12 +16,11 @@ export function registrationRequestPath(id: string) {
 /** Sections of the cooperative panel, in menu order. */
 export const COOPERATIVE_SECTIONS = [
   { path: COOPERATIVE_HOME_PATH, label: 'Inicio', icon: IconHome, alwaysVisible: true },
-  // TODO(#13): replace the "coming soon" page with the profile editor.
   { path: COOPERATIVE_PROFILE_PATH, label: 'Mi ficha', icon: IconFileText },
   // TODO(#19): replace the "coming soon" page with the product management.
   { path: COOPERATIVE_PRODUCTS_PATH, label: 'Productos y servicios', icon: IconBox },
   // TODO(#68): replace the "coming soon" page with the team management.
-  { path: COOPERATIVE_TEAM_PATH, label: 'Equipo', icon: IconUsers },
+  { path: COOPERATIVE_TEAM_PATH, label: 'Usuarios', icon: IconUsers },
   // Also without any approved organization: it is where the account sends its requests.
   {
     path: COOPERATIVE_REGISTRATION_REQUESTS_PATH,

@@ -5,20 +5,36 @@
  * Open observatory of worker-recovered companies and worker cooperatives
  * OpenAPI spec version: v1
  */
-import type { GeoPoint } from './geoPoint';
+import type { ActivityType } from './activityType';
+import type { OrganizationType } from './organizationType';
 import type { Province } from './province';
+import type { PublicLocation } from './publicLocation';
+import type { ResponseTime } from './responseTime';
 import type { Sector } from './sector';
 
 export interface OrganizationProfileResponse {
+  activityTypes: ActivityType[];
+  /** Only along with the street */
+  additionalReferences?: string;
   description?: string;
   district: string;
   email?: string;
+  legalName?: string;
   locality: string;
-  location?: GeoPoint;
+  location?: PublicLocation;
   name: string;
+  openingHours?: string;
   phone?: string;
   province: Province;
+  responseTime?: ResponseTime;
   sectors: Sector[];
   slug: string;
-  street: string;
+  socialMedia?: string;
+  startYear?: number;
+  /** Missing when the organization keeps it private */
+  street?: string;
+  type: OrganizationType;
+  website?: string;
+  whatsapp?: string;
+  workerCount?: number;
 }

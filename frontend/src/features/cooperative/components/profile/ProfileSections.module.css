@@ -1,0 +1,41 @@
+.fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--mantine-radius-md);
+  background: var(--mantine-color-default-hover);
+  color: var(--mantine-color-dimmed);
+  font-size: var(--mantine-font-size-sm);
+}
+
+.logo {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+}
+
+.cover {
+  height: 140px;
+}
+
+.photo {
+  height: 110px;
+}
+
+.panel {
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-lg);
+  background: var(--mantine-color-body);
+}
+
+.title {
+  margin: 0;
+  font-size: 20px;
+}

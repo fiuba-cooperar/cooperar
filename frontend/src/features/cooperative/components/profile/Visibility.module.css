@@ -1,0 +1,14 @@
+.badge {
+  flex: none;
+}
+
+.header {
+  margin-bottom: 6px;
+  min-height: 30px;
+}
+
+.legend {
+  padding: 0;
+  font-size: var(--mantine-font-size-sm);
+  font-weight: 500;
+}

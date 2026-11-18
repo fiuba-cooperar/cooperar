@@ -1,0 +1,115 @@
+.layout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.nav {
+  flex: 1 1 220px;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  @media (min-width: 56em) {
+    flex: 0 0 240px;
+    position: sticky;
+    top: calc(81px + var(--mantine-spacing-md));
+  }
+}
+
+.navButton {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 56px;
+  padding: 8px 14px;
+  border: 1px solid transparent;
+  border-radius: var(--mantine-radius-md);
+  color: var(--mantine-color-text);
+  font-weight: 500;
+
+  &:hover {
+    background: var(--mantine-color-default-hover);
+  }
+
+  &[aria-current='step'] {
+    background: var(--mantine-color-body);
+    border-color: var(--mantine-color-default-border);
+    box-shadow: inset 3px 0 0 var(--mantine-color-brand-6);
+    color: var(--mantine-color-brand-8);
+    font-weight: 600;
+  }
+}
+
+.navText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.done,
+.pending {
+  font-size: var(--mantine-font-size-sm);
+  font-weight: 400;
+  color: var(--mantine-color-dimmed);
+}
+
+.pending {
+  color: var(--mantine-color-orange-9);
+
+  @mixin dark {
+    color: var(--mantine-color-orange-4);
+  }
+}
+
+.doneIcon {
+  flex: none;
+  color: var(--mantine-color-green-7);
+}
+
+.pendingDot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  margin-right: 5px;
+  border-radius: 50%;
+  background: var(--mantine-color-orange-6);
+}
+
+.section {
+  flex: 1 1 480px;
+  min-width: 0;
+}
+
+.legendRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* A fixed column, so the three explanations start at the same place. */
+.legendSample {
+  flex: 0 0 132px;
+  display: flex;
+}
+
+.toggleSample {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-sm);
+  font-size: var(--mantine-font-size-xs);
+  font-weight: 600;
+
+  > span {
+    padding: 4px 8px;
+  }
+}
+
+.toggleSampleOn {
+  background: var(--mantine-color-brand-filled);
+  color: var(--mantine-color-white);
+}

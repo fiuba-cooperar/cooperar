@@ -20,6 +20,40 @@ const ACCOUNT = {
   registrationRequests: [],
 };
 
+function managedProfile({ complete = false } = {}) {
+  return {
+    id: 'c1',
+    slug: 'la-litoralena',
+    type: 'COOPERATIVE',
+    cuit: '30712345671',
+    identification: {
+      name: 'La Litoraleña',
+      legalName: 'La Litoraleña Ltda.',
+      legalNameVisibility: 'PRIVATE',
+    },
+    activity: {
+      sectors: ['FOOD'],
+      activityTypes: ['PRODUCT'],
+      description: complete ? 'Pastas frescas' : null,
+      startYear: complete ? 2003 : null,
+      workerCount: null,
+      workerCountVisibility: 'PUBLIC',
+    },
+    location: {
+      address: { province: 'SANTA_FE', district: 'Rosario', locality: 'Centro', street: 'Calle 1' },
+      streetVisibility: 'PUBLIC',
+      point: complete ? { latitude: -32.95, longitude: -60.64 } : null,
+    },
+    contact: {
+      phone: complete ? '341 000-0000' : null,
+      phoneVisibility: 'PUBLIC',
+      whatsappVisibility: 'PUBLIC',
+      emailVisibility: 'PUBLIC',
+      openingHours: complete ? 'Lunes a viernes' : null,
+    },
+  };
+}
+
 // Signed up, but the observatory has not approved the request yet: there is no organization to manage.
 function withRequests(...registrationRequests: object[]) {
   return { ...ACCOUNT, organizations: [], registrationRequests };
@@ -184,22 +218,25 @@ describe('cooperative panel', () => {
       within(menu)
         .getAllByRole('link')
         .map((link) => link.textContent),
-    ).toEqual(['Inicio', 'Mi ficha', 'Productos y servicios', 'Equipo', 'Solicitudes de alta']);
+    ).toEqual(['Inicio', 'Mi ficha', 'Productos y servicios', 'Usuarios', 'Solicitudes de alta']);
     expect(within(menu).getByRole('link', { name: 'Inicio' })).toHaveAttribute(
       'aria-current',
       'page',
     );
   });
 
-  it('shows the quick accesses with the profile progress as coming soon', async () => {
-    signedIn();
+  it('shows the steps to complete the presence with the progress of the profile', async () => {
+    signedIn(ACCOUNT, {
+      'GET /api/cooperative/organizations/c1/profile': { body: managedProfile() },
+    });
 
     renderRoute('/cooperative');
 
     const steps = await screen.findByRole('region', {
       name: 'Completá tu presencia en el observatorio',
     });
-    expect(within(steps).getByText('Próximamente')).toBeInTheDocument();
+    expect(within(steps).getByText('1 de 3 pasos')).toBeInTheDocument();
+    expect(within(steps).getByText(/Datos básicos de la entidad/)).toHaveTextContent('(listo)');
     expect(within(steps).getByRole('link', { name: 'Completar ficha' })).toHaveAttribute(
       'href',
       '/cooperative/profile',
@@ -210,10 +247,23 @@ describe('cooperative panel', () => {
     );
   });
 
+  it('counts the profile as done once every section that can be filled in is complete', async () => {
+    signedIn(ACCOUNT, {
+      'GET /api/cooperative/organizations/c1/profile': { body: managedProfile({ complete: true }) },
+    });
+
+    renderRoute('/cooperative');
+
+    const steps = await screen.findByRole('region', {
+      name: 'Completá tu presencia en el observatorio',
+    });
+    expect(await within(steps).findByText('2 de 3 pasos')).toBeInTheDocument();
+    expect(within(steps).queryByRole('link', { name: 'Completar ficha' })).not.toBeInTheDocument();
+  });
+
   it.each([
-    ['/cooperative/profile', 'Mi ficha'],
     ['/cooperative/products', 'Productos y servicios'],
-    ['/cooperative/team', 'Equipo'],
+    ['/cooperative/team', 'Usuarios'],
   ])('shows a coming soon page for %s inside the panel', async (path, title) => {
     signedIn();
 

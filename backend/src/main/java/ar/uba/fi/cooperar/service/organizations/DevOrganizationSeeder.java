@@ -4,17 +4,20 @@ import ar.uba.fi.cooperar.domain.organizations.ActivityType;
 import ar.uba.fi.cooperar.domain.organizations.Address;
 import ar.uba.fi.cooperar.domain.organizations.Organization;
 import ar.uba.fi.cooperar.domain.organizations.OrganizationDetails;
-import ar.uba.fi.cooperar.domain.organizations.OrganizationProfile;
 import ar.uba.fi.cooperar.domain.organizations.OrganizationType;
+import ar.uba.fi.cooperar.domain.organizations.ProfileActivity;
+import ar.uba.fi.cooperar.domain.organizations.ProfileContact;
 import ar.uba.fi.cooperar.domain.organizations.Province;
 import ar.uba.fi.cooperar.domain.organizations.Sector;
 import ar.uba.fi.cooperar.domain.organizations.Slugs;
+import ar.uba.fi.cooperar.domain.organizations.Visibility;
 import ar.uba.fi.cooperar.domain.user.Role;
 import ar.uba.fi.cooperar.domain.user.UserAccount;
 import ar.uba.fi.cooperar.repository.organizations.OrganizationRepository;
 import ar.uba.fi.cooperar.repository.user.UserAccountRepository;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.Year;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -33,8 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Fictitious organizations, created as if their requests had been approved, so the public profile can be seen locally
- * before profiles can be edited (#13). Only runs in
- * the dev profile: production data must come from public sources (#10).
+ * with data in it. Only runs in the dev profile: production data must come from public sources (#10).
  */
 @Component
 @Profile("dev")
@@ -136,11 +138,28 @@ public class DevOrganizationSeeder implements ApplicationRunner {
                             null),
                     account,
                     now);
-            organization.updateProfile(new OrganizationProfile(
-                    sample.description(),
+            organization.updateActivity(
+                    new ProfileActivity(
+                            sample.sectors(),
+                            sample.activityTypes(),
+                            sample.description(),
+                            null,
+                            null,
+                            Visibility.PUBLIC),
+                    Year.now(clock).getValue());
+            organization.updateLocation(
+                    sample.address(), Visibility.PUBLIC, point(sample.latitude(), sample.longitude()));
+            organization.updateContact(new ProfileContact(
                     sample.phone(),
+                    Visibility.PUBLIC,
+                    null,
+                    Visibility.PUBLIC,
                     sample.email(),
-                    point(sample.latitude(), sample.longitude())));
+                    Visibility.PUBLIC,
+                    null,
+                    null,
+                    null,
+                    null));
             account.getOrganizations().add(organizations.save(organization));
             log.info("Seeded the sample organization {}", organization.getId());
         }

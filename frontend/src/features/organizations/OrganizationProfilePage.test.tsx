@@ -205,6 +205,58 @@ describe('OrganizationProfilePage', () => {
     expect(screen.getByText('Sin precio')).toBeVisible();
   });
 
+  it('lists two full rows of products and links to the catalog for the rest', async () => {
+    const product = (n: number) => ({
+      id: `p${String(n)}`,
+      name: `Producto ${String(n)}`,
+      category: { id: 'k2', name: 'Alimentos' },
+      saleModes: ['RETAIL'],
+      description: null,
+      indicativePrice: null,
+      photos: [],
+    });
+    stubFetchRoutes({
+      'GET /api/organizations/la-cacerola': { body: fullProfile },
+      'GET /api/organizations/la-cacerola/products': {
+        body: Array.from({ length: 10 }, (_, index) => product(index + 1)),
+      },
+    });
+
+    renderRoute('/organizations/la-cacerola');
+
+    expect(await screen.findByText('Producto 6')).toBeVisible();
+    expect(screen.queryByText('Producto 7')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('10 en total')).toHaveTextContent('10');
+    expect(screen.getByRole('link', { name: 'Ver todos' })).toHaveAttribute(
+      'href',
+      '/catalog?organization=la-cacerola',
+    );
+  });
+
+  it('does not offer the catalog when every product is already listed', async () => {
+    stubFetchRoutes({
+      'GET /api/organizations/la-cacerola': { body: fullProfile },
+      'GET /api/organizations/la-cacerola/products': {
+        body: [
+          {
+            id: 'p1',
+            name: 'Pan de campo',
+            category: { id: 'k2', name: 'Alimentos' },
+            saleModes: ['RETAIL'],
+            description: null,
+            indicativePrice: null,
+            photos: [],
+          },
+        ],
+      },
+    });
+
+    renderRoute('/organizations/la-cacerola');
+
+    expect(await screen.findByText('Pan de campo')).toBeVisible();
+    expect(screen.queryByRole('link', { name: 'Ver todos' })).not.toBeInTheDocument();
+  });
+
   it('leaves out the data the organization did not load or keeps private', async () => {
     stubProfile('sin-datos', minimalProfile);
 

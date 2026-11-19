@@ -160,6 +160,10 @@ public class Product {
         return id;
     }
 
+    public Organization getOrganization() {
+        return organization;
+    }
+
     public String getName() {
         return name;
     }

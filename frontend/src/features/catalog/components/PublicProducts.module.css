@@ -1,10 +1,12 @@
 .list {
+  display: grid;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .card {
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -31,4 +33,16 @@
 .body {
   flex: 1;
   padding: var(--mantine-spacing-sm) var(--mantine-spacing-md) var(--mantine-spacing-md);
+}
+
+/* The name link stretches over the whole card, so any click on it opens the product. */
+.name::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.card:has(.name:focus-visible) {
+  outline: 2px solid var(--mantine-color-brand-6);
+  outline-offset: 2px;
 }

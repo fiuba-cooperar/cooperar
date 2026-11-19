@@ -1648,6 +1648,139 @@
         "summary" : "The categories products and services are filed under",
         "tags" : [ "products" ]
       }
+    },
+    "/api/products" : {
+      "get" : {
+        "description" : "Words match in Spanish, ignoring accents and as prefixes of a word with the same stem. Every search that narrows the catalog is logged, without anything that identifies the visitor.",
+        "operationId" : "searchProducts",
+        "parameters" : [ {
+          "description" : "Words to look for in the name, the category, the organization, where it is and the description",
+          "in" : "query",
+          "name" : "q",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "description" : "Words to look for in the name, the category, the organization, where it is and the description",
+            "maxLength" : 200,
+            "minLength" : 0
+          }
+        }, {
+          "description" : "Only this category",
+          "in" : "query",
+          "name" : "category",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "Only this category"
+          }
+        }, {
+          "description" : "Any of these sale modes",
+          "in" : "query",
+          "name" : "saleMode",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "description" : "Any of these sale modes",
+            "items" : {
+              "$ref" : "#/components/schemas/SaleMode"
+            },
+            "uniqueItems" : true
+          }
+        }, {
+          "description" : "Only organizations of this province",
+          "in" : "query",
+          "name" : "province",
+          "required" : false,
+          "schema" : {
+            "$ref" : "#/components/schemas/Province"
+          }
+        }, {
+          "description" : "Only products of the organization with this slug",
+          "in" : "query",
+          "name" : "organization",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "description" : "Only products of the organization with this slug",
+            "maxLength" : 200,
+            "minLength" : 0
+          }
+        }, {
+          "description" : "RELEVANCE by default",
+          "in" : "query",
+          "name" : "sort",
+          "required" : false,
+          "schema" : {
+            "$ref" : "#/components/schemas/ProductSearchSort"
+          }
+        }, {
+          "description" : "From 0; 0 by default",
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "From 0; 0 by default",
+            "minimum" : 0
+          }
+        }, {
+          "description" : "20 by default",
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "20 by default",
+            "maximum" : 50,
+            "minimum" : 1
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProductSearchResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Public catalog of products and services: full-text search, filters and pagination",
+        "tags" : [ "products" ]
+      }
+    },
+    "/api/products/{id}" : {
+      "get" : {
+        "operationId" : "getProduct",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CatalogProductDetailResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "A published product or service, with the organization that offers it",
+        "tags" : [ "products" ]
+      }
     }
   },
   "components" : {
@@ -1805,6 +1938,101 @@
           }
         },
         "required" : [ "activityTypes", "address", "cuit", "id", "name", "registeredAt", "reviews", "sectors", "status", "submittedAt", "type" ]
+      },
+      "CatalogOrganizationResponse" : {
+        "type" : "object",
+        "properties" : {
+          "district" : {
+            "type" : "string"
+          },
+          "locality" : {
+            "type" : "string"
+          },
+          "logoUrl" : {
+            "type" : "string",
+            "description" : "Missing until the organization uploads one"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "province" : {
+            "$ref" : "#/components/schemas/Province"
+          },
+          "responseTime" : {
+            "$ref" : "#/components/schemas/ResponseTime"
+          },
+          "sectors" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Sector"
+            },
+            "uniqueItems" : true
+          },
+          "slug" : {
+            "type" : "string",
+            "description" : "Path segment of its public profile"
+          },
+          "type" : {
+            "$ref" : "#/components/schemas/OrganizationType"
+          }
+        },
+        "required" : [ "district", "locality", "name", "province", "sectors", "slug", "type" ]
+      },
+      "CatalogProductDetailResponse" : {
+        "type" : "object",
+        "properties" : {
+          "moreFromOrganization" : {
+            "type" : "array",
+            "description" : "Other published products of the same organization",
+            "items" : {
+              "$ref" : "#/components/schemas/CatalogProductResponse"
+            }
+          },
+          "product" : {
+            "$ref" : "#/components/schemas/CatalogProductResponse"
+          }
+        },
+        "required" : [ "moreFromOrganization", "product" ]
+      },
+      "CatalogProductResponse" : {
+        "type" : "object",
+        "properties" : {
+          "category" : {
+            "$ref" : "#/components/schemas/ProductCategoryResponse"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "indicativePrice" : {
+            "type" : "number",
+            "description" : "Indicative price in Argentine pesos; missing when none was set"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "organization" : {
+            "$ref" : "#/components/schemas/CatalogOrganizationResponse"
+          },
+          "photos" : {
+            "type" : "array",
+            "description" : "The first one is the cover",
+            "items" : {
+              "$ref" : "#/components/schemas/ProductPhotoResponse"
+            }
+          },
+          "saleModes" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SaleMode"
+            },
+            "uniqueItems" : true
+          }
+        },
+        "required" : [ "category", "id", "name", "organization", "photos", "saleModes" ]
       },
       "CooperativeOrganizationProfileResponse" : {
         "type" : "object",
@@ -2399,6 +2627,43 @@
           }
         },
         "required" : [ "category", "id", "name", "photos", "saleModes", "status" ]
+      },
+      "ProductSearchResponse" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CatalogProductResponse"
+            }
+          },
+          "page" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "saleModes" : {
+            "type" : "array",
+            "description" : "Every sale mode, with how many would be found with it and the other filters as they are",
+            "items" : {
+              "$ref" : "#/components/schemas/SaleModeCount"
+            }
+          },
+          "size" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "total" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Products found, on every page"
+          }
+        },
+        "required" : [ "items", "page", "saleModes", "size", "total" ]
+      },
+      "ProductSearchSort" : {
+        "type" : "string",
+        "description" : "RELEVANCE by default",
+        "enum" : [ "RELEVANCE", "NAME", "PRICE_ASC", "PRICE_DESC" ]
       },
       "ProductStatus" : {
         "type" : "string",
@@ -3011,6 +3276,19 @@
       "SaleMode" : {
         "type" : "string",
         "enum" : [ "RETAIL", "WHOLESALE" ]
+      },
+      "SaleModeCount" : {
+        "type" : "object",
+        "properties" : {
+          "count" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "saleMode" : {
+            "$ref" : "#/components/schemas/SaleMode"
+          }
+        },
+        "required" : [ "count", "saleMode" ]
       },
       "Sector" : {
         "type" : "string",

@@ -5,7 +5,6 @@ import {
   Group,
   Pagination,
   Paper,
-  Select,
   Stack,
   Text,
   Title,
@@ -30,6 +29,7 @@ import {
   writeSearch,
   type OrganizationSearch,
 } from './organizationSearch';
+import { SortSelect } from '@/components/SortSelect';
 import styles from './OrganizationSearchPage.module.css';
 
 // 1180px of content between 48px gutters, as in the mock and the home page.
@@ -58,7 +58,7 @@ function SearchBox({ query, onSearch }: { query: string; onSearch: (query: strin
   }
 
   return (
-    <Stack gap={8} maw={760}>
+    <Stack maw={760}>
       <form
         role="search"
         aria-label="Buscar entidades"
@@ -78,7 +78,6 @@ function SearchBox({ query, onSearch }: { query: string; onSearch: (query: strin
           value={text}
           maxLength={200}
           placeholder="Buscá por nombre, rubro o localidad"
-          aria-describedby="organization-search-hint"
           className={styles.searchInput}
           onChange={(event) => {
             setText(event.target.value);
@@ -88,9 +87,6 @@ function SearchBox({ query, onSearch }: { query: string; onSearch: (query: strin
           Buscar
         </Button>
       </form>
-      <Text size="sm" c="dimmed" id="organization-search-hint">
-        No hace falta escribir con tildes: «panaderia» encuentra «Panadería».
-      </Text>
     </Stack>
   );
 }
@@ -266,18 +262,11 @@ export function OrganizationSearchPage() {
                 {isPending ? 'Buscando entidades…' : data ? countText(data.total, filtered) : ''}
               </Title>
               <Group gap={12}>
-                <Select
-                  label="Ordenar por"
-                  data={SORT_OPTIONS}
+                <SortSelect
+                  options={SORT_OPTIONS}
                   value={search.sort}
-                  allowDeselect={false}
-                  classNames={{
-                    root: styles.sort,
-                    label: styles.sortLabel,
-                    wrapper: styles.sortField,
-                  }}
-                  onChange={(value) => {
-                    if (value) update({ sort: value });
+                  onChange={(sort) => {
+                    update({ sort });
                   }}
                 />
                 <Button

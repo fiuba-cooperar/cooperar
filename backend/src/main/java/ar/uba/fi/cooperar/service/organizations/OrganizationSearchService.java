@@ -103,7 +103,7 @@ public class OrganizationSearchService {
      * {@code zapat:*}, which also finds "zapatería". Only letters and digits are kept, so the expression is always
      * valid.
      */
-    static String toTsQuery(String query) {
+    public static String toTsQuery(String query) {
         if (query == null) {
             return null;
         }

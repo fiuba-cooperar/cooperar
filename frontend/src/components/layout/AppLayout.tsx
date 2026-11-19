@@ -76,7 +76,7 @@ const FOCUSED_ACTION_PROPS = {
   miw: 'max-content',
 } as const;
 
-const FLUSH_PAGES = new Set(['/', '/organizations']);
+const FLUSH_PAGES = new Set(['/', '/organizations', '/catalog']);
 
 export function AppLayout() {
   const { pathname } = useLocation();
@@ -92,7 +92,7 @@ export function AppLayout() {
     </Button>
   ) : null;
   // The home page and the directory draw their own full-width bands, so they skip the centered container.
-  const isFlushPage = FLUSH_PAGES.has(pathname);
+  const isFlushPage = FLUSH_PAGES.has(pathname) || pathname.startsWith('/catalog/');
   const [menuOpened, menu] = useDisclosure(false);
 
   return (

@@ -1,6 +1,7 @@
 import {
   Alert,
   Anchor,
+  Avatar,
   Badge,
   Button,
   CopyButton,
@@ -18,6 +19,7 @@ import { useParams } from 'react-router';
 import type { OrganizationProfileResponse } from '@/api/generated/model';
 import { PublicProducts } from '@/features/catalog/components/PublicProducts';
 import { NotFoundPage } from '@/features/errors/NotFoundPage';
+import { initials } from './initials';
 import { useOrganizationProfile } from './api/useOrganizationProfile';
 import {
   ACTIVITY_TYPE_LABELS,
@@ -70,21 +72,23 @@ function Profile({ profile }: { profile: OrganizationProfileResponse }) {
         )}
         <Group justify="space-between" gap="md" p="lg">
           <Group gap="md" wrap="nowrap" miw={0}>
-            {profile.photos.logoUrl ? (
-              <img
-                src={profile.photos.logoUrl}
-                alt={`Logo de ${profile.name}`}
-                className={styles.logo}
-              />
-            ) : (
-              <div className={styles.logo} />
-            )}
+            {/* Without a logo, the initials of the name, as in the catalog. */}
+            <Avatar
+              src={profile.photos.logoUrl ?? null}
+              alt={profile.photos.logoUrl ? `Logo de ${profile.name}` : ''}
+              size={72}
+              radius="50%"
+              color="brand"
+              aria-hidden={profile.photos.logoUrl ? undefined : true}
+            >
+              {initials(profile.name)}
+            </Avatar>
             <Stack gap="xs" miw={0}>
               <Title order={1}>{profile.name}</Title>
               <Group gap="sm">
                 <Badge variant="light">{ORGANIZATION_TYPE_LABELS[profile.type]}</Badge>
                 {profile.sectors.map((sector) => (
-                  <Badge key={sector} variant="light">
+                  <Badge key={sector} variant="light" color="gray">
                     {SECTOR_LABELS[sector]}
                   </Badge>
                 ))}
@@ -182,9 +186,6 @@ function Profile({ profile }: { profile: OrganizationProfileResponse }) {
               </section>
             )}
             <section aria-labelledby="products">
-              <Title order={2} size="h3" id="products" mb="xs">
-                Productos y servicios
-              </Title>
               <PublicProducts slug={profile.slug} />
             </section>
           </Stack>

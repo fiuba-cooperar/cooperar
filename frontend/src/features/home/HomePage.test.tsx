@@ -135,11 +135,11 @@ describe('public site', () => {
 
     await userEvent.click(
       within(screen.getByRole('navigation', { name: 'Principal' })).getByRole('link', {
-        name: 'Catálogo',
+        name: 'Mapa',
       }),
     );
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Catálogo' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Mapa' })).toBeInTheDocument();
     expect(screen.getByText('Próximamente')).toBeInTheDocument();
   });
 

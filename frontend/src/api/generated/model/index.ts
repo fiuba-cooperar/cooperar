@@ -7,6 +7,7 @@
  */
 
 export * from './activityType';
+export * from './activityTypeCount';
 export * from './adminOrganizationResponse';
 export * from './adminRegistrationRequestResponse';
 export * from './cooperativeOrganizationProfileResponse';
@@ -22,7 +23,10 @@ export * from './listOrganizationsParams';
 export * from './listRegistrationRequestsParams';
 export * from './loginRequest';
 export * from './organizationProfileResponse';
+export * from './organizationSearchResponse';
+export * from './organizationSearchSort';
 export * from './organizationSummary';
+export * from './organizationSummaryResponse';
 export * from './organizationType';
 export * from './profileActivityRequest';
 export * from './profileActivityResponse';
@@ -51,7 +55,10 @@ export * from './responseTime';
 export * from './reviewOutcome';
 export * from './reviewResponse';
 export * from './role';
+export * from './searchOrganizationsParams';
 export * from './sector';
+export * from './sectorCount';
 export * from './tokenResponse';
+export * from './typeCount';
 export * from './verifyEmailRequest';
 export * from './visibility';

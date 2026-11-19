@@ -18,7 +18,11 @@ import type {
   UseQueryResult,
 } from '@tanstack/react-query';
 
-import type { OrganizationProfileResponse } from '../model';
+import type {
+  OrganizationProfileResponse,
+  OrganizationSearchResponse,
+  SearchOrganizationsParams,
+} from '../model';
 
 import { apiFetch } from '../../apiFetch';
 
@@ -38,6 +42,171 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+export type searchOrganizationsResponse200 = {
+  data: OrganizationSearchResponse;
+  status: 200;
+};
+
+export type searchOrganizationsResponseSuccess = searchOrganizationsResponse200 & {
+  headers: Headers;
+};
+export type searchOrganizationsResponse = searchOrganizationsResponseSuccess;
+
+export const getSearchOrganizationsUrl = (params?: SearchOrganizationsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    const explodeParameters = ['type', 'sector', 'activityType'];
+
+    if (Array.isArray(value) && explodeParameters.includes(key)) {
+      value.forEach((v) => {
+        normalizedParams.append(key, v === null ? 'null' : String(v));
+      });
+      return;
+    }
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/organizations?${stringifiedParams}`
+    : `/api/organizations`;
+};
+
+/**
+ * Words match in Spanish, ignoring accents and as prefixes of a word with the same stem. Every search that narrows the directory is logged, without anything that identifies the visitor.
+ * @summary Public directory of organizations: full-text search, filters and pagination
+ */
+export const searchOrganizations = async (
+  params?: SearchOrganizationsParams,
+  options?: Parameters<typeof apiFetch>[1],
+): Promise<searchOrganizationsResponse> => {
+  return apiFetch<searchOrganizationsResponse>(getSearchOrganizationsUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getSearchOrganizationsQueryKey = (params?: SearchOrganizationsParams) => {
+  return [`/api/organizations`, ...(params ? [params] : [])] as const;
+};
+
+export const getSearchOrganizationsQueryOptions = <
+  TData = Awaited<ReturnType<typeof searchOrganizations>>,
+  TError = unknown,
+>(
+  params?: SearchOrganizationsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof searchOrganizations>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getSearchOrganizationsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof searchOrganizations>>> = ({ signal }) =>
+    searchOrganizations(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof searchOrganizations>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type SearchOrganizationsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof searchOrganizations>>
+>;
+export type SearchOrganizationsQueryError = unknown;
+
+export function useSearchOrganizations<
+  TData = Awaited<ReturnType<typeof searchOrganizations>>,
+  TError = unknown,
+>(
+  params: undefined | SearchOrganizationsParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof searchOrganizations>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof searchOrganizations>>,
+          TError,
+          Awaited<ReturnType<typeof searchOrganizations>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useSearchOrganizations<
+  TData = Awaited<ReturnType<typeof searchOrganizations>>,
+  TError = unknown,
+>(
+  params?: SearchOrganizationsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof searchOrganizations>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof searchOrganizations>>,
+          TError,
+          Awaited<ReturnType<typeof searchOrganizations>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useSearchOrganizations<
+  TData = Awaited<ReturnType<typeof searchOrganizations>>,
+  TError = unknown,
+>(
+  params?: SearchOrganizationsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof searchOrganizations>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Public directory of organizations: full-text search, filters and pagination
+ */
+
+export function useSearchOrganizations<
+  TData = Awaited<ReturnType<typeof searchOrganizations>>,
+  TError = unknown,
+>(
+  params?: SearchOrganizationsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof searchOrganizations>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getSearchOrganizationsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
 
 export type getOrganizationProfileResponse200 = {
   data: OrganizationProfileResponse;

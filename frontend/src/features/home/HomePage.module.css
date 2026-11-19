@@ -42,6 +42,7 @@
 /* Same border as the form fields in the theme, dark enough for the 3:1 contrast of WCAG 1.4.11. */
 .search {
   display: flex;
+  max-width: 600px;
   align-items: center;
   gap: 6px;
   padding: 4px 4px 4px 14px;
@@ -81,14 +82,8 @@
   opacity: 1;
 }
 
-/* Keeps the look of the mock while disabled; the badge below says why it does not work yet. */
-.searchButton:disabled {
+.searchButton {
   flex: none;
-  border-radius: 9px;
-  background: var(--mantine-color-brand-filled);
-  color: var(--mantine-color-white);
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 
 .chip {

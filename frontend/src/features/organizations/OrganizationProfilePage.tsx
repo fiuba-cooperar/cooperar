@@ -15,6 +15,7 @@ import { IconCheck, IconLink } from '@tabler/icons-react';
 import { lazy, Suspense } from 'react';
 import { useParams } from 'react-router';
 import type { OrganizationProfileResponse } from '@/api/generated/model';
+import { PublicProducts } from '@/features/catalog/components/PublicProducts';
 import { NotFoundPage } from '@/features/errors/NotFoundPage';
 import { useOrganizationProfile } from './api/useOrganizationProfile';
 import {
@@ -146,8 +147,7 @@ function Profile({ profile }: { profile: OrganizationProfileResponse }) {
               <Title order={2} size="h3" id="products" mb="xs">
                 Productos y servicios
               </Title>
-              {/* TODO(#21) */}
-              <Text c="dimmed">Esta entidad todavía no cargó productos.</Text>
+              <PublicProducts slug={profile.slug} />
             </section>
           </Stack>
         </Grid.Col>

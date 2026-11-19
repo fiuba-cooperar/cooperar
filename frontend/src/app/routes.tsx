@@ -5,9 +5,11 @@ import { AdminLayout } from '@/features/admin/AdminLayout';
 import {
   ADMIN_HOME_PATH,
   ADMIN_ORGANIZATIONS_PATH,
+  ADMIN_PRODUCT_CATEGORIES_PATH,
   ADMIN_REGISTRATIONS_PATH,
 } from '@/features/admin/adminSections';
 import { OrganizationsPage } from '@/features/admin/OrganizationsPage';
+import { ProductCategoriesPage } from '@/features/admin/ProductCategoriesPage';
 import { RegistrationsPage } from '@/features/admin/RegistrationsPage';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { RegisterPage } from '@/features/auth/RegisterPage';
@@ -17,14 +19,19 @@ import { CooperativeHomePage } from '@/features/cooperative/CooperativeHomePage'
 import { CooperativeLayout } from '@/features/cooperative/CooperativeLayout';
 import {
   COOPERATIVE_HOME_PATH,
+  COOPERATIVE_PRODUCT_PATH,
+  COOPERATIVE_PRODUCTS_PATH,
   COOPERATIVE_PROFILE_PATH,
   COOPERATIVE_REGISTRATION_REQUEST_PATH,
   COOPERATIVE_REGISTRATION_REQUESTS_PATH,
   COOPERATIVE_SECTIONS,
+  NEW_PRODUCT_PATH,
   NEW_REGISTRATION_REQUEST_PATH,
 } from '@/features/cooperative/cooperativeSections';
 import { CorrectRegistrationPage } from '@/features/cooperative/CorrectRegistrationPage';
 import { NewRegistrationRequestPage } from '@/features/cooperative/NewRegistrationRequestPage';
+import { ProductFormPage } from '@/features/cooperative/ProductFormPage';
+import { ProductsPage } from '@/features/cooperative/ProductsPage';
 import { ProfilePage } from '@/features/cooperative/ProfilePage';
 import { RegistrationRequestsPage } from '@/features/cooperative/RegistrationRequestsPage';
 import { ForbiddenPage } from '@/features/errors/ForbiddenPage';
@@ -63,6 +70,7 @@ export const routes: RouteObject[] = [
           { index: true, element: <AdminHomePage /> },
           { path: ADMIN_REGISTRATIONS_PATH, element: <RegistrationsPage /> },
           { path: ADMIN_ORGANIZATIONS_PATH, element: <OrganizationsPage /> },
+          { path: ADMIN_PRODUCT_CATEGORIES_PATH, element: <ProductCategoriesPage /> },
         ],
       },
     ],
@@ -77,6 +85,9 @@ export const routes: RouteObject[] = [
         children: [
           { index: true, element: <CooperativeHomePage /> },
           { path: COOPERATIVE_PROFILE_PATH, element: <ProfilePage /> },
+          { path: COOPERATIVE_PRODUCTS_PATH, element: <ProductsPage /> },
+          { path: NEW_PRODUCT_PATH, element: <ProductFormPage /> },
+          { path: COOPERATIVE_PRODUCT_PATH, element: <ProductFormPage /> },
           { path: COOPERATIVE_REGISTRATION_REQUESTS_PATH, element: <RegistrationRequestsPage /> },
           { path: NEW_REGISTRATION_REQUEST_PATH, element: <NewRegistrationRequestPage /> },
           { path: COOPERATIVE_REGISTRATION_REQUEST_PATH, element: <CorrectRegistrationPage /> },
@@ -84,6 +95,7 @@ export const routes: RouteObject[] = [
             ({ path }) =>
               path !== COOPERATIVE_HOME_PATH &&
               path !== COOPERATIVE_PROFILE_PATH &&
+              path !== COOPERATIVE_PRODUCTS_PATH &&
               path !== COOPERATIVE_REGISTRATION_REQUESTS_PATH,
           ).map(({ path, label }) => ({
             path,

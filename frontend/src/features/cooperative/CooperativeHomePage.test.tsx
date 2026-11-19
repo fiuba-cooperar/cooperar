@@ -184,7 +184,14 @@ describe('cooperative panel', () => {
       within(menu)
         .getAllByRole('link')
         .map((link) => link.textContent),
-    ).toEqual(['Inicio', 'Mi ficha', 'Productos y servicios', 'Equipo', 'Solicitudes de alta']);
+    ).toEqual([
+      'Inicio',
+      'Mi ficha',
+      'Productos y servicios',
+      'Usuarios',
+      'Solicitudes de alta',
+      'Ver mi ficha pública',
+    ]);
     expect(within(menu).getByRole('link', { name: 'Inicio' })).toHaveAttribute(
       'aria-current',
       'page',
@@ -211,9 +218,8 @@ describe('cooperative panel', () => {
   });
 
   it.each([
-    ['/cooperative/profile', 'Mi ficha'],
     ['/cooperative/products', 'Productos y servicios'],
-    ['/cooperative/team', 'Equipo'],
+    ['/cooperative/team', 'Usuarios'],
   ])('shows a coming soon page for %s inside the panel', async (path, title) => {
     signedIn();
 

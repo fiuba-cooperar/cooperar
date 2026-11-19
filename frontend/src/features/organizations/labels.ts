@@ -4,12 +4,19 @@ import {
   RegistrationStatus,
   OrganizationType,
   Province,
+  ResponseTime,
   Sector,
 } from '@/api/generated/model';
 
 export const ORGANIZATION_TYPE_LABELS: Record<OrganizationType, string> = {
   [OrganizationType.COOPERATIVE]: 'Cooperativa',
   [OrganizationType.ERT]: 'Empresa recuperada',
+};
+
+/** The short tag next to the name in the public profile. */
+export const ORGANIZATION_TYPE_BADGES: Record<OrganizationType, string> = {
+  [OrganizationType.COOPERATIVE]: 'Cooperativa',
+  [OrganizationType.ERT]: 'ERT',
 };
 
 /** How the account that sent a registration request reads its status. */
@@ -68,4 +75,11 @@ export const PROVINCE_LABELS: Record<Province, string> = {
   [Province.SANTIAGO_DEL_ESTERO]: 'Santiago del Estero',
   [Province.TIERRA_DEL_FUEGO]: 'Tierra del Fuego',
   [Province.TUCUMAN]: 'Tucumán',
+};
+
+export const RESPONSE_TIME_LABELS: Record<ResponseTime, string> = {
+  [ResponseTime.SAME_DAY]: 'En el día',
+  [ResponseTime.ONE_DAY]: '24 horas',
+  [ResponseTime.TWO_DAYS]: '48 horas',
+  [ResponseTime.ONE_WEEK]: 'Una semana',
 };

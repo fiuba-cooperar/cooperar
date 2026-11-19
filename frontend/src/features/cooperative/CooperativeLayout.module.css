@@ -30,6 +30,10 @@
   background: var(--color-hover);
 }
 
+.publicLink {
+  color: var(--mantine-color-dimmed);
+}
+
 .navLink[aria-current='page'] {
   background: var(--mantine-color-brand-light);
   color: var(--mantine-color-brand-light-color);

@@ -1,5 +1,6 @@
 import { AppShell, Burger, Group, Stack } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
+import { IconExternalLink } from '@tabler/icons-react';
 import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router';
 import { Brand } from '@/components/layout/Brand';
@@ -82,6 +83,16 @@ export function CooperativeLayout() {
             </NavLink>
           ))}
         </Stack>
+        {organization && (
+          <NavLink
+            to={`/organizations/${organization.slug}`}
+            className={() => [styles.navLink, styles.publicLink].join(' ')}
+            onClick={menu.close}
+          >
+            <IconExternalLink size={20} stroke={1.9} aria-hidden />
+            Ver mi ficha pública
+          </NavLink>
+        )}
         <div className={styles.navbarAccount}>
           <PanelAccount />
         </div>

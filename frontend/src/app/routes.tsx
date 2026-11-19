@@ -19,9 +19,11 @@ import {
   COOPERATIVE_HOME_PATH,
   COOPERATIVE_REGISTRATION_REQUEST_PATH,
   COOPERATIVE_REGISTRATION_REQUESTS_PATH,
+  COOPERATIVE_PROFILE_PATH,
   COOPERATIVE_SECTIONS,
   NEW_REGISTRATION_REQUEST_PATH,
 } from '@/features/cooperative/cooperativeSections';
+import { ProfilePage } from '@/features/cooperative/profile/ProfilePage';
 import { CorrectRegistrationPage } from '@/features/cooperative/CorrectRegistrationPage';
 import { NewRegistrationRequestPage } from '@/features/cooperative/NewRegistrationRequestPage';
 import { RegistrationRequestsPage } from '@/features/cooperative/RegistrationRequestsPage';
@@ -74,12 +76,15 @@ export const routes: RouteObject[] = [
         element: <CooperativeLayout />,
         children: [
           { index: true, element: <CooperativeHomePage /> },
+          { path: COOPERATIVE_PROFILE_PATH, element: <ProfilePage /> },
           { path: COOPERATIVE_REGISTRATION_REQUESTS_PATH, element: <RegistrationRequestsPage /> },
           { path: NEW_REGISTRATION_REQUEST_PATH, element: <NewRegistrationRequestPage /> },
           { path: COOPERATIVE_REGISTRATION_REQUEST_PATH, element: <CorrectRegistrationPage /> },
           ...COOPERATIVE_SECTIONS.filter(
             ({ path }) =>
-              path !== COOPERATIVE_HOME_PATH && path !== COOPERATIVE_REGISTRATION_REQUESTS_PATH,
+              path !== COOPERATIVE_HOME_PATH &&
+              path !== COOPERATIVE_PROFILE_PATH &&
+              path !== COOPERATIVE_REGISTRATION_REQUESTS_PATH,
           ).map(({ path, label }) => ({
             path,
             element: <ComingSoonPage title={label} homePath={COOPERATIVE_HOME_PATH} />,

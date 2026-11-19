@@ -26,6 +26,8 @@ Niveles: **público** (cualquier visitante y la API pública), **privado** (solo
 | | Redes sociales | `socialMedia` | Texto libre, hasta 200 | No | Público |
 | | Horarios de atención | `openingHours` | Texto libre, hasta 200 | No | Público |
 | | Tiempo estimado de respuesta | `responseTime` | En el día, 24 horas, 48 horas o una semana | No | Público |
-| Fotos | Logo, portada y galería | — | Pendiente: falta decidir el almacenamiento (#13) | No | Público |
+| Fotos | Logo | `logo` | JPEG, PNG o WebP de hasta 5 MB, validado por su contenido; uno solo, uno nuevo reemplaza al anterior | No | Público |
+| | Foto de portada | `cover` | Igual que el logo | No | Público |
+| | Galería | `photos` | Hasta 10 fotos como las anteriores, en el orden que elige la cooperativa | No | Público |
 
 Datos del alta que no son parte de la ficha: el rol de quien registró la entidad (`registrantRole`) y la cuenta que la registró, visibles solo para el observatorio.

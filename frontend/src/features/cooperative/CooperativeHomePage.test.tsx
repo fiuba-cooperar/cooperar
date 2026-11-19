@@ -51,6 +51,11 @@ function managedProfile({ complete = false } = {}) {
       emailVisibility: 'PUBLIC',
       openingHours: complete ? 'Lunes a viernes' : null,
     },
+    photos: {
+      logoUrl: complete ? 'https://img.example/logo.png' : null,
+      coverUrl: complete ? 'https://img.example/cover.png' : null,
+      gallery: [],
+    },
   };
 }
 
@@ -247,7 +252,7 @@ describe('cooperative panel', () => {
     );
   });
 
-  it('counts the profile as done once every section that can be filled in is complete', async () => {
+  it('counts the profile as done once every section is complete', async () => {
     signedIn(ACCOUNT, {
       'GET /api/cooperative/organizations/c1/profile': { body: managedProfile({ complete: true }) },
     });

@@ -106,7 +106,8 @@ class OrganizationProfileIntegrationTest {
                           "socialMedia": "@lacacerola",
                           "openingHours": "Lunes a viernes de 8 a 17",
                           "responseTime": "ONE_DAY",
-                          "location": {"latitude": -34.6, "longitude": -58.42, "approximate": false}
+                          "location": {"latitude": -34.6, "longitude": -58.42, "approximate": false},
+                          "photos": {"logoUrl": null, "coverUrl": null, "gallery": []}
                         }
                         """);
     }
@@ -185,7 +186,8 @@ class OrganizationProfileIntegrationTest {
                         "socialMedia",
                         "openingHours",
                         "responseTime",
-                        "location");
+                        "location",
+                        "photos");
     }
 
     @Test

@@ -7,6 +7,7 @@
  */
 import type { ActivityType } from './activityType';
 import type { OrganizationType } from './organizationType';
+import type { ProfilePhotosResponse } from './profilePhotosResponse';
 import type { Province } from './province';
 import type { PublicLocation } from './publicLocation';
 import type { ResponseTime } from './responseTime';
@@ -25,6 +26,7 @@ export interface OrganizationProfileResponse {
   name: string;
   openingHours?: string;
   phone?: string;
+  photos: ProfilePhotosResponse;
   province: Province;
   responseTime?: ResponseTime;
   sectors: Sector[];

@@ -15,6 +15,8 @@ export interface OrganizationSummaryResponse {
   description?: string;
   district: string;
   locality: string;
+  /** Missing until the organization uploads one */
+  logoUrl?: string;
   name: string;
   province: Province;
   sectors: Sector[];

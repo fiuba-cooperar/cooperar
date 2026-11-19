@@ -7,5 +7,6 @@ public enum Sector {
     METALWORKING,
     PRINTING,
     SERVICES,
+    PHARMACEUTICAL,
     OTHER
 }

@@ -553,6 +553,76 @@
         "tags" : [ "cooperative-organization-profile" ]
       }
     },
+    "/api/cooperative/organizations/{id}/profile/cover" : {
+      "delete" : {
+        "operationId" : "removeProfileCover",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CooperativeOrganizationProfileResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Remove the cover photo",
+        "tags" : [ "cooperative-organization-profile" ]
+      },
+      "put" : {
+        "operationId" : "replaceProfileCover",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "file" : {
+                    "type" : "string",
+                    "format" : "binary"
+                  }
+                },
+                "required" : [ "file" ]
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CooperativeOrganizationProfileResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Set the cover photo, replacing the one it had",
+        "tags" : [ "cooperative-organization-profile" ]
+      }
+    },
     "/api/cooperative/organizations/{id}/profile/identification" : {
       "put" : {
         "operationId" : "updateProfileIdentification",
@@ -627,6 +697,196 @@
           }
         },
         "summary" : "Save the address and the point on the map",
+        "tags" : [ "cooperative-organization-profile" ]
+      }
+    },
+    "/api/cooperative/organizations/{id}/profile/logo" : {
+      "delete" : {
+        "operationId" : "removeProfileLogo",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CooperativeOrganizationProfileResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Remove the logo",
+        "tags" : [ "cooperative-organization-profile" ]
+      },
+      "put" : {
+        "operationId" : "replaceProfileLogo",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "file" : {
+                    "type" : "string",
+                    "format" : "binary"
+                  }
+                },
+                "required" : [ "file" ]
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CooperativeOrganizationProfileResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Set the logo, replacing the one it had",
+        "tags" : [ "cooperative-organization-profile" ]
+      }
+    },
+    "/api/cooperative/organizations/{id}/profile/photos" : {
+      "post" : {
+        "description" : "Answers 409 when the gallery already has 10 photos.",
+        "operationId" : "addProfilePhoto",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "file" : {
+                    "type" : "string",
+                    "format" : "binary"
+                  }
+                },
+                "required" : [ "file" ]
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CooperativeOrganizationProfileResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Add a photo at the end of the gallery",
+        "tags" : [ "cooperative-organization-profile" ]
+      }
+    },
+    "/api/cooperative/organizations/{id}/profile/photos/order" : {
+      "put" : {
+        "description" : "The list must have every photo of the gallery exactly once. Answers 400 otherwise.",
+        "operationId" : "reorderProfilePhotos",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/GalleryOrderRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CooperativeOrganizationProfileResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Set the order of the gallery",
+        "tags" : [ "cooperative-organization-profile" ]
+      }
+    },
+    "/api/cooperative/organizations/{id}/profile/photos/{photoId}" : {
+      "delete" : {
+        "operationId" : "removeProfilePhoto",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "photoId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CooperativeOrganizationProfileResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Remove a photo of the gallery",
         "tags" : [ "cooperative-organization-profile" ]
       }
     },
@@ -1569,6 +1829,9 @@
           "location" : {
             "$ref" : "#/components/schemas/ProfileLocationResponse"
           },
+          "photos" : {
+            "$ref" : "#/components/schemas/ProfilePhotosResponse"
+          },
           "slug" : {
             "type" : "string"
           },
@@ -1577,7 +1840,7 @@
             "description" : "Validated by the observatory; always public"
           }
         },
-        "required" : [ "activity", "contact", "cuit", "id", "identification", "location", "slug", "type" ]
+        "required" : [ "activity", "contact", "cuit", "id", "identification", "location", "photos", "slug", "type" ]
       },
       "CooperativeRegistrationRequestResponse" : {
         "type" : "object",
@@ -1710,6 +1973,34 @@
         },
         "required" : [ "outcome", "reviewedAt" ]
       },
+      "GalleryOrderRequest" : {
+        "type" : "object",
+        "properties" : {
+          "photoIds" : {
+            "type" : "array",
+            "description" : "Every photo of the gallery, in the order they should be shown",
+            "items" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          }
+        },
+        "required" : [ "photoIds" ]
+      },
+      "GalleryPhotoResponse" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "url" : {
+            "type" : "string",
+            "description" : "Where anyone opens the photo"
+          }
+        },
+        "required" : [ "id", "url" ]
+      },
       "GeoPointRequest" : {
         "type" : "object",
         "properties" : {
@@ -1814,6 +2105,9 @@
           "phone" : {
             "type" : "string"
           },
+          "photos" : {
+            "$ref" : "#/components/schemas/ProfilePhotosResponse"
+          },
           "province" : {
             "$ref" : "#/components/schemas/Province"
           },
@@ -1855,7 +2149,7 @@
             "format" : "int32"
           }
         },
-        "required" : [ "activityTypes", "district", "locality", "name", "province", "sectors", "slug", "type" ]
+        "required" : [ "activityTypes", "district", "locality", "name", "photos", "province", "sectors", "slug", "type" ]
       },
       "OrganizationSearchResponse" : {
         "type" : "object",
@@ -1943,6 +2237,10 @@
           },
           "locality" : {
             "type" : "string"
+          },
+          "logoUrl" : {
+            "type" : "string",
+            "description" : "Missing until the organization uploads one"
           },
           "name" : {
             "type" : "string"
@@ -2340,6 +2638,27 @@
         },
         "required" : [ "address", "streetVisibility" ]
       },
+      "ProfilePhotosResponse" : {
+        "type" : "object",
+        "properties" : {
+          "coverUrl" : {
+            "type" : "string",
+            "description" : "Missing until the organization uploads one"
+          },
+          "gallery" : {
+            "type" : "array",
+            "description" : "In the order the organization chose",
+            "items" : {
+              "$ref" : "#/components/schemas/GalleryPhotoResponse"
+            }
+          },
+          "logoUrl" : {
+            "type" : "string",
+            "description" : "Missing until the organization uploads one"
+          }
+        },
+        "required" : [ "gallery" ]
+      },
       "Province" : {
         "type" : "string",
         "enum" : [ "BUENOS_AIRES", "CITY_OF_BUENOS_AIRES", "CATAMARCA", "CHACO", "CHUBUT", "CORDOBA", "CORRIENTES", "ENTRE_RIOS", "FORMOSA", "JUJUY", "LA_PAMPA", "LA_RIOJA", "MENDOZA", "MISIONES", "NEUQUEN", "RIO_NEGRO", "SALTA", "SAN_JUAN", "SAN_LUIS", "SANTA_CRUZ", "SANTA_FE", "SANTIAGO_DEL_ESTERO", "TIERRA_DEL_FUEGO", "TUCUMAN" ]
@@ -2695,7 +3014,7 @@
       },
       "Sector" : {
         "type" : "string",
-        "enum" : [ "FOOD", "TEXTILE", "METALWORKING", "PRINTING", "SERVICES", "OTHER" ]
+        "enum" : [ "FOOD", "TEXTILE", "METALWORKING", "PRINTING", "SERVICES", "PHARMACEUTICAL", "OTHER" ]
       },
       "SectorCount" : {
         "type" : "object",

@@ -1,4 +1,4 @@
-package ar.uba.fi.cooperar.service.catalog;
+package ar.uba.fi.cooperar.service.images;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

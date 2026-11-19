@@ -39,9 +39,13 @@ export function sectionStatus(
       // A year is never 0, so a missing one (null from the API) is falsy.
       if (!profile.activity.startYear) return missing('Falta el año de inicio');
       return COMPLETE;
-    case 'photos':
-      // TODO(#13): the photos arrive once there is somewhere to store them.
-      return missing('Próximamente');
+    case 'photos': {
+      const { logoUrl, coverUrl, gallery } = profile.photos;
+      if (!logoUrl && !coverUrl && gallery.length === 0) return missing('Sin fotos todavía');
+      if (!logoUrl) return missing('Falta el logo');
+      if (!coverUrl) return missing('Falta la foto de portada');
+      return COMPLETE;
+    }
     case 'location':
       return profile.location.point ? COMPLETE : missing('Falta el punto en el mapa');
     case 'contact': {

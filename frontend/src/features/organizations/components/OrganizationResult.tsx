@@ -35,8 +35,16 @@ export function OrganizationResult({
       className={styles.result}
       aria-labelledby={headingId}
     >
-      {/* TODO(#13): show the logo once photos can be stored. */}
-      <Avatar size={72} radius={12} color="brand" aria-hidden className={styles.logo}>
+      {/* Decorative: the name next to it says whose it is. Without a logo, its initials. */}
+      <Avatar
+        src={organization.logoUrl ?? null}
+        alt=""
+        size={72}
+        radius={12}
+        color="brand"
+        aria-hidden
+        className={styles.logo}
+      >
         {initials(organization.name)}
       </Avatar>
       <Stack gap={8} className={styles.body}>

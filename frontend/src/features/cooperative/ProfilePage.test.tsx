@@ -60,7 +60,10 @@ const PROFILE = {
     openingHours: null,
     responseTime: null,
   },
+  photos: { logoUrl: null, coverUrl: null, gallery: [] },
 };
+
+const PHOTOS = PROFILE.photos;
 
 type Routes = Parameters<typeof stubFetchRoutes>[0];
 
@@ -134,13 +137,119 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
     renderRoute('/cooperative/profile?section=photos');
 
     expect(await screen.findByRole('heading', { name: 'Fotos' })).toBeVisible();
-    expect(screen.getByText(/Todavía no se pueden subir fotos/)).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Agregar fotos' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Subir el logo' })).toBeVisible();
 
     await userEvent.click(screen.getByRole('button', { name: 'Seguir con ubicación' }));
 
     expect(screen.getByRole('heading', { name: 'Ubicación' })).toBeVisible();
     expect(screen.queryByRole('heading', { name: 'Fotos' })).not.toBeInTheDocument();
+  });
+
+  it('uploads the logo at once and lets it be changed or removed', async () => {
+    const withLogo = { ...PROFILE, photos: { ...PHOTOS, logoUrl: 'https://img.example/logo.png' } };
+    const fetchMock = signedIn({
+      [`PUT ${PROFILE_URL}/logo`]: { body: withLogo },
+      [`DELETE ${PROFILE_URL}/logo`]: { body: PROFILE },
+      'GET /api/organizations/la-litoralena': { body: {} },
+    });
+
+    renderRoute('/cooperative/profile?section=photos');
+    await userEvent.upload(
+      await screen.findByLabelText('Archivo para el logo'),
+      new File(['x'], 'logo.png', { type: 'image/png' }),
+    );
+
+    expect(await screen.findByRole('img', { name: 'Logo' })).toHaveAttribute(
+      'src',
+      'https://img.example/logo.png',
+    );
+    const upload = fetchMock.mock.calls.find(
+      ([input, init]) => input === `${PROFILE_URL}/logo` && init?.method === 'PUT',
+    );
+    expect(upload?.[1]?.body).toBeInstanceOf(FormData);
+    expect(within(sectionNav()).getByRole('button', { name: /Fotos/ })).toHaveTextContent(
+      'Falta la foto de portada',
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Quitar el logo' }));
+
+    expect(await screen.findByRole('button', { name: 'Subir el logo' })).toBeVisible();
+    expect(screen.queryByRole('img', { name: 'Logo' })).not.toBeInTheDocument();
+  });
+
+  it('says why a logo was not taken', async () => {
+    signedIn({ [`PUT ${PROFILE_URL}/cover`]: { status: 502, body: {} } });
+
+    renderRoute('/cooperative/profile?section=photos');
+    const input = await screen.findByLabelText('Archivo para el logo');
+    await userEvent
+      .setup({ applyAccept: false })
+      .upload(input, new File(['x'], 'logo.pdf', { type: 'application/pdf' }));
+    expect(await screen.findByText('logo.pdf: tiene que ser JPG, PNG o WebP.')).toBeVisible();
+
+    await userEvent.upload(
+      screen.getByLabelText('Archivo para la portada'),
+      new File(['x'], 'tapa.png', { type: 'image/png' }),
+    );
+    expect(
+      await screen.findByText('No pudimos subir la foto. Probá de nuevo en unos minutos.'),
+    ).toBeVisible();
+  });
+
+  it('adds photos to the gallery one after the other and removes them', async () => {
+    URL.createObjectURL = () => 'blob:preview';
+    URL.revokeObjectURL = () => undefined;
+    const one = { id: 'g1', url: 'https://img.example/1.png' };
+    const two = { id: 'g2', url: 'https://img.example/2.png' };
+    let uploads = 0;
+    const fetchMock = signedIn({
+      [`POST ${PROFILE_URL}/photos`]: () => {
+        uploads += 1;
+        const gallery = uploads === 1 ? [one] : [one, two];
+        return { body: { ...PROFILE, photos: { ...PHOTOS, gallery } } };
+      },
+      [`DELETE ${PROFILE_URL}/photos/g1`]: {
+        body: { ...PROFILE, photos: { ...PHOTOS, gallery: [two] } },
+      },
+      'GET /api/organizations/la-litoralena': { body: {} },
+    });
+
+    renderRoute('/cooperative/profile?section=photos');
+    await userEvent.upload(await screen.findByTestId('photos-input'), [
+      new File(['x'], 'a.png', { type: 'image/png' }),
+      new File(['y'], 'b.png', { type: 'image/png' }),
+    ]);
+
+    expect(await screen.findByRole('img', { name: 'Foto 2' })).toHaveAttribute('src', two.url);
+    expect(
+      fetchMock.mock.calls.filter(
+        ([input, init]) => input === `${PROFILE_URL}/photos` && init?.method === 'POST',
+      ),
+    ).toHaveLength(2);
+    expect(screen.queryByText('Portada')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Quitar la foto 1' }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole('img', { name: 'Foto 2' })).not.toBeInTheDocument();
+    });
+    expect(screen.getByRole('img', { name: 'Foto 1' })).toHaveAttribute('src', two.url);
+  });
+
+  it('says how many gallery photos could not be uploaded', async () => {
+    URL.createObjectURL = () => 'blob:preview';
+    URL.revokeObjectURL = () => undefined;
+    signedIn({ [`POST ${PROFILE_URL}/photos`]: { status: 502, body: {} } });
+
+    renderRoute('/cooperative/profile?section=photos');
+    await userEvent.upload(await screen.findByTestId('photos-input'), [
+      new File(['x'], 'a.png', { type: 'image/png' }),
+      new File(['y'], 'b.png', { type: 'image/png' }),
+    ]);
+
+    expect(
+      await screen.findByText('No pudimos subir 2 fotos. Probá de nuevo en unos minutos.'),
+    ).toBeVisible();
   });
 
   it('saves the identification with the chosen visibility and reloads the account', async () => {

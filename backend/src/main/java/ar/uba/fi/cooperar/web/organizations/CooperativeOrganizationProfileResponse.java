@@ -31,7 +31,8 @@ public record CooperativeOrganizationProfileResponse(
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) ProfileIdentificationResponse identification,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) ProfileActivityResponse activity,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) ProfileLocationResponse location,
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) ProfileContactResponse contact) {
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) ProfileContactResponse contact,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) ProfilePhotosResponse photos) {
 
     public record ProfileIdentificationResponse(
             @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
@@ -117,6 +118,7 @@ public record CooperativeOrganizationProfileResponse(
                         organization.getWebsite(),
                         organization.getSocialMedia(),
                         organization.getOpeningHours(),
-                        organization.getResponseTime()));
+                        organization.getResponseTime()),
+                ProfilePhotosResponse.from(organization));
     }
 }

@@ -182,7 +182,7 @@ function Sections({ profile }: { profile: CooperativeOrganizationProfileResponse
       <div className={styles.section}>
         <IdentificationSection {...props('identification')} />
         <ActivitySection {...props('activity')} />
-        <PhotosSection hidden={current !== 'photos'} next={props('photos').next} />
+        <PhotosSection {...props('photos')} />
         <LocationSection {...props('location')} />
         <ContactSection {...props('contact')} />
       </div>

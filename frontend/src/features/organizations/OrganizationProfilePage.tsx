@@ -7,6 +7,7 @@ import {
   Grid,
   Group,
   Paper,
+  SimpleGrid,
   Stack,
   Text,
   Title,
@@ -61,12 +62,23 @@ function Profile({ profile }: { profile: OrganizationProfileResponse }) {
     <Stack gap="lg">
       <title>{`${profile.name} · CooperAR`}</title>
       <Paper withBorder radius="lg" className={styles.summary}>
-        {/* TODO(#13): show the cover photo. */}
-        <div className={styles.cover} />
+        {profile.photos.coverUrl ? (
+          // Decorative: it shows the place, and the name right below says whose it is.
+          <img src={profile.photos.coverUrl} alt="" className={styles.cover} />
+        ) : (
+          <div className={styles.cover} />
+        )}
         <Group justify="space-between" gap="md" p="lg">
           <Group gap="md" wrap="nowrap" miw={0}>
-            {/* TODO(#13): show the logo. */}
-            <div className={styles.logo} />
+            {profile.photos.logoUrl ? (
+              <img
+                src={profile.photos.logoUrl}
+                alt={`Logo de ${profile.name}`}
+                className={styles.logo}
+              />
+            ) : (
+              <div className={styles.logo} />
+            )}
             <Stack gap="xs" miw={0}>
               <Title order={1}>{profile.name}</Title>
               <Group gap="sm">
@@ -143,6 +155,32 @@ function Profile({ profile }: { profile: OrganizationProfileResponse }) {
                 </div>
               </dl>
             </Paper>
+            {profile.photos.gallery.length > 0 && (
+              <section aria-labelledby="photos">
+                <Title order={2} size="h3" id="photos" mb="xs">
+                  Fotos
+                </Title>
+                <SimpleGrid
+                  component="ul"
+                  cols={{ base: 2, sm: 3 }}
+                  spacing="sm"
+                  className={styles.gallery}
+                >
+                  {profile.photos.gallery.map((photo, index) => (
+                    <li key={photo.id}>
+                      <a href={photo.url} target="_blank" rel="noopener noreferrer">
+                        <img
+                          src={photo.url}
+                          alt={`Foto ${String(index + 1)} de ${profile.name}`}
+                          loading="lazy"
+                          className={styles.galleryPhoto}
+                        />
+                      </a>
+                    </li>
+                  ))}
+                </SimpleGrid>
+              </section>
+            )}
             <section aria-labelledby="products">
               <Title order={2} size="h3" id="products" mb="xs">
                 Productos y servicios

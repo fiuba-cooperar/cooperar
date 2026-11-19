@@ -18,15 +18,22 @@ import { CSS } from '@dnd-kit/utilities';
 import { ActionIcon, Button, Stack, Text } from '@mantine/core';
 import { IconX } from '@tabler/icons-react';
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type DragEvent } from 'react';
-import type { ProductPhotoResponse } from '@/api/generated/model';
 import { LabelWithHint } from '@/components/form/LabelWithHint';
-import { ACCEPTED, MAX_PHOTOS, PHOTOS_HINT } from './photoRules';
-import styles from './ProductPhotosField.module.css';
+import { ACCEPTED } from './photoRules';
+import styles from './PhotosField.module.css';
 
 interface Props {
-  /** Photos the product already has. */
-  photos: ProductPhotoResponse[];
-  /** Photos chosen and not uploaded yet: they go up when the product is saved. */
+  /** Id of the button that chooses files, which the label points at. */
+  id: string;
+  label: string;
+  /** What the person can upload: shown next to the label and read by screen readers. */
+  hint: string;
+  max: number;
+  /** Whether the first photo is marked as the cover. */
+  firstIsCover: boolean;
+  /** Photos already saved. */
+  photos: { id: string; url: string }[];
+  /** Photos chosen and not saved yet, shown as previews. */
   files: File[];
   error: string | undefined;
   removing: boolean;
@@ -94,8 +101,16 @@ function PhotoTile({
   );
 }
 
-/** The photos of a product: the ones it has, the ones waiting to be uploaded and the button to choose more. */
-export function ProductPhotosField({
+/**
+ * A sortable set of photos: the saved ones, the ones waiting to be saved and the button (or the drop zone) to choose
+ * more. Products and the gallery of the profile use it.
+ */
+export function PhotosField({
+  id,
+  label,
+  hint,
+  max,
+  firstIsCover,
   photos: savedPhotos,
   files,
   error,
@@ -141,7 +156,7 @@ export function ProductPhotosField({
   function dropFiles(event: DragEvent<HTMLDivElement>) {
     event.preventDefault();
     setOverDropzone(false);
-    if (total < MAX_PHOTOS) onAdd(Array.from(event.dataTransfer.files));
+    if (total < max) onAdd(Array.from(event.dataTransfer.files));
   }
 
   function dragEnd({ active, over }: DragEndEvent) {
@@ -170,7 +185,7 @@ export function ProductPhotosField({
 
   return (
     <Stack gap={6}>
-      <LabelWithHint htmlFor="photos-button" label="Fotos" hint={PHOTOS_HINT} />
+      <LabelWithHint htmlFor={id} label={label} hint={hint} />
       <div
         className={[styles.dropzone, overDropzone ? styles.dragging : ''].join(' ')}
         onDragOver={(event) => {
@@ -192,7 +207,7 @@ export function ProductPhotosField({
                     id={photo.id}
                     src={photo.url}
                     alt={`Foto ${String(index + 1)}`}
-                    cover={index === 0}
+                    cover={firstIsCover && index === 0}
                     sortable={photos.length > 1}
                     removeLabel={`Quitar la foto ${String(index + 1)}`}
                     removing={removing}
@@ -209,7 +224,7 @@ export function ProductPhotosField({
                     id={fileKeys[index] ?? ''}
                     src={previews[index] ?? ''}
                     alt={`Foto nueva ${String(index + 1)}`}
-                    cover={photos.length === 0 && index === 0}
+                    cover={firstIsCover && photos.length === 0 && index === 0}
                     sortable={files.length > 1}
                     removeLabel={`Quitar la foto nueva ${String(index + 1)}`}
                     onRemove={() => {
@@ -221,7 +236,7 @@ export function ProductPhotosField({
             </ul>
           </DndContext>
         )}
-        {total < MAX_PHOTOS ? (
+        {total < max ? (
           <div className={styles.add}>
             <input
               ref={input}
@@ -235,19 +250,19 @@ export function ProductPhotosField({
             />
             <span>Arrastrá las fotos acá o</span>
             <Button
-              id="photos-button"
+              id={id}
               type="button"
               variant="outline"
               h={40}
               px={16}
-              aria-description={PHOTOS_HINT}
+              aria-description={hint}
               onClick={() => input.current?.click()}
             >
               Elegir archivos
             </Button>
           </div>
         ) : (
-          <Text size="sm">Llegaste al máximo de {MAX_PHOTOS} fotos.</Text>
+          <Text size="sm">Llegaste al máximo de {max} fotos.</Text>
         )}
       </div>
       {error && (

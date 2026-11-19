@@ -24,7 +24,10 @@ public record OrganizationSummaryResponse(
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Province province,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String district,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String locality,
-        String description) {
+        String description,
+
+        @Schema(description = "Missing until the organization uploads one")
+        String logoUrl) {
 
     static OrganizationSummaryResponse from(Organization organization) {
         Address address = organization.getAddress();
@@ -37,6 +40,7 @@ public record OrganizationSummaryResponse(
                 address.province(),
                 address.district(),
                 address.locality(),
-                organization.getDescription());
+                organization.getDescription(),
+                ProfilePhotosResponse.url(organization.getLogo()));
     }
 }

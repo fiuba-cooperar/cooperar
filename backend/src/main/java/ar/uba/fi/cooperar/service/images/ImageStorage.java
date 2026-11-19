@@ -1,4 +1,4 @@
-package ar.uba.fi.cooperar.service.catalog;
+package ar.uba.fi.cooperar.service.images;
 
 /**
  * Where the photos live. The implementation is chosen by configuration ({@code cooperar.images.provider}): the

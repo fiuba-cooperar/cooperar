@@ -41,7 +41,8 @@ public record OrganizationProfileResponse(
         String socialMedia,
         String openingHours,
         ResponseTime responseTime,
-        PublicLocation location) {
+        PublicLocation location,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) ProfilePhotosResponse photos) {
 
     /** When the street is private, the point is rounded to the area and {@code approximate} is true. */
     public record PublicLocation(
@@ -84,6 +85,7 @@ public record OrganizationProfileResponse(
                 organization.getSocialMedia(),
                 organization.getOpeningHours(),
                 organization.getResponseTime(),
-                PublicLocation.from(organization.getPublicLocation(), street == Visibility.PRIVATE));
+                PublicLocation.from(organization.getPublicLocation(), street == Visibility.PRIVATE),
+                ProfilePhotosResponse.from(organization));
     }
 }

@@ -28,6 +28,7 @@ const fullProfile = {
   openingHours: 'Lunes a viernes de 8 a 17',
   responseTime: 'TWO_DAYS',
   location: { latitude: -34.6, longitude: -58.42, approximate: false },
+  photos: { logoUrl: null, coverUrl: null, gallery: [] },
 };
 
 const minimalProfile = {
@@ -53,6 +54,7 @@ const minimalProfile = {
   openingHours: null,
   responseTime: null,
   location: null,
+  photos: { logoUrl: null, coverUrl: null, gallery: [] },
 };
 
 /** Answers the profile of `slug` and an empty product list. */
@@ -71,6 +73,42 @@ describe('OrganizationProfilePage', () => {
 
     expect(await screen.findByRole('heading', { level: 1, name: 'La Cacerola' })).toBeVisible();
     expect(fetchMock).toHaveBeenCalledWith('/api/organizations/la-cacerola', expect.anything());
+  });
+
+  it('shows the logo, the cover and the gallery', async () => {
+    stubProfile('la-cacerola', {
+      ...fullProfile,
+      photos: {
+        logoUrl: 'https://img.example/logo.png',
+        coverUrl: 'https://img.example/cover.png',
+        gallery: [
+          { id: 'g1', url: 'https://img.example/1.png' },
+          { id: 'g2', url: 'https://img.example/2.png' },
+        ],
+      },
+    });
+
+    renderRoute('/organizations/la-cacerola');
+
+    expect(await screen.findByRole('img', { name: 'Logo de La Cacerola' })).toHaveAttribute(
+      'src',
+      'https://img.example/logo.png',
+    );
+    const photos = screen.getByRole('region', { name: 'Fotos' });
+    expect(within(photos).getByRole('img', { name: 'Foto 2 de La Cacerola' })).toHaveAttribute(
+      'src',
+      'https://img.example/2.png',
+    );
+    expect(document.querySelector('img[src="https://img.example/cover.png"]')).not.toBeNull();
+  });
+
+  it('leaves the photos section out when the gallery is empty', async () => {
+    stubProfile('la-cacerola', fullProfile);
+
+    renderRoute('/organizations/la-cacerola');
+
+    await screen.findByRole('heading', { level: 1, name: 'La Cacerola' });
+    expect(screen.queryByRole('region', { name: 'Fotos' })).not.toBeInTheDocument();
   });
 
   it('shows the public data, the contact details and the map', async () => {

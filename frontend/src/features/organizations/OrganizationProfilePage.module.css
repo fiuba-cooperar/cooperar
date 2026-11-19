@@ -34,15 +34,6 @@
   background: var(--mantine-color-default-border);
 }
 
-.logo {
-  flex: none;
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  object-fit: cover;
-  background: var(--mantine-color-default-border);
-}
-
 .gallery {
   margin: 0;
   padding: 0;

@@ -1,0 +1,19 @@
+/* The label sits beside the field instead of above it, as in the mocks. */
+.root {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: auto;
+}
+
+.field {
+  width: 190px;
+}
+
+.label {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--mantine-color-dimmed);
+  white-space: nowrap;
+}

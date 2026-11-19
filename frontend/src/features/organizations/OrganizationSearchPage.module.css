@@ -84,26 +84,6 @@
   }
 }
 
-/* The label sits beside the field instead of above it, as in the mock. */
-.sort {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: auto;
-}
-
-.sortField {
-  width: 180px;
-}
-
-.sortLabel {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 400;
-  color: var(--mantine-color-dimmed);
-  white-space: nowrap;
-}
-
 .list {
   margin: 0;
   padding: 0;

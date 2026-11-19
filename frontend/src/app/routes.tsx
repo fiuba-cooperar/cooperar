@@ -37,6 +37,9 @@ import { RegistrationRequestsPage } from '@/features/cooperative/RegistrationReq
 import { ForbiddenPage } from '@/features/errors/ForbiddenPage';
 import { NotFoundPage } from '@/features/errors/NotFoundPage';
 import { ComingSoonPage } from '@/features/home/ComingSoonPage';
+import { CatalogPage } from '@/features/catalog/CatalogPage';
+import { ProductDetailPage } from '@/features/catalog/ProductDetailPage';
+import { CATALOG_PATH } from '@/features/catalog/productSearch';
 import { HomePage } from '@/features/home/HomePage';
 import { OrganizationProfilePage } from '@/features/organizations/OrganizationProfilePage';
 import { OrganizationSearchPage } from '@/features/organizations/OrganizationSearchPage';
@@ -53,12 +56,14 @@ export const routes: RouteObject[] = [
       { path: REGISTER_PATH, element: <RegisterPage /> },
       { path: VERIFY_EMAIL_PATH, element: <VerifyEmailPage /> },
       { path: ORGANIZATIONS_PATH, element: <OrganizationSearchPage /> },
-      ...PUBLIC_SECTIONS.filter(({ path }) => path !== ORGANIZATIONS_PATH).map(
-        ({ path, label }) => ({
-          path,
-          element: <ComingSoonPage title={label} />,
-        }),
-      ),
+      { path: CATALOG_PATH, element: <CatalogPage /> },
+      { path: `${CATALOG_PATH}/:id`, element: <ProductDetailPage /> },
+      ...PUBLIC_SECTIONS.filter(
+        ({ path }) => path !== ORGANIZATIONS_PATH && path !== CATALOG_PATH,
+      ).map(({ path, label }) => ({
+        path,
+        element: <ComingSoonPage title={label} />,
+      })),
       { path: 'forbidden', element: <ForbiddenPage /> },
       { path: 'organizations/:slug', element: <OrganizationProfilePage /> },
       { path: '*', element: <NotFoundPage /> },

@@ -18,7 +18,13 @@ import type {
   UseQueryResult,
 } from '@tanstack/react-query';
 
-import type { ProductCategoryResponse, PublicProductResponse } from '../model';
+import type {
+  CatalogProductDetailResponse,
+  ProductCategoryResponse,
+  ProductSearchResponse,
+  PublicProductResponse,
+  SearchProductsParams,
+} from '../model';
 
 import { apiFetch } from '../../apiFetch';
 
@@ -313,6 +319,279 @@ export function useListProductCategories<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getListProductCategoriesQueryOptions(options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type searchProductsResponse200 = {
+  data: ProductSearchResponse;
+  status: 200;
+};
+
+export type searchProductsResponseSuccess = searchProductsResponse200 & {
+  headers: Headers;
+};
+export type searchProductsResponse = searchProductsResponseSuccess;
+
+export const getSearchProductsUrl = (params?: SearchProductsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    const explodeParameters = ['saleMode'];
+
+    if (Array.isArray(value) && explodeParameters.includes(key)) {
+      value.forEach((v) => {
+        normalizedParams.append(key, v === null ? 'null' : String(v));
+      });
+      return;
+    }
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/products?${stringifiedParams}` : `/api/products`;
+};
+
+/**
+ * Words match in Spanish, ignoring accents and as prefixes of a word with the same stem. Every search that narrows the catalog is logged, without anything that identifies the visitor.
+ * @summary Public catalog of products and services: full-text search, filters and pagination
+ */
+export const searchProducts = async (
+  params?: SearchProductsParams,
+  options?: Parameters<typeof apiFetch>[1],
+): Promise<searchProductsResponse> => {
+  return apiFetch<searchProductsResponse>(getSearchProductsUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getSearchProductsQueryKey = (params?: SearchProductsParams) => {
+  return [`/api/products`, ...(params ? [params] : [])] as const;
+};
+
+export const getSearchProductsQueryOptions = <
+  TData = Awaited<ReturnType<typeof searchProducts>>,
+  TError = unknown,
+>(
+  params?: SearchProductsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchProducts>>, TError, TData>>;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getSearchProductsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof searchProducts>>> = ({ signal }) =>
+    searchProducts(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof searchProducts>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type SearchProductsQueryResult = NonNullable<Awaited<ReturnType<typeof searchProducts>>>;
+export type SearchProductsQueryError = unknown;
+
+export function useSearchProducts<
+  TData = Awaited<ReturnType<typeof searchProducts>>,
+  TError = unknown,
+>(
+  params: undefined | SearchProductsParams,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchProducts>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof searchProducts>>,
+          TError,
+          Awaited<ReturnType<typeof searchProducts>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useSearchProducts<
+  TData = Awaited<ReturnType<typeof searchProducts>>,
+  TError = unknown,
+>(
+  params?: SearchProductsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchProducts>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof searchProducts>>,
+          TError,
+          Awaited<ReturnType<typeof searchProducts>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useSearchProducts<
+  TData = Awaited<ReturnType<typeof searchProducts>>,
+  TError = unknown,
+>(
+  params?: SearchProductsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchProducts>>, TError, TData>>;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Public catalog of products and services: full-text search, filters and pagination
+ */
+
+export function useSearchProducts<
+  TData = Awaited<ReturnType<typeof searchProducts>>,
+  TError = unknown,
+>(
+  params?: SearchProductsParams,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof searchProducts>>, TError, TData>>;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getSearchProductsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type getProductResponse200 = {
+  data: CatalogProductDetailResponse;
+  status: 200;
+};
+
+export type getProductResponseSuccess = getProductResponse200 & {
+  headers: Headers;
+};
+export type getProductResponse = getProductResponseSuccess;
+
+export const getGetProductUrl = (id: string) => {
+  return `/api/products/${id}`;
+};
+
+/**
+ * @summary A published product or service, with the organization that offers it
+ */
+export const getProduct = async (
+  id: string,
+  options?: Parameters<typeof apiFetch>[1],
+): Promise<getProductResponse> => {
+  return apiFetch<getProductResponse>(getGetProductUrl(id), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetProductQueryKey = (id: string) => {
+  return [`/api/products/${id}`] as const;
+};
+
+export const getGetProductQueryOptions = <
+  TData = Awaited<ReturnType<typeof getProduct>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getProduct>>, TError, TData>>;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetProductQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getProduct>>> = ({ signal }) =>
+    getProduct(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: id !== null && id !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof getProduct>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+};
+
+export type GetProductQueryResult = NonNullable<Awaited<ReturnType<typeof getProduct>>>;
+export type GetProductQueryError = unknown;
+
+export function useGetProduct<TData = Awaited<ReturnType<typeof getProduct>>, TError = unknown>(
+  id: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getProduct>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProduct>>,
+          TError,
+          Awaited<ReturnType<typeof getProduct>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetProduct<TData = Awaited<ReturnType<typeof getProduct>>, TError = unknown>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getProduct>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProduct>>,
+          TError,
+          Awaited<ReturnType<typeof getProduct>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetProduct<TData = Awaited<ReturnType<typeof getProduct>>, TError = unknown>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getProduct>>, TError, TData>>;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary A published product or service, with the organization that offers it
+ */
+
+export function useGetProduct<TData = Awaited<ReturnType<typeof getProduct>>, TError = unknown>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getProduct>>, TError, TData>>;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetProductQueryOptions(id, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;

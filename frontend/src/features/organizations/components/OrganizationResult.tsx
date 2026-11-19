@@ -8,16 +8,8 @@ import {
   PROVINCE_LABELS,
   SECTOR_LABELS,
 } from '../labels';
+import { initials } from '../initials';
 import styles from './OrganizationResult.module.css';
-
-function initials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter((word) => /^\p{Lu}/u.test(word))
-    .slice(0, 2)
-    .map((word) => word.charAt(0))
-    .join('');
-}
 
 /** An organization found in the public directory, with the way to its profile. */
 export function OrganizationResult({

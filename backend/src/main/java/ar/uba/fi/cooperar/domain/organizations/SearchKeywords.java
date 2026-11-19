@@ -22,6 +22,7 @@ public final class SearchKeywords {
             Sector.METALWORKING, "metalúrgica",
             Sector.PRINTING, "gráfica",
             Sector.SERVICES, "servicios",
+            Sector.PHARMACEUTICAL, "farmacéutica",
             Sector.OTHER, "");
 
     private static final Map<ActivityType, String> ACTIVITY_TYPES = Map.of(

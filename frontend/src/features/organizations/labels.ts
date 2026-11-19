@@ -41,6 +41,7 @@ export const SECTOR_LABELS: Record<Sector, string> = {
   [Sector.METALWORKING]: 'Metalúrgica',
   [Sector.PRINTING]: 'Gráfica',
   [Sector.SERVICES]: 'Servicios',
+  [Sector.PHARMACEUTICAL]: 'Farmacéutica',
   [Sector.OTHER]: 'Otro',
 };
 

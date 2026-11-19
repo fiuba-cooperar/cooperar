@@ -121,6 +121,7 @@ describe('organizations', () => {
       'Metalúrgica',
       'Gráfica',
       'Servicios',
+      'Farmacéutica',
       'Otro',
     ]);
   });

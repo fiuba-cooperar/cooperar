@@ -54,6 +54,115 @@
         "tags" : [ "admin-organizations" ]
       }
     },
+    "/api/admin/product-categories" : {
+      "get" : {
+        "operationId" : "listAdminProductCategories",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/AdminProductCategoryResponse"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "The product categories with their product count",
+        "tags" : [ "admin-product-categories" ]
+      },
+      "post" : {
+        "description" : "Answers 409 when another category has the same name, ignoring case.",
+        "operationId" : "createProductCategory",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ProductCategoryRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AdminProductCategoryResponse"
+                }
+              }
+            },
+            "description" : "Created"
+          }
+        },
+        "summary" : "Add a product category",
+        "tags" : [ "admin-product-categories" ]
+      }
+    },
+    "/api/admin/product-categories/{id}" : {
+      "delete" : {
+        "description" : "Answers 409 while there are products filed under it.",
+        "operationId" : "deleteProductCategory",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        },
+        "summary" : "Delete a product category",
+        "tags" : [ "admin-product-categories" ]
+      },
+      "put" : {
+        "description" : "Answers 409 when another category has the same name, ignoring case.",
+        "operationId" : "renameProductCategory",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ProductCategoryRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AdminProductCategoryResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Rename a product category; its products keep it",
+        "tags" : [ "admin-product-categories" ]
+      }
+    },
     "/api/admin/registration-requests" : {
       "get" : {
         "description" : "Without `type`, of every organization type. Pending ones are only those whose account confirmed its email, the oldest submission first. The rest go from the latest decision back.",
@@ -521,6 +630,400 @@
         "tags" : [ "cooperative-organization-profile" ]
       }
     },
+    "/api/cooperative/organizations/{organizationId}/products" : {
+      "get" : {
+        "operationId" : "listManagedProducts",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "organizationId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ProductResponse"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Every product of an organization the account manages, unpublished ones included",
+        "tags" : [ "cooperative-products" ]
+      },
+      "post" : {
+        "description" : "It is saved unpublished unless the request says to publish it.",
+        "operationId" : "createProduct",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "organizationId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ProductRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProductResponse"
+                }
+              }
+            },
+            "description" : "Created"
+          }
+        },
+        "summary" : "Add a product or service",
+        "tags" : [ "cooperative-products" ]
+      }
+    },
+    "/api/cooperative/organizations/{organizationId}/products/{productId}" : {
+      "delete" : {
+        "description" : "Published or not. Unpublishing hides a product and keeps it; this does not.",
+        "operationId" : "deleteProduct",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "organizationId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "productId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        },
+        "summary" : "Delete a product and its photos for good",
+        "tags" : [ "cooperative-products" ]
+      },
+      "get" : {
+        "operationId" : "getManagedProduct",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "organizationId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "productId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProductResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "A product of an organization the account manages",
+        "tags" : [ "cooperative-products" ]
+      },
+      "put" : {
+        "operationId" : "updateProduct",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "organizationId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "productId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ProductRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProductResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Edit a product, published or not",
+        "tags" : [ "cooperative-products" ]
+      }
+    },
+    "/api/cooperative/organizations/{organizationId}/products/{productId}/photos" : {
+      "post" : {
+        "description" : "A JPEG, PNG or WebP of at most 5 MB, checked by its content. Answers 400 for anything else and 409 when the product already has 5 photos.",
+        "operationId" : "addProductPhoto",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "organizationId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "productId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "type" : "object",
+                "properties" : {
+                  "file" : {
+                    "type" : "string",
+                    "format" : "binary"
+                  }
+                },
+                "required" : [ "file" ]
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProductResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Add a photo to a product, after the others",
+        "tags" : [ "cooperative-products" ]
+      }
+    },
+    "/api/cooperative/organizations/{organizationId}/products/{productId}/photos/order" : {
+      "put" : {
+        "description" : "The list must have every photo of the product exactly once; the first one is the cover. Answers 400 otherwise.",
+        "operationId" : "reorderProductPhotos",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "organizationId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "productId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PhotoOrderRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProductResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Set the order of the photos of a product",
+        "tags" : [ "cooperative-products" ]
+      }
+    },
+    "/api/cooperative/organizations/{organizationId}/products/{productId}/photos/{photoId}" : {
+      "delete" : {
+        "operationId" : "removeProductPhoto",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "organizationId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "productId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "photoId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProductResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Remove a photo of a product",
+        "tags" : [ "cooperative-products" ]
+      }
+    },
+    "/api/cooperative/organizations/{organizationId}/products/{productId}/publish" : {
+      "post" : {
+        "description" : "Publishing one that is already active changes nothing.",
+        "operationId" : "publishProduct",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "organizationId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "productId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProductResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Show a product on the public profile",
+        "tags" : [ "cooperative-products" ]
+      }
+    },
+    "/api/cooperative/organizations/{organizationId}/products/{productId}/unpublish" : {
+      "post" : {
+        "description" : "The product is kept, only hidden. Unpublishing one that already is changes nothing.",
+        "operationId" : "unpublishProduct",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "organizationId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "productId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProductResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Take a product off the public profile",
+        "tags" : [ "cooperative-products" ]
+      }
+    },
     "/api/cooperative/registration-requests" : {
       "get" : {
         "operationId" : "listRegistrationRequestsSent",
@@ -724,6 +1227,58 @@
         "summary" : "Public profile of an organization",
         "tags" : [ "organizations" ]
       }
+    },
+    "/api/organizations/{slug}/products" : {
+      "get" : {
+        "operationId" : "listOrganizationProducts",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "slug",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/PublicProductResponse"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Active products and services of an organization",
+        "tags" : [ "products" ]
+      }
+    },
+    "/api/product-categories" : {
+      "get" : {
+        "operationId" : "listProductCategories",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ProductCategoryResponse"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "The categories products and services are filed under",
+        "tags" : [ "products" ]
+      }
     }
   },
   "components" : {
@@ -781,6 +1336,24 @@
           }
         },
         "required" : [ "activityTypes", "address", "createdAt", "cuit", "id", "name", "sectors", "slug", "type" ]
+      },
+      "AdminProductCategoryResponse" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "productCount" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Products filed under the category, discontinued ones included; it cannot be deleted while there are any"
+          }
+        },
+        "required" : [ "id", "name", "productCount" ]
       },
       "AdminRegistrationRequestResponse" : {
         "type" : "object",
@@ -1183,6 +1756,141 @@
         "type" : "string",
         "enum" : [ "COOPERATIVE", "ERT" ]
       },
+      "PhotoOrderRequest" : {
+        "type" : "object",
+        "properties" : {
+          "photoIds" : {
+            "type" : "array",
+            "description" : "Every photo of the product, in the order they should be shown",
+            "items" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          }
+        },
+        "required" : [ "photoIds" ]
+      },
+      "ProductCategoryRequest" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "maxLength" : 80,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "name" ]
+      },
+      "ProductCategoryResponse" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "id", "name" ]
+      },
+      "ProductPhotoResponse" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "url" : {
+            "type" : "string",
+            "description" : "Where anyone opens the photo"
+          }
+        },
+        "required" : [ "id", "url" ]
+      },
+      "ProductRequest" : {
+        "type" : "object",
+        "properties" : {
+          "categoryId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "Id of one of the product categories"
+          },
+          "description" : {
+            "type" : "string",
+            "maxLength" : 2000,
+            "minLength" : 0
+          },
+          "indicativePrice" : {
+            "type" : "number",
+            "description" : "Indicative price in Argentine pesos; optional",
+            "maximum" : 9999999999.99,
+            "minimum" : 0
+          },
+          "name" : {
+            "type" : "string",
+            "maxLength" : 120,
+            "minLength" : 0
+          },
+          "publish" : {
+            "type" : "boolean",
+            "description" : "Publish the product when saving. Without it a new product is saved unpublished and an existing one keeps its status"
+          },
+          "saleModes" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SaleMode"
+            },
+            "minItems" : 1,
+            "uniqueItems" : true
+          }
+        },
+        "required" : [ "categoryId", "name", "saleModes" ]
+      },
+      "ProductResponse" : {
+        "type" : "object",
+        "properties" : {
+          "category" : {
+            "$ref" : "#/components/schemas/ProductCategoryResponse"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "indicativePrice" : {
+            "type" : "number",
+            "description" : "Indicative price in Argentine pesos; missing when none was set"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "photos" : {
+            "type" : "array",
+            "description" : "The first one is the cover",
+            "items" : {
+              "$ref" : "#/components/schemas/ProductPhotoResponse"
+            }
+          },
+          "saleModes" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SaleMode"
+            },
+            "uniqueItems" : true
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/ProductStatus"
+          }
+        },
+        "required" : [ "category", "id", "name", "photos", "saleModes", "status" ]
+      },
+      "ProductStatus" : {
+        "type" : "string",
+        "enum" : [ "PUBLISHED", "UNPUBLISHED" ]
+      },
       "ProfileActivityRequest" : {
         "type" : "object",
         "properties" : {
@@ -1437,6 +2145,43 @@
           }
         },
         "required" : [ "approximate", "latitude", "longitude" ]
+      },
+      "PublicProductResponse" : {
+        "type" : "object",
+        "properties" : {
+          "category" : {
+            "$ref" : "#/components/schemas/ProductCategoryResponse"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "indicativePrice" : {
+            "type" : "number",
+            "description" : "Indicative price in Argentine pesos; missing when none was set"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "photos" : {
+            "type" : "array",
+            "description" : "The first one is the cover",
+            "items" : {
+              "$ref" : "#/components/schemas/ProductPhotoResponse"
+            }
+          },
+          "saleModes" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SaleMode"
+            },
+            "uniqueItems" : true
+          }
+        },
+        "required" : [ "category", "id", "name", "photos", "saleModes" ]
       },
       "RefreshTokenRequest" : {
         "type" : "object",
@@ -1728,6 +2473,10 @@
       "Role" : {
         "type" : "string",
         "enum" : [ "ADMIN", "COOPERATIVE" ]
+      },
+      "SaleMode" : {
+        "type" : "string",
+        "enum" : [ "RETAIL", "WHOLESALE" ]
       },
       "Sector" : {
         "type" : "string",

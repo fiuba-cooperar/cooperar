@@ -1,4 +1,4 @@
-/** Sections of the public site, in menu order. None of them exists yet, so they render a "coming soon" page. */
+/** Sections of the public site, in menu order. Those that do not exist yet render a "coming soon" page. */
 export const PUBLIC_SECTIONS = [
   { path: '/organizations', label: 'Entidades' },
   { path: '/catalog', label: 'Catálogo' },

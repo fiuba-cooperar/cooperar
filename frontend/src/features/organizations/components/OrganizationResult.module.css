@@ -1,0 +1,35 @@
+/* Logo, text and button in a row that wraps under the text on narrow screens, as in the mock. */
+.result {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 18px;
+  padding: 20px 22px;
+}
+
+.result:hover {
+  border-color: light-dark(#9ab8d6, var(--mantine-color-brand-7));
+}
+
+.logo {
+  flex: none;
+}
+
+.body {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.name {
+  color: var(--mantine-color-text);
+  text-decoration: none;
+}
+
+.name:hover {
+  text-decoration: underline;
+}
+
+.action {
+  flex: none;
+  align-self: center;
+}

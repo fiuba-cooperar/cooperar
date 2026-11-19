@@ -1,0 +1,327 @@
+import {
+  Alert,
+  Button,
+  Container,
+  Group,
+  Pagination,
+  Paper,
+  Select,
+  Stack,
+  Text,
+  Title,
+} from '@mantine/core';
+import { IconAlertCircle, IconMap, IconSearch, IconSearchOff, IconX } from '@tabler/icons-react';
+import { useState } from 'react';
+import { Link, useSearchParams } from 'react-router';
+import { OrganizationSearchSort, type OrganizationSearchResponse } from '@/api/generated/model';
+import { useOrganizationSearch } from './api/useOrganizationSearch';
+import { OrganizationResult } from './components/OrganizationResult';
+import { SearchFilters } from './components/SearchFilters';
+import {
+  ACTIVITY_TYPE_LABELS,
+  ORGANIZATION_TYPE_LABELS,
+  PROVINCE_LABELS,
+  SECTOR_LABELS,
+} from './labels';
+import {
+  hasFilters,
+  readSearch,
+  toApiParams,
+  writeSearch,
+  type OrganizationSearch,
+} from './organizationSearch';
+import styles from './OrganizationSearchPage.module.css';
+
+// 1180px of content between 48px gutters, as in the mock and the home page.
+const SECTION = { size: 1276, px: { base: 'md', sm: 48 } } as const;
+
+const SORT_OPTIONS = [
+  { value: OrganizationSearchSort.RELEVANCE, label: 'Relevancia' },
+  { value: OrganizationSearchSort.NAME, label: 'Nombre (A a Z)' },
+];
+
+const NO_FILTERS = {
+  query: '',
+  types: [],
+  sectors: [],
+  activityTypes: [],
+  province: null,
+} as const satisfies Partial<OrganizationSearch>;
+
+function SearchBox({ query, onSearch }: { query: string; onSearch: (query: string) => void }) {
+  const [text, setText] = useState(query);
+  const [lastQuery, setLastQuery] = useState(query);
+  // Removing the search from its pill, or going back, changes the query from outside the box.
+  if (query !== lastQuery) {
+    setLastQuery(query);
+    setText(query);
+  }
+
+  return (
+    <Stack gap={8} maw={760}>
+      <form
+        role="search"
+        aria-label="Buscar entidades"
+        className={styles.search}
+        onSubmit={(event) => {
+          event.preventDefault();
+          onSearch(text.trim());
+        }}
+      >
+        <IconSearch size={20} stroke={2.2} aria-hidden className={styles.searchIcon} />
+        <label htmlFor="organization-search" className={styles.visuallyHidden}>
+          Buscar entidades
+        </label>
+        <input
+          id="organization-search"
+          type="search"
+          value={text}
+          maxLength={200}
+          placeholder="Buscá por nombre, rubro o localidad"
+          aria-describedby="organization-search-hint"
+          className={styles.searchInput}
+          onChange={(event) => {
+            setText(event.target.value);
+          }}
+        />
+        <Button type="submit" h={44} px={22} fz={15} radius={9}>
+          Buscar
+        </Button>
+      </form>
+      <Text size="sm" c="dimmed" id="organization-search-hint">
+        No hace falta escribir con tildes: «panaderia» encuentra «Panadería».
+      </Text>
+    </Stack>
+  );
+}
+
+interface ActiveFilter {
+  key: string;
+  label: string;
+  aria: string;
+  remove: Partial<OrganizationSearch>;
+}
+
+function activeFilters(search: OrganizationSearch): ActiveFilter[] {
+  const filters: ActiveFilter[] = [];
+  if (search.query) {
+    filters.push({
+      key: 'query',
+      label: `«${search.query}»`,
+      aria: `Quitar la búsqueda ${search.query}`,
+      remove: { query: '' },
+    });
+  }
+  const filter = (key: string, label: string, remove: Partial<OrganizationSearch>) => {
+    filters.push({ key, label, aria: `Quitar el filtro ${label}`, remove });
+  };
+  search.types.forEach((type) => {
+    filter(`type-${type}`, ORGANIZATION_TYPE_LABELS[type], {
+      types: search.types.filter((other) => other !== type),
+    });
+  });
+  search.sectors.forEach((sector) => {
+    filter(`sector-${sector}`, SECTOR_LABELS[sector], {
+      sectors: search.sectors.filter((other) => other !== sector),
+    });
+  });
+  search.activityTypes.forEach((activityType) => {
+    filter(`activity-${activityType}`, ACTIVITY_TYPE_LABELS[activityType], {
+      activityTypes: search.activityTypes.filter((other) => other !== activityType),
+    });
+  });
+  if (search.province) {
+    filter('province', PROVINCE_LABELS[search.province], { province: null });
+  }
+  return filters;
+}
+
+function countText(total: number, filtered: boolean) {
+  const noun = total === 1 ? 'entidad' : 'entidades';
+  if (!filtered) return `${String(total)} ${noun}`;
+  return `${String(total)} ${noun} ${total === 1 ? 'encontrada' : 'encontradas'}`;
+}
+
+function Results({
+  search,
+  result,
+  onChange,
+}: {
+  search: OrganizationSearch;
+  result: OrganizationSearchResponse;
+  onChange: (changes: Partial<OrganizationSearch>) => void;
+}) {
+  if (result.total === 0) {
+    return (
+      <Paper withBorder radius={14} className={styles.empty}>
+        <IconSearchOff size={40} stroke={1.8} aria-hidden className={styles.emptyIcon} />
+        <Text fw={700} fz={18}>
+          No encontramos entidades con esa búsqueda
+        </Text>
+        <Text c="dimmed" fz={15} maw={440} lh={1.5}>
+          Probá con otras palabras o sacá algún filtro. Igual registramos la búsqueda para saber qué
+          se está buscando y no se encuentra.
+        </Text>
+        <Button
+          variant="outline"
+          h={44}
+          onClick={() => {
+            onChange(NO_FILTERS);
+          }}
+        >
+          Ver todas las entidades
+        </Button>
+      </Paper>
+    );
+  }
+  const pages = Math.ceil(result.total / result.size);
+  return (
+    <>
+      <Stack component="ul" gap={16} className={styles.list}>
+        {result.items.map((organization) => (
+          <li key={organization.slug}>
+            <OrganizationResult organization={organization} />
+          </li>
+        ))}
+      </Stack>
+      {pages > 1 && (
+        <Group component="nav" aria-label="Páginas de resultados" justify="center" pt={8}>
+          <Pagination
+            total={pages}
+            value={search.page}
+            size="lg"
+            withEdges={false}
+            getItemProps={(page) => ({ 'aria-label': `Página ${String(page)}` })}
+            getControlProps={(control) =>
+              control === 'previous'
+                ? { 'aria-label': 'Página anterior' }
+                : control === 'next'
+                  ? { 'aria-label': 'Página siguiente' }
+                  : {}
+            }
+            onChange={(page) => {
+              onChange({ page });
+              window.scrollTo({ top: 0 });
+            }}
+          />
+        </Group>
+      )}
+    </>
+  );
+}
+
+/**
+ * The public directory (#15): full-text search, filters with their counts, order and pages, all of it kept in the
+ * address.
+ */
+export function OrganizationSearchPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const search = readSearch(searchParams);
+  const { data, isPending, isError, isPlaceholderData } = useOrganizationSearch(
+    toApiParams(search),
+  );
+  const filtered = hasFilters(search);
+  const active = activeFilters(search);
+
+  function update(changes: Partial<OrganizationSearch>) {
+    // Changing what is searched starts again from the first page.
+    setSearchParams(writeSearch({ ...search, page: 1, ...changes }));
+  }
+
+  return (
+    <>
+      <title>Entidades · CooperAR</title>
+      <section className={styles.hero}>
+        <Container {...SECTION} py={36}>
+          <Stack gap={16}>
+            <Stack gap={6}>
+              <Title order={1} fz={36} className={styles.title}>
+                Entidades
+              </Title>
+              <Text fz={17} className={styles.lead}>
+                Cooperativas de trabajo y empresas recuperadas de todo el país.
+              </Text>
+            </Stack>
+            <SearchBox
+              query={search.query}
+              onSearch={(query) => {
+                update({ query });
+              }}
+            />
+          </Stack>
+        </Container>
+      </section>
+      <Container {...SECTION} pt={28} pb={56}>
+        <div className={styles.layout}>
+          <SearchFilters search={search} facets={data} onChange={update} />
+          <Stack
+            component="section"
+            aria-labelledby="results-count"
+            gap={16}
+            className={styles.results}
+            aria-busy={isPlaceholderData}
+          >
+            <Group justify="space-between" gap={12}>
+              <Title order={2} fz={18} id="results-count" role="status">
+                {isPending ? 'Buscando entidades…' : data ? countText(data.total, filtered) : ''}
+              </Title>
+              <Group gap={12}>
+                <Select
+                  label="Ordenar por"
+                  data={SORT_OPTIONS}
+                  value={search.sort}
+                  allowDeselect={false}
+                  classNames={{
+                    root: styles.sort,
+                    label: styles.sortLabel,
+                    wrapper: styles.sortField,
+                  }}
+                  onChange={(value) => {
+                    if (value) update({ sort: value });
+                  }}
+                />
+                <Button
+                  component={Link}
+                  to="/map"
+                  variant="outline"
+                  h={44}
+                  px={16}
+                  leftSection={<IconMap size={18} stroke={2} aria-hidden />}
+                >
+                  Ver en el mapa
+                </Button>
+              </Group>
+            </Group>
+            {active.length > 0 && (
+              <Group gap={8}>
+                {active.map((filter) => (
+                  <Button
+                    key={filter.key}
+                    variant="default"
+                    radius="xl"
+                    size="compact-md"
+                    h={36}
+                    rightSection={<IconX size={16} stroke={2.4} aria-hidden />}
+                    aria-label={filter.aria}
+                    onClick={() => {
+                      update(filter.remove);
+                    }}
+                  >
+                    {filter.label}
+                  </Button>
+                ))}
+              </Group>
+            )}
+            {isError ? (
+              <Alert color="red" icon={<IconAlertCircle aria-hidden />} role="alert">
+                No pudimos cargar las entidades. Intentá de nuevo en unos minutos.
+              </Alert>
+            ) : (
+              data && <Results search={search} result={data} onChange={update} />
+            )}
+          </Stack>
+        </div>
+      </Container>
+    </>
+  );
+}

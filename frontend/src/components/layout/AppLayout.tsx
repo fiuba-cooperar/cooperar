@@ -76,6 +76,8 @@ const FOCUSED_ACTION_PROPS = {
   miw: 'max-content',
 } as const;
 
+const FLUSH_PAGES = new Set(['/', '/organizations']);
+
 export function AppLayout() {
   const { pathname } = useLocation();
   const isLoginPage = pathname === '/login';
@@ -89,8 +91,8 @@ export function AppLayout() {
       Ya tengo cuenta
     </Button>
   ) : null;
-  // The home page draws its own full-width bands, so it skips the centered container.
-  const isHomePage = pathname === '/';
+  // The home page and the directory draw their own full-width bands, so they skip the centered container.
+  const isFlushPage = FLUSH_PAGES.has(pathname);
   const [menuOpened, menu] = useDisclosure(false);
 
   return (
@@ -154,13 +156,13 @@ export function AppLayout() {
           styles.main,
           isLoginPage && styles.mainCentered,
           isRegisterPage && styles.mainForm,
-          isHomePage && styles.mainFlush,
+          isFlushPage && styles.mainFlush,
         ]
           .filter(Boolean)
           .join(' ')}
         tabIndex={-1}
       >
-        {isHomePage ? (
+        {isFlushPage ? (
           <Outlet />
         ) : (
           <Container size="lg">

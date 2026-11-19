@@ -131,6 +131,10 @@ public class Organization {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
+    /** Derived from the type, sectors, activity types and province; see {@link SearchKeywords}. */
+    @Column(name = "search_keywords", nullable = false)
+    private String searchKeywords;
+
     protected Organization() {}
 
     public Organization(String slug, OrganizationDetails details, UserAccount registeredBy, Instant createdAt) {
@@ -149,6 +153,11 @@ public class Organization {
         replaceSectorsAndActivityTypes(details.sectors(), details.activityTypes());
         this.address = details.address();
         this.registrantRole = trimmed(details.registrantRole());
+        refreshSearchKeywords();
+    }
+
+    private void refreshSearchKeywords() {
+        this.searchKeywords = SearchKeywords.of(type, sectors, activityTypes, address.province());
     }
 
     private void replaceSectorsAndActivityTypes(Set<Sector> sectors, Set<ActivityType> activityTypes) {
@@ -190,6 +199,7 @@ public class Organization {
         this.startYear = activity.startYear();
         this.workerCount = activity.workerCount();
         this.workerCountVisibility = activity.workerCountVisibility();
+        refreshSearchKeywords();
     }
 
     /** {@code location} is the point on the map, or null when the address could not be located. */
@@ -197,6 +207,7 @@ public class Organization {
         this.address = address;
         this.streetVisibility = streetVisibility;
         this.location = location;
+        refreshSearchKeywords();
     }
 
     public void updateContact(ProfileContact contact) {

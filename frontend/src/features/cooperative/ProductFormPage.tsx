@@ -26,8 +26,8 @@ import { LabelWithHint } from '@/components/form/LabelWithHint';
 import { NotFoundPage } from '@/features/errors/NotFoundPage';
 import { useProductCategories } from '@/features/catalog/api/useProductCategories';
 import { ProductSaveError, useProduct, useProductPhotos, useSaveProduct } from './api/useProducts';
-import { ProductPhotosField } from './components/ProductPhotosField';
-import { MAX_PHOTOS, photoProblem } from './components/photoRules';
+import { PhotosField } from './components/PhotosField';
+import { MAX_PHOTOS, PHOTOS_HINT, photoProblem } from './components/photoRules';
 import { COOPERATIVE_PRODUCTS_PATH, editProductPath } from './cooperativeSections';
 import { useActiveOrganization } from './useActiveOrganization';
 import styles from './ProductFormPage.module.css';
@@ -369,7 +369,12 @@ function ProductForm({
             />
             <CharCount value={form.description} max={DESCRIPTION_MAX} />
           </div>
-          <ProductPhotosField
+          <PhotosField
+            id="photos-button"
+            label="Fotos"
+            hint={PHOTOS_HINT}
+            max={MAX_PHOTOS}
+            firstIsCover
             photos={photos}
             files={files}
             error={photoError}

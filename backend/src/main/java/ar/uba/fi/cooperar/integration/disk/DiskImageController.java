@@ -1,6 +1,6 @@
 package ar.uba.fi.cooperar.integration.disk;
 
-import ar.uba.fi.cooperar.service.catalog.ImageFormat;
+import ar.uba.fi.cooperar.service.images.ImageFormat;
 import io.swagger.v3.oas.annotations.Hidden;
 import java.io.IOException;
 import java.nio.file.Path;

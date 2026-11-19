@@ -5,13 +5,13 @@ import ar.uba.fi.cooperar.domain.catalog.ProductPhoto;
 import ar.uba.fi.cooperar.domain.catalog.TooManyPhotosException;
 import ar.uba.fi.cooperar.repository.catalog.ProductRepository;
 import ar.uba.fi.cooperar.repository.organizations.OrganizationRepository;
+import ar.uba.fi.cooperar.service.images.ImageFormat;
+import ar.uba.fi.cooperar.service.images.Photos;
 import ar.uba.fi.cooperar.service.organizations.OrganizationNotFoundException;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,51 +19,35 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class ProductPhotoService {
 
-    /** Largest photo accepted, in bytes. */
-    public static final int MAX_BYTES = 5 * 1024 * 1024;
-
-    private static final Logger log = LoggerFactory.getLogger(ProductPhotoService.class);
-
     private final ProductRepository products;
     private final OrganizationRepository organizations;
-    private final ImageStorage storage;
+    private final Photos photos;
     private final Clock clock;
 
     public ProductPhotoService(
-            ProductRepository products, OrganizationRepository organizations, ImageStorage storage, Clock clock) {
+            ProductRepository products, OrganizationRepository organizations, Photos photos, Clock clock) {
         this.products = products;
         this.organizations = organizations;
-        this.storage = storage;
+        this.photos = photos;
         this.clock = clock;
     }
 
     /**
-     * Adds a photo. The file is checked by its content: a JPEG, PNG or WebP of at most {@value #MAX_BYTES} bytes.
+     * Adds a photo. The file is checked by its content: a JPEG, PNG or WebP of at most {@value Photos#MAX_BYTES} bytes.
      * Not found also when the account does not manage the organization, so that is not revealed.
      */
     @Transactional
     public Product add(UUID organizationId, UUID accountId, UUID productId, byte[] content) {
         Product product = product(organizationId, accountId, productId);
-        if (content.length == 0) {
-            throw new InvalidImageException("The file is empty");
-        }
-        if (content.length > MAX_BYTES) {
-            throw new InvalidImageException("The photo is bigger than 5 MB");
-        }
-        ImageFormat format = ImageFormat.detect(content)
-                .orElseThrow(() -> new InvalidImageException("The photo must be a JPEG, PNG or WebP image"));
+        ImageFormat format = Photos.check(content);
         // Checked before storing, so a full product does not leave an orphan image behind.
         if (product.getPhotos().size() >= Product.MAX_PHOTOS) {
             throw new TooManyPhotosException(Product.MAX_PHOTOS);
         }
-        ImageStorage.StoredImage stored = storage.store(content, format);
-        try {
+        photos.store(content, format, stored -> {
             product.addPhoto(stored.ref(), stored.url(), Instant.now(clock));
             products.flush();
-        } catch (RuntimeException exception) {
-            deleteQuietly(stored.ref());
-            throw exception;
-        }
+        });
         return product;
     }
 
@@ -73,7 +57,7 @@ public class ProductPhotoService {
         ProductPhoto photo =
                 product.removePhoto(photoId, Instant.now(clock)).orElseThrow(ProductPhotoNotFoundException::new);
         products.flush();
-        deleteQuietly(photo.getStorageRef());
+        photos.deleteQuietly(photo.getStorageRef());
         return product;
     }
 
@@ -91,14 +75,5 @@ public class ProductPhotoService {
                 organizations.findManagedBy(organizationId, accountId).orElseThrow(OrganizationNotFoundException::new);
         return products.findByIdAndOrganizationId(productId, organization.getId())
                 .orElseThrow(ProductNotFoundException::new);
-    }
-
-    /** A photo left in the storage is harmless, and failing the request over it would hide what the user did. */
-    private void deleteQuietly(String ref) {
-        try {
-            storage.delete(ref);
-        } catch (RuntimeException exception) {
-            log.warn("Could not delete image {} from the storage: {}", ref, exception.getMessage());
-        }
     }
 }

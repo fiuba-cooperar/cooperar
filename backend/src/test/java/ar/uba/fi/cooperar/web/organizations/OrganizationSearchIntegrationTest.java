@@ -118,7 +118,8 @@ class OrganizationSearchIntegrationTest {
                         "province",
                         "district",
                         "locality",
-                        "description");
+                        "description",
+                        "logoUrl");
         assertThat(body)
                 .doesNotContain("30123456781")
                 .doesNotContain("Rivadavia")
@@ -140,6 +141,21 @@ class OrganizationSearchIntegrationTest {
         assertThat(names(SEARCH + "?q=empresa recuperada")).containsExactly("Gráfica Norte", "Zapatería del Oeste");
         assertThat(names(SEARCH + "?q=cordoba")).containsExactly("Gráfica Norte");
         assertThat(names(SEARCH + "?q=san justo")).containsExactly("Zapatería del Oeste");
+    }
+
+    @Test
+    void findsAPharmaceuticalOrganizationByItsSector() {
+        organizations.saveAndFlush(organization(
+                "Laboratorio del Sur",
+                OrganizationType.ERT,
+                "30-71234567-1",
+                Set.of(Sector.PHARMACEUTICAL),
+                Set.of(ActivityType.PRODUCT),
+                new Address(Province.BUENOS_AIRES, "Lanús", "Lanús Oeste", "Hipólito Yrigoyen 1", null),
+                "Medicamentos genéricos"));
+
+        assertThat(names(SEARCH + "?q=farmaceutica")).containsExactly("Laboratorio del Sur");
+        assertThat(names(SEARCH + "?sector=PHARMACEUTICAL")).containsExactly("Laboratorio del Sur");
     }
 
     @Test
@@ -188,7 +204,8 @@ class OrganizationSearchIntegrationTest {
                  "types": [{"type": "COOPERATIVE", "count": 0}, {"type": "ERT", "count": 1}],
                  "sectors": [{"sector": "FOOD", "count": 0}, {"sector": "TEXTILE", "count": 1},
                              {"sector": "METALWORKING", "count": 0}, {"sector": "PRINTING", "count": 1},
-                             {"sector": "SERVICES", "count": 1}, {"sector": "OTHER", "count": 0}],
+                             {"sector": "SERVICES", "count": 1}, {"sector": "PHARMACEUTICAL", "count": 0},
+                             {"sector": "OTHER", "count": 0}],
                  "activityTypes": [{"activityType": "WORK", "count": 1}, {"activityType": "SERVICE", "count": 0},
                                    {"activityType": "PRODUCT", "count": 1}]}
                 """);

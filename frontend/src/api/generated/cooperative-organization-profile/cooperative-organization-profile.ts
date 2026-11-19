@@ -22,11 +22,15 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AddProfilePhotoBody,
   CooperativeOrganizationProfileResponse,
+  GalleryOrderRequest,
   ProfileActivityRequest,
   ProfileContactRequest,
   ProfileIdentificationRequest,
   ProfileLocationRequest,
+  ReplaceProfileCoverBody,
+  ReplaceProfileLogoBody,
 } from '../model';
 
 import { apiFetch } from '../../apiFetch';
@@ -429,6 +433,201 @@ export const useUpdateProfileContact = <TError = unknown, TContext = unknown>(
 > => {
   return useMutation(getUpdateProfileContactMutationOptions(options), queryClient);
 };
+export type removeProfileCoverResponse200 = {
+  data: CooperativeOrganizationProfileResponse;
+  status: 200;
+};
+
+export type removeProfileCoverResponseSuccess = removeProfileCoverResponse200 & {
+  headers: Headers;
+};
+export type removeProfileCoverResponse = removeProfileCoverResponseSuccess;
+
+export const getRemoveProfileCoverUrl = (id: string) => {
+  return `/api/cooperative/organizations/${id}/profile/cover`;
+};
+
+/**
+ * @summary Remove the cover photo
+ */
+export const removeProfileCover = async (
+  id: string,
+  options?: Parameters<typeof apiFetch>[1],
+): Promise<removeProfileCoverResponse> => {
+  return apiFetch<removeProfileCoverResponse>(getRemoveProfileCoverUrl(id), {
+    ...options,
+    method: 'DELETE',
+  });
+};
+
+export const getRemoveProfileCoverMutationKey = () => ['removeProfileCover'] as const;
+
+export const getRemoveProfileCoverMutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof removeProfileCover>>,
+    TError,
+    RemoveProfileCoverMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof apiFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof removeProfileCover>>,
+  TError,
+  RemoveProfileCoverMutationVariables,
+  TContext
+> => {
+  const mutationKey = getRemoveProfileCoverMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof removeProfileCover>>,
+    RemoveProfileCoverMutationVariables
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return removeProfileCover(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RemoveProfileCoverMutationResult = NonNullable<
+  Awaited<ReturnType<typeof removeProfileCover>>
+>;
+
+export type RemoveProfileCoverMutationError = unknown;
+export type RemoveProfileCoverMutationVariables = { id: string };
+
+/**
+ * @summary Remove the cover photo
+ */
+export const useRemoveProfileCover = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof removeProfileCover>>,
+      TError,
+      RemoveProfileCoverMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof removeProfileCover>>,
+  TError,
+  RemoveProfileCoverMutationVariables,
+  TContext
+> => {
+  return useMutation(getRemoveProfileCoverMutationOptions(options), queryClient);
+};
+export type replaceProfileCoverResponse200 = {
+  data: CooperativeOrganizationProfileResponse;
+  status: 200;
+};
+
+export type replaceProfileCoverResponseSuccess = replaceProfileCoverResponse200 & {
+  headers: Headers;
+};
+export type replaceProfileCoverResponse = replaceProfileCoverResponseSuccess;
+
+export const getReplaceProfileCoverUrl = (id: string) => {
+  return `/api/cooperative/organizations/${id}/profile/cover`;
+};
+
+/**
+ * @summary Set the cover photo, replacing the one it had
+ */
+export const replaceProfileCover = async (
+  id: string,
+  replaceProfileCoverBody?: ReplaceProfileCoverBody,
+  options?: Parameters<typeof apiFetch>[1],
+): Promise<replaceProfileCoverResponse> => {
+  const formData = new FormData();
+  if (replaceProfileCoverBody?.file !== undefined) {
+    formData.append(`file`, replaceProfileCoverBody.file);
+  }
+
+  return apiFetch<replaceProfileCoverResponse>(getReplaceProfileCoverUrl(id), {
+    ...options,
+    method: 'PUT',
+    body: formData,
+  });
+};
+
+export const getReplaceProfileCoverMutationKey = () => ['replaceProfileCover'] as const;
+
+export const getReplaceProfileCoverMutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof replaceProfileCover>>,
+    TError,
+    ReplaceProfileCoverMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof apiFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof replaceProfileCover>>,
+  TError,
+  ReplaceProfileCoverMutationVariables,
+  TContext
+> => {
+  const mutationKey = getReplaceProfileCoverMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof replaceProfileCover>>,
+    ReplaceProfileCoverMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return replaceProfileCover(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ReplaceProfileCoverMutationResult = NonNullable<
+  Awaited<ReturnType<typeof replaceProfileCover>>
+>;
+export type ReplaceProfileCoverMutationBody = ReplaceProfileCoverBody | undefined;
+export type ReplaceProfileCoverMutationError = unknown;
+export type ReplaceProfileCoverMutationVariables = { id: string; data?: ReplaceProfileCoverBody };
+
+/**
+ * @summary Set the cover photo, replacing the one it had
+ */
+export const useReplaceProfileCover = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof replaceProfileCover>>,
+      TError,
+      ReplaceProfileCoverMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof replaceProfileCover>>,
+  TError,
+  ReplaceProfileCoverMutationVariables,
+  TContext
+> => {
+  return useMutation(getReplaceProfileCoverMutationOptions(options), queryClient);
+};
 export type updateProfileIdentificationResponse200 = {
   data: CooperativeOrganizationProfileResponse;
   status: 200;
@@ -665,4 +864,510 @@ export const useUpdateProfileLocation = <TError = unknown, TContext = unknown>(
   TContext
 > => {
   return useMutation(getUpdateProfileLocationMutationOptions(options), queryClient);
+};
+export type removeProfileLogoResponse200 = {
+  data: CooperativeOrganizationProfileResponse;
+  status: 200;
+};
+
+export type removeProfileLogoResponseSuccess = removeProfileLogoResponse200 & {
+  headers: Headers;
+};
+export type removeProfileLogoResponse = removeProfileLogoResponseSuccess;
+
+export const getRemoveProfileLogoUrl = (id: string) => {
+  return `/api/cooperative/organizations/${id}/profile/logo`;
+};
+
+/**
+ * @summary Remove the logo
+ */
+export const removeProfileLogo = async (
+  id: string,
+  options?: Parameters<typeof apiFetch>[1],
+): Promise<removeProfileLogoResponse> => {
+  return apiFetch<removeProfileLogoResponse>(getRemoveProfileLogoUrl(id), {
+    ...options,
+    method: 'DELETE',
+  });
+};
+
+export const getRemoveProfileLogoMutationKey = () => ['removeProfileLogo'] as const;
+
+export const getRemoveProfileLogoMutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof removeProfileLogo>>,
+    TError,
+    RemoveProfileLogoMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof apiFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof removeProfileLogo>>,
+  TError,
+  RemoveProfileLogoMutationVariables,
+  TContext
+> => {
+  const mutationKey = getRemoveProfileLogoMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof removeProfileLogo>>,
+    RemoveProfileLogoMutationVariables
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return removeProfileLogo(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RemoveProfileLogoMutationResult = NonNullable<
+  Awaited<ReturnType<typeof removeProfileLogo>>
+>;
+
+export type RemoveProfileLogoMutationError = unknown;
+export type RemoveProfileLogoMutationVariables = { id: string };
+
+/**
+ * @summary Remove the logo
+ */
+export const useRemoveProfileLogo = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof removeProfileLogo>>,
+      TError,
+      RemoveProfileLogoMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof removeProfileLogo>>,
+  TError,
+  RemoveProfileLogoMutationVariables,
+  TContext
+> => {
+  return useMutation(getRemoveProfileLogoMutationOptions(options), queryClient);
+};
+export type replaceProfileLogoResponse200 = {
+  data: CooperativeOrganizationProfileResponse;
+  status: 200;
+};
+
+export type replaceProfileLogoResponseSuccess = replaceProfileLogoResponse200 & {
+  headers: Headers;
+};
+export type replaceProfileLogoResponse = replaceProfileLogoResponseSuccess;
+
+export const getReplaceProfileLogoUrl = (id: string) => {
+  return `/api/cooperative/organizations/${id}/profile/logo`;
+};
+
+/**
+ * @summary Set the logo, replacing the one it had
+ */
+export const replaceProfileLogo = async (
+  id: string,
+  replaceProfileLogoBody?: ReplaceProfileLogoBody,
+  options?: Parameters<typeof apiFetch>[1],
+): Promise<replaceProfileLogoResponse> => {
+  const formData = new FormData();
+  if (replaceProfileLogoBody?.file !== undefined) {
+    formData.append(`file`, replaceProfileLogoBody.file);
+  }
+
+  return apiFetch<replaceProfileLogoResponse>(getReplaceProfileLogoUrl(id), {
+    ...options,
+    method: 'PUT',
+    body: formData,
+  });
+};
+
+export const getReplaceProfileLogoMutationKey = () => ['replaceProfileLogo'] as const;
+
+export const getReplaceProfileLogoMutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof replaceProfileLogo>>,
+    TError,
+    ReplaceProfileLogoMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof apiFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof replaceProfileLogo>>,
+  TError,
+  ReplaceProfileLogoMutationVariables,
+  TContext
+> => {
+  const mutationKey = getReplaceProfileLogoMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof replaceProfileLogo>>,
+    ReplaceProfileLogoMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return replaceProfileLogo(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ReplaceProfileLogoMutationResult = NonNullable<
+  Awaited<ReturnType<typeof replaceProfileLogo>>
+>;
+export type ReplaceProfileLogoMutationBody = ReplaceProfileLogoBody | undefined;
+export type ReplaceProfileLogoMutationError = unknown;
+export type ReplaceProfileLogoMutationVariables = { id: string; data?: ReplaceProfileLogoBody };
+
+/**
+ * @summary Set the logo, replacing the one it had
+ */
+export const useReplaceProfileLogo = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof replaceProfileLogo>>,
+      TError,
+      ReplaceProfileLogoMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof replaceProfileLogo>>,
+  TError,
+  ReplaceProfileLogoMutationVariables,
+  TContext
+> => {
+  return useMutation(getReplaceProfileLogoMutationOptions(options), queryClient);
+};
+export type addProfilePhotoResponse200 = {
+  data: CooperativeOrganizationProfileResponse;
+  status: 200;
+};
+
+export type addProfilePhotoResponseSuccess = addProfilePhotoResponse200 & {
+  headers: Headers;
+};
+export type addProfilePhotoResponse = addProfilePhotoResponseSuccess;
+
+export const getAddProfilePhotoUrl = (id: string) => {
+  return `/api/cooperative/organizations/${id}/profile/photos`;
+};
+
+/**
+ * Answers 409 when the gallery already has 10 photos.
+ * @summary Add a photo at the end of the gallery
+ */
+export const addProfilePhoto = async (
+  id: string,
+  addProfilePhotoBody?: AddProfilePhotoBody,
+  options?: Parameters<typeof apiFetch>[1],
+): Promise<addProfilePhotoResponse> => {
+  const formData = new FormData();
+  if (addProfilePhotoBody?.file !== undefined) {
+    formData.append(`file`, addProfilePhotoBody.file);
+  }
+
+  return apiFetch<addProfilePhotoResponse>(getAddProfilePhotoUrl(id), {
+    ...options,
+    method: 'POST',
+    body: formData,
+  });
+};
+
+export const getAddProfilePhotoMutationKey = () => ['addProfilePhoto'] as const;
+
+export const getAddProfilePhotoMutationOptions = <TError = unknown, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof addProfilePhoto>>,
+    TError,
+    AddProfilePhotoMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof apiFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof addProfilePhoto>>,
+  TError,
+  AddProfilePhotoMutationVariables,
+  TContext
+> => {
+  const mutationKey = getAddProfilePhotoMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof addProfilePhoto>>,
+    AddProfilePhotoMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return addProfilePhoto(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AddProfilePhotoMutationResult = NonNullable<
+  Awaited<ReturnType<typeof addProfilePhoto>>
+>;
+export type AddProfilePhotoMutationBody = AddProfilePhotoBody | undefined;
+export type AddProfilePhotoMutationError = unknown;
+export type AddProfilePhotoMutationVariables = { id: string; data?: AddProfilePhotoBody };
+
+/**
+ * @summary Add a photo at the end of the gallery
+ */
+export const useAddProfilePhoto = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof addProfilePhoto>>,
+      TError,
+      AddProfilePhotoMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof addProfilePhoto>>,
+  TError,
+  AddProfilePhotoMutationVariables,
+  TContext
+> => {
+  return useMutation(getAddProfilePhotoMutationOptions(options), queryClient);
+};
+export type reorderProfilePhotosResponse200 = {
+  data: CooperativeOrganizationProfileResponse;
+  status: 200;
+};
+
+export type reorderProfilePhotosResponseSuccess = reorderProfilePhotosResponse200 & {
+  headers: Headers;
+};
+export type reorderProfilePhotosResponse = reorderProfilePhotosResponseSuccess;
+
+export const getReorderProfilePhotosUrl = (id: string) => {
+  return `/api/cooperative/organizations/${id}/profile/photos/order`;
+};
+
+/**
+ * The list must have every photo of the gallery exactly once. Answers 400 otherwise.
+ * @summary Set the order of the gallery
+ */
+export const reorderProfilePhotos = async (
+  id: string,
+  galleryOrderRequest: GalleryOrderRequest,
+  options?: Parameters<typeof apiFetch>[1],
+): Promise<reorderProfilePhotosResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return apiFetch<reorderProfilePhotosResponse>(getReorderProfilePhotosUrl(id), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(galleryOrderRequest),
+  });
+};
+
+export const getReorderProfilePhotosMutationKey = () => ['reorderProfilePhotos'] as const;
+
+export const getReorderProfilePhotosMutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof reorderProfilePhotos>>,
+    TError,
+    ReorderProfilePhotosMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof apiFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof reorderProfilePhotos>>,
+  TError,
+  ReorderProfilePhotosMutationVariables,
+  TContext
+> => {
+  const mutationKey = getReorderProfilePhotosMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof reorderProfilePhotos>>,
+    ReorderProfilePhotosMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return reorderProfilePhotos(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ReorderProfilePhotosMutationResult = NonNullable<
+  Awaited<ReturnType<typeof reorderProfilePhotos>>
+>;
+export type ReorderProfilePhotosMutationBody = GalleryOrderRequest;
+export type ReorderProfilePhotosMutationError = unknown;
+export type ReorderProfilePhotosMutationVariables = { id: string; data: GalleryOrderRequest };
+
+/**
+ * @summary Set the order of the gallery
+ */
+export const useReorderProfilePhotos = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof reorderProfilePhotos>>,
+      TError,
+      ReorderProfilePhotosMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof reorderProfilePhotos>>,
+  TError,
+  ReorderProfilePhotosMutationVariables,
+  TContext
+> => {
+  return useMutation(getReorderProfilePhotosMutationOptions(options), queryClient);
+};
+export type removeProfilePhotoResponse200 = {
+  data: CooperativeOrganizationProfileResponse;
+  status: 200;
+};
+
+export type removeProfilePhotoResponseSuccess = removeProfilePhotoResponse200 & {
+  headers: Headers;
+};
+export type removeProfilePhotoResponse = removeProfilePhotoResponseSuccess;
+
+export const getRemoveProfilePhotoUrl = (id: string, photoId: string) => {
+  return `/api/cooperative/organizations/${id}/profile/photos/${photoId}`;
+};
+
+/**
+ * @summary Remove a photo of the gallery
+ */
+export const removeProfilePhoto = async (
+  id: string,
+  photoId: string,
+  options?: Parameters<typeof apiFetch>[1],
+): Promise<removeProfilePhotoResponse> => {
+  return apiFetch<removeProfilePhotoResponse>(getRemoveProfilePhotoUrl(id, photoId), {
+    ...options,
+    method: 'DELETE',
+  });
+};
+
+export const getRemoveProfilePhotoMutationKey = () => ['removeProfilePhoto'] as const;
+
+export const getRemoveProfilePhotoMutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof removeProfilePhoto>>,
+    TError,
+    RemoveProfilePhotoMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof apiFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof removeProfilePhoto>>,
+  TError,
+  RemoveProfilePhotoMutationVariables,
+  TContext
+> => {
+  const mutationKey = getRemoveProfilePhotoMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof removeProfilePhoto>>,
+    RemoveProfilePhotoMutationVariables
+  > = (props) => {
+    const { id, photoId } = props ?? {};
+
+    return removeProfilePhoto(id, photoId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RemoveProfilePhotoMutationResult = NonNullable<
+  Awaited<ReturnType<typeof removeProfilePhoto>>
+>;
+
+export type RemoveProfilePhotoMutationError = unknown;
+export type RemoveProfilePhotoMutationVariables = { id: string; photoId: string };
+
+/**
+ * @summary Remove a photo of the gallery
+ */
+export const useRemoveProfilePhoto = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof removeProfilePhoto>>,
+      TError,
+      RemoveProfilePhotoMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof removeProfilePhoto>>,
+  TError,
+  RemoveProfilePhotoMutationVariables,
+  TContext
+> => {
+  return useMutation(getRemoveProfilePhotoMutationOptions(options), queryClient);
 };

@@ -1,4 +1,4 @@
-package ar.uba.fi.cooperar.service.catalog;
+package ar.uba.fi.cooperar.service.images;
 
 /** The image storage did not take the image. */
 public class ImageStorageException extends RuntimeException {

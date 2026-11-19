@@ -1,8 +1,8 @@
 package ar.uba.fi.cooperar.integration.cloudinary;
 
-import ar.uba.fi.cooperar.service.catalog.ImageFormat;
-import ar.uba.fi.cooperar.service.catalog.ImageStorage;
-import ar.uba.fi.cooperar.service.catalog.ImageStorageException;
+import ar.uba.fi.cooperar.service.images.ImageFormat;
+import ar.uba.fi.cooperar.service.images.ImageStorage;
+import ar.uba.fi.cooperar.service.images.ImageStorageException;
 import java.net.http.HttpClient;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;

@@ -18,7 +18,7 @@ spring:
       enabled: true
   servlet:
     multipart:
-      # A photo is at most 5 MB (ProductPhotoService.MAX_BYTES); the request adds a little on top.
+      # A photo is at most 5 MB (Photos.MAX_BYTES); the request adds a little on top.
       max-file-size: 5MB
       max-request-size: 6MB
   # Any SMTP server works (the Faculty's or a self-hosted one). MAIL_HOST is mandatory outside dev.

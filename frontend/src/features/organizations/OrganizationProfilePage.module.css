@@ -27,7 +27,10 @@
 }
 
 .cover {
+  display: block;
+  width: 100%;
   height: clamp(120px, 25vw, 240px);
+  object-fit: cover;
   background: var(--mantine-color-default-border);
 }
 
@@ -36,6 +39,22 @@
   width: 72px;
   height: 72px;
   border-radius: 50%;
+  object-fit: cover;
+  background: var(--mantine-color-default-border);
+}
+
+.gallery {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.galleryPhoto {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--mantine-radius-md);
+  object-fit: cover;
   background: var(--mantine-color-default-border);
 }
 

@@ -2,8 +2,8 @@ package ar.uba.fi.cooperar.integration.disk;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import ar.uba.fi.cooperar.service.catalog.ImageFormat;
-import ar.uba.fi.cooperar.service.catalog.ImageStorage.StoredImage;
+import ar.uba.fi.cooperar.service.images.ImageFormat;
+import ar.uba.fi.cooperar.service.images.ImageStorage.StoredImage;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.junit.jupiter.api.Test;

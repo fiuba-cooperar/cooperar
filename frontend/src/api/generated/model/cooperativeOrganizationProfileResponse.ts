@@ -10,6 +10,7 @@ import type { ProfileActivityResponse } from './profileActivityResponse';
 import type { ProfileContactResponse } from './profileContactResponse';
 import type { ProfileIdentificationResponse } from './profileIdentificationResponse';
 import type { ProfileLocationResponse } from './profileLocationResponse';
+import type { ProfilePhotosResponse } from './profilePhotosResponse';
 
 export interface CooperativeOrganizationProfileResponse {
   activity: ProfileActivityResponse;
@@ -19,6 +20,7 @@ export interface CooperativeOrganizationProfileResponse {
   id: string;
   identification: ProfileIdentificationResponse;
   location: ProfileLocationResponse;
+  photos: ProfilePhotosResponse;
   slug: string;
   /** Validated by the observatory; always public */
   type: OrganizationType;

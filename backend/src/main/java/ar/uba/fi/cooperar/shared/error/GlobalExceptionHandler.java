@@ -2,11 +2,10 @@ package ar.uba.fi.cooperar.shared.error;
 
 import ar.uba.fi.cooperar.domain.catalog.TooManyPhotosException;
 import ar.uba.fi.cooperar.domain.organizations.ChangesNotRequestedException;
+import ar.uba.fi.cooperar.domain.organizations.GalleryFullException;
 import ar.uba.fi.cooperar.domain.organizations.InvalidCuitException;
 import ar.uba.fi.cooperar.domain.organizations.InvalidStartYearException;
 import ar.uba.fi.cooperar.domain.organizations.RegistrationNotAwaitingReviewException;
-import ar.uba.fi.cooperar.service.catalog.ImageStorageException;
-import ar.uba.fi.cooperar.service.catalog.InvalidImageException;
 import ar.uba.fi.cooperar.service.catalog.InvalidPhotoOrderException;
 import ar.uba.fi.cooperar.service.catalog.InvalidProductCategoryException;
 import ar.uba.fi.cooperar.service.catalog.ProductCategoryInUseException;
@@ -14,8 +13,12 @@ import ar.uba.fi.cooperar.service.catalog.ProductCategoryNameTakenException;
 import ar.uba.fi.cooperar.service.catalog.ProductCategoryNotFoundException;
 import ar.uba.fi.cooperar.service.catalog.ProductNotFoundException;
 import ar.uba.fi.cooperar.service.catalog.ProductPhotoNotFoundException;
+import ar.uba.fi.cooperar.service.images.ImageStorageException;
+import ar.uba.fi.cooperar.service.images.InvalidImageException;
 import ar.uba.fi.cooperar.service.organizations.CuitAlreadyRegisteredException;
+import ar.uba.fi.cooperar.service.organizations.InvalidGalleryOrderException;
 import ar.uba.fi.cooperar.service.organizations.OrganizationNotFoundException;
+import ar.uba.fi.cooperar.service.organizations.ProfilePhotoNotFoundException;
 import ar.uba.fi.cooperar.service.organizations.RegistrationRequestNotFoundException;
 import ar.uba.fi.cooperar.service.user.AccountNotFoundException;
 import ar.uba.fi.cooperar.service.user.EmailAlreadyVerifiedException;
@@ -57,6 +60,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         InvalidProductCategoryException.class,
         InvalidImageException.class,
         InvalidPhotoOrderException.class,
+        InvalidGalleryOrderException.class,
         PasswordTooLongException.class,
         InvalidVerificationTokenException.class
     })
@@ -69,7 +73,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         RegistrationRequestNotFoundException.class,
         ProductNotFoundException.class,
         ProductCategoryNotFoundException.class,
-        ProductPhotoNotFoundException.class
+        ProductPhotoNotFoundException.class,
+        ProfilePhotoNotFoundException.class
     })
     public ProblemDetail handleNotFound(RuntimeException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());
@@ -81,7 +86,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         EmailAlreadyVerifiedException.class,
         ProductCategoryNameTakenException.class,
         ProductCategoryInUseException.class,
-        TooManyPhotosException.class
+        TooManyPhotosException.class,
+        GalleryFullException.class
     })
     public ProblemDetail handleStateConflict(RuntimeException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());

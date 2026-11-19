@@ -25,6 +25,17 @@
   height: 140px;
 }
 
+/* A photo fills its frame, cropped to it, instead of the placeholder text. */
+.image {
+  display: block;
+  width: 100%;
+  object-fit: cover;
+}
+
+.logo.image {
+  width: 96px;
+}
+
 .photo {
   height: 110px;
 }

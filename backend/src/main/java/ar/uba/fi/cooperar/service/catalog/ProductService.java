@@ -8,6 +8,7 @@ import ar.uba.fi.cooperar.domain.organizations.Organization;
 import ar.uba.fi.cooperar.repository.catalog.ProductCategoryRepository;
 import ar.uba.fi.cooperar.repository.catalog.ProductRepository;
 import ar.uba.fi.cooperar.repository.organizations.OrganizationRepository;
+import ar.uba.fi.cooperar.service.images.ImageStorage;
 import ar.uba.fi.cooperar.service.organizations.OrganizationNotFoundException;
 import java.time.Clock;
 import java.time.Instant;

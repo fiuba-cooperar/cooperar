@@ -21,13 +21,11 @@ interface Step {
   done: boolean;
 }
 
-/** Whether every section of the profile that can be filled in today is complete. */
+/** Whether every section of the profile is complete. */
 function useProfileComplete(organizationId: string): boolean {
   const { data: profile } = useManagedProfile(organizationId);
   if (!profile) return false;
-  return PROFILE_SECTIONS.filter(({ key }) => key !== 'photos').every(
-    ({ key }) => sectionStatus(profile, key).complete,
-  );
+  return PROFILE_SECTIONS.every(({ key }) => sectionStatus(profile, key).complete);
 }
 
 function Steps({ organization }: { organization: OrganizationSummary }) {

@@ -1,6 +1,8 @@
 package ar.uba.fi.cooperar.domain.organizations;
 
 import ar.uba.fi.cooperar.domain.user.UserAccount;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
@@ -12,13 +14,22 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Point;
 
@@ -30,6 +41,9 @@ import org.locationtech.jts.geom.Point;
 @Entity
 @Table(name = "organizations")
 public class Organization {
+
+    /** Photos in the gallery, besides the logo and the cover. */
+    public static final int MAX_PHOTOS = 10;
 
     @Id
     private UUID id;
@@ -119,6 +133,21 @@ public class Organization {
     @Enumerated(EnumType.STRING)
     @Column(name = "response_time")
     private ResponseTime responseTime;
+
+    @Embedded
+    @AttributeOverride(name = "storageRef", column = @Column(name = "logo_storage_ref"))
+    @AttributeOverride(name = "url", column = @Column(name = "logo_url"))
+    private ProfileImage logo;
+
+    @Embedded
+    @AttributeOverride(name = "storageRef", column = @Column(name = "cover_storage_ref"))
+    @AttributeOverride(name = "url", column = @Column(name = "cover_url"))
+    private ProfileImage cover;
+
+    @OneToMany(mappedBy = "organization", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OrderBy("position")
+    @Fetch(FetchMode.SUBSELECT)
+    private List<OrganizationPhoto> photos = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "registered_by")
@@ -221,6 +250,52 @@ public class Organization {
         this.socialMedia = optional(contact.socialMedia());
         this.openingHours = optional(contact.openingHours());
         this.responseTime = contact.responseTime();
+    }
+
+    /** The logo it had, now replaced, so its image can be deleted; null when there was none. */
+    public ProfileImage replaceLogo(ProfileImage logo) {
+        ProfileImage previous = this.logo;
+        this.logo = logo;
+        return previous;
+    }
+
+    /** The cover photo it had, now replaced, so its image can be deleted; null when there was none. */
+    public ProfileImage replaceCover(ProfileImage cover) {
+        ProfileImage previous = this.cover;
+        this.cover = cover;
+        return previous;
+    }
+
+    /** Adds the photo at the end of the gallery. */
+    public OrganizationPhoto addPhoto(String storageRef, String url, Instant now) {
+        if (photos.size() >= MAX_PHOTOS) {
+            throw new GalleryFullException(MAX_PHOTOS);
+        }
+        int position =
+                photos.stream().mapToInt(OrganizationPhoto::getPosition).max().orElse(-1) + 1;
+        OrganizationPhoto photo = new OrganizationPhoto(this, storageRef, url, position, now);
+        photos.add(photo);
+        return photo;
+    }
+
+    /** Orders the gallery as listed; false when the list is not exactly the gallery's photos. */
+    public boolean reorderPhotos(List<UUID> photoIds) {
+        Set<UUID> current = photos.stream().map(OrganizationPhoto::getId).collect(Collectors.toSet());
+        if (photoIds.size() != current.size() || !current.equals(new HashSet<>(photoIds))) {
+            return false;
+        }
+        photos.forEach(photo -> photo.moveTo(photoIds.indexOf(photo.getId())));
+        photos.sort(Comparator.comparingInt(OrganizationPhoto::getPosition));
+        return true;
+    }
+
+    /** The removed photo, or empty when the gallery has no such photo. */
+    public Optional<OrganizationPhoto> removePhoto(UUID photoId) {
+        Optional<OrganizationPhoto> photo = photos.stream()
+                .filter(candidate -> candidate.getId().equals(photoId))
+                .findFirst();
+        photo.ifPresent(photos::remove);
+        return photo;
     }
 
     public UUID getId() {
@@ -345,6 +420,21 @@ public class Organization {
 
     public ResponseTime getResponseTime() {
         return responseTime;
+    }
+
+    /** Missing until the organization uploads one. */
+    public ProfileImage getLogo() {
+        return logo;
+    }
+
+    /** Missing until the organization uploads one. */
+    public ProfileImage getCover() {
+        return cover;
+    }
+
+    /** The gallery, in the order the organization chose. */
+    public List<OrganizationPhoto> getPhotos() {
+        return List.copyOf(photos);
     }
 
     /** The account that sent the registration request; missing if that account was deleted. */

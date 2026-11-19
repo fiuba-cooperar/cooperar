@@ -8,9 +8,9 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
-import ar.uba.fi.cooperar.service.catalog.ImageFormat;
-import ar.uba.fi.cooperar.service.catalog.ImageStorage.StoredImage;
-import ar.uba.fi.cooperar.service.catalog.ImageStorageException;
+import ar.uba.fi.cooperar.service.images.ImageFormat;
+import ar.uba.fi.cooperar.service.images.ImageStorage.StoredImage;
+import ar.uba.fi.cooperar.service.images.ImageStorageException;
 import java.net.URI;
 import java.time.Clock;
 import java.time.Duration;

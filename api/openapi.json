@@ -698,6 +698,115 @@
         "tags" : [ "auth" ]
       }
     },
+    "/api/organizations" : {
+      "get" : {
+        "description" : "Words match in Spanish, ignoring accents and as prefixes of a word with the same stem. Every search that narrows the directory is logged, without anything that identifies the visitor.",
+        "operationId" : "searchOrganizations",
+        "parameters" : [ {
+          "description" : "Words to look for in the name, what it does, where it is and its description",
+          "in" : "query",
+          "name" : "q",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "description" : "Words to look for in the name, what it does, where it is and its description",
+            "maxLength" : 200,
+            "minLength" : 0
+          }
+        }, {
+          "description" : "Any of these types",
+          "in" : "query",
+          "name" : "type",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "description" : "Any of these types",
+            "items" : {
+              "$ref" : "#/components/schemas/OrganizationType"
+            },
+            "uniqueItems" : true
+          }
+        }, {
+          "description" : "Any of these sectors",
+          "in" : "query",
+          "name" : "sector",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "description" : "Any of these sectors",
+            "items" : {
+              "$ref" : "#/components/schemas/Sector"
+            },
+            "uniqueItems" : true
+          }
+        }, {
+          "description" : "Any of these activity types",
+          "in" : "query",
+          "name" : "activityType",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "description" : "Any of these activity types",
+            "items" : {
+              "$ref" : "#/components/schemas/ActivityType"
+            },
+            "uniqueItems" : true
+          }
+        }, {
+          "in" : "query",
+          "name" : "province",
+          "required" : false,
+          "schema" : {
+            "$ref" : "#/components/schemas/Province"
+          }
+        }, {
+          "description" : "RELEVANCE by default",
+          "in" : "query",
+          "name" : "sort",
+          "required" : false,
+          "schema" : {
+            "$ref" : "#/components/schemas/OrganizationSearchSort"
+          }
+        }, {
+          "description" : "From 0; 0 by default",
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "From 0; 0 by default",
+            "minimum" : 0
+          }
+        }, {
+          "description" : "20 by default",
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "20 by default",
+            "maximum" : 50,
+            "minimum" : 1
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/OrganizationSearchResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Public directory of organizations: full-text search, filters and pagination",
+        "tags" : [ "organizations" ]
+      }
+    },
     "/api/organizations/{slug}" : {
       "get" : {
         "operationId" : "getOrganizationProfile",
@@ -731,6 +840,19 @@
       "ActivityType" : {
         "type" : "string",
         "enum" : [ "WORK", "SERVICE", "PRODUCT" ]
+      },
+      "ActivityTypeCount" : {
+        "type" : "object",
+        "properties" : {
+          "activityType" : {
+            "$ref" : "#/components/schemas/ActivityType"
+          },
+          "count" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "activityType", "count" ]
       },
       "AdminOrganizationResponse" : {
         "type" : "object",
@@ -1162,6 +1284,57 @@
         },
         "required" : [ "activityTypes", "district", "locality", "name", "province", "sectors", "slug", "type" ]
       },
+      "OrganizationSearchResponse" : {
+        "type" : "object",
+        "properties" : {
+          "activityTypes" : {
+            "type" : "array",
+            "description" : "Every activity type, counted the same way",
+            "items" : {
+              "$ref" : "#/components/schemas/ActivityTypeCount"
+            }
+          },
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/OrganizationSummaryResponse"
+            }
+          },
+          "page" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "sectors" : {
+            "type" : "array",
+            "description" : "Every sector, counted the same way",
+            "items" : {
+              "$ref" : "#/components/schemas/SectorCount"
+            }
+          },
+          "size" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "total" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Organizations found, on every page"
+          },
+          "types" : {
+            "type" : "array",
+            "description" : "Every type, with how many would be found with it and the other filters as they are",
+            "items" : {
+              "$ref" : "#/components/schemas/TypeCount"
+            }
+          }
+        },
+        "required" : [ "activityTypes", "items", "page", "sectors", "size", "total", "types" ]
+      },
+      "OrganizationSearchSort" : {
+        "type" : "string",
+        "description" : "RELEVANCE by default",
+        "enum" : [ "RELEVANCE", "NAME" ]
+      },
       "OrganizationSummary" : {
         "type" : "object",
         "properties" : {
@@ -1178,6 +1351,48 @@
           }
         },
         "required" : [ "id", "name", "slug" ]
+      },
+      "OrganizationSummaryResponse" : {
+        "type" : "object",
+        "properties" : {
+          "activityTypes" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ActivityType"
+            },
+            "uniqueItems" : true
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "district" : {
+            "type" : "string"
+          },
+          "locality" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "province" : {
+            "$ref" : "#/components/schemas/Province"
+          },
+          "sectors" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Sector"
+            },
+            "uniqueItems" : true
+          },
+          "slug" : {
+            "type" : "string",
+            "description" : "Path segment of its public profile"
+          },
+          "type" : {
+            "$ref" : "#/components/schemas/OrganizationType"
+          }
+        },
+        "required" : [ "activityTypes", "district", "locality", "name", "province", "sectors", "slug", "type" ]
       },
       "OrganizationType" : {
         "type" : "string",
@@ -1733,6 +1948,19 @@
         "type" : "string",
         "enum" : [ "FOOD", "TEXTILE", "METALWORKING", "PRINTING", "SERVICES", "OTHER" ]
       },
+      "SectorCount" : {
+        "type" : "object",
+        "properties" : {
+          "count" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "sector" : {
+            "$ref" : "#/components/schemas/Sector"
+          }
+        },
+        "required" : [ "count", "sector" ]
+      },
       "TokenResponse" : {
         "type" : "object",
         "properties" : {
@@ -1749,6 +1977,19 @@
           }
         },
         "required" : [ "accessToken", "expiresIn", "refreshToken" ]
+      },
+      "TypeCount" : {
+        "type" : "object",
+        "properties" : {
+          "count" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "type" : {
+            "$ref" : "#/components/schemas/OrganizationType"
+          }
+        },
+        "required" : [ "count", "type" ]
       },
       "VerifyEmailRequest" : {
         "type" : "object",

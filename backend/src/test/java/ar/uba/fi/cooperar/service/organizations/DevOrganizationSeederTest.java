@@ -44,7 +44,8 @@ class DevOrganizationSeederTest {
         verify(organizations)
                 .save(argThat(organization -> organization.getSlug().equals("cooperativa-ejemplo-textil")
                         && organization.getLocation().getY() == -34.617608
-                        && organization.getLocation().getX() == -58.368443));
+                        && organization.getLocation().getX() == -58.368443
+                        && organization.isStreetPublic()));
         verify(organizations)
                 .save(argThat(organization -> organization.getSlug().equals("cooperativa-ejemplo-grafica")
                         && organization.getLocation() == null));

@@ -1,12 +1,15 @@
 package ar.uba.fi.cooperar.service.organizations;
 
+import ar.uba.fi.cooperar.domain.organizations.ActivityProfile;
 import ar.uba.fi.cooperar.domain.organizations.ActivityType;
 import ar.uba.fi.cooperar.domain.organizations.Address;
+import ar.uba.fi.cooperar.domain.organizations.ContactProfile;
+import ar.uba.fi.cooperar.domain.organizations.GeoPoints;
 import ar.uba.fi.cooperar.domain.organizations.Organization;
 import ar.uba.fi.cooperar.domain.organizations.OrganizationDetails;
-import ar.uba.fi.cooperar.domain.organizations.OrganizationProfile;
 import ar.uba.fi.cooperar.domain.organizations.OrganizationType;
 import ar.uba.fi.cooperar.domain.organizations.Province;
+import ar.uba.fi.cooperar.domain.organizations.ResponseTime;
 import ar.uba.fi.cooperar.domain.organizations.Sector;
 import ar.uba.fi.cooperar.domain.organizations.Slugs;
 import ar.uba.fi.cooperar.domain.user.Role;
@@ -18,10 +21,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
-import org.locationtech.jts.geom.PrecisionModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
@@ -33,15 +33,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Fictitious organizations, created as if their requests had been approved, so the public profile can be seen locally
- * before profiles can be edited (#13). Only runs in
- * the dev profile: production data must come from public sources (#10).
+ * with sample data in every section. Only runs in the dev profile: production data must come from public sources (#10).
  */
 @Component
 @Profile("dev")
 public class DevOrganizationSeeder implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DevOrganizationSeeder.class);
-    private static final GeometryFactory WGS84 = new GeometryFactory(new PrecisionModel(), 4326);
     private static final String SAMPLE_ACCOUNT_EMAIL = "ejemplos@example.org";
 
     private record Sample(
@@ -136,11 +134,23 @@ public class DevOrganizationSeeder implements ApplicationRunner {
                             null),
                     account,
                     now);
-            organization.updateProfile(new OrganizationProfile(
-                    sample.description(),
+            organization.updateIdentification(sample.name(), sample.name(), true);
+            organization.updateActivity(new ActivityProfile(
+                    sample.sectors(), sample.activityTypes(), sample.description(), null, null, false));
+            Point location = point(sample.latitude(), sample.longitude());
+            // Every sample shows its street except the incomplete one, to see the map showing only the area.
+            organization.updateLocation(sample.address(), location != null, location);
+            organization.updateContact(new ContactProfile(
                     sample.phone(),
+                    true,
+                    sample.phone(),
+                    false,
                     sample.email(),
-                    point(sample.latitude(), sample.longitude())));
+                    true,
+                    null,
+                    null,
+                    sample.phone() == null ? null : "Lunes a viernes de 8 a 17",
+                    sample.phone() == null ? null : ResponseTime.TWO_DAYS));
             account.getOrganizations().add(organizations.save(organization));
             log.info("Seeded the sample organization {}", organization.getId());
         }
@@ -158,6 +168,6 @@ public class DevOrganizationSeeder implements ApplicationRunner {
         if (latitude == null || longitude == null) {
             return null;
         }
-        return WGS84.createPoint(new Coordinate(longitude, latitude));
+        return GeoPoints.of(latitude, longitude);
     }
 }

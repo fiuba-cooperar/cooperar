@@ -3,14 +3,17 @@ package ar.uba.fi.cooperar.web.organizations;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import ar.uba.fi.cooperar.IntegrationTest;
+import ar.uba.fi.cooperar.domain.organizations.ActivityProfile;
 import ar.uba.fi.cooperar.domain.organizations.ActivityType;
 import ar.uba.fi.cooperar.domain.organizations.Address;
+import ar.uba.fi.cooperar.domain.organizations.ContactProfile;
+import ar.uba.fi.cooperar.domain.organizations.GeoPoints;
 import ar.uba.fi.cooperar.domain.organizations.Organization;
 import ar.uba.fi.cooperar.domain.organizations.OrganizationDetails;
-import ar.uba.fi.cooperar.domain.organizations.OrganizationProfile;
 import ar.uba.fi.cooperar.domain.organizations.OrganizationType;
 import ar.uba.fi.cooperar.domain.organizations.Province;
 import ar.uba.fi.cooperar.domain.organizations.RegistrationRequest;
+import ar.uba.fi.cooperar.domain.organizations.ResponseTime;
 import ar.uba.fi.cooperar.domain.organizations.Sector;
 import ar.uba.fi.cooperar.domain.user.Role;
 import ar.uba.fi.cooperar.domain.user.UserAccount;
@@ -21,9 +24,6 @@ import java.time.Instant;
 import java.util.Set;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.Test;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.PrecisionModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -33,8 +33,6 @@ import org.springframework.transaction.annotation.Transactional;
 @IntegrationTest
 @Transactional
 class OrganizationProfileIntegrationTest {
-
-    private static final GeometryFactory WGS84 = new GeometryFactory(new PrecisionModel(), 4326);
 
     @Autowired
     private MockMvcTester mvc;
@@ -51,11 +49,7 @@ class OrganizationProfileIntegrationTest {
     @Test
     void returnsThePublicProfileWithoutAToken() {
         Organization organization = approved("La Cacerola", "la-cacerola", "30-71234567-1");
-        organization.updateProfile(new OrganizationProfile(
-                "Panificados",
-                "11 1234-5678",
-                "contacto@example.org",
-                WGS84.createPoint(new Coordinate(-58.42, -34.6))));
+        fillProfile(organization, true);
         organizations.saveAndFlush(organization);
 
         assertThat(mvc.get().uri("/api/organizations/la-cacerola"))
@@ -65,39 +59,142 @@ class OrganizationProfileIntegrationTest {
                         {
                           "slug": "la-cacerola",
                           "name": "La Cacerola",
+                          "type": "ERT",
+                          "legalName": "La Cacerola Ltda.",
                           "sectors": ["FOOD", "SERVICES"],
+                          "activityTypes": ["SERVICE", "PRODUCT"],
+                          "description": "Panificados",
+                          "foundingYear": 2003,
+                          "workerCount": 45,
                           "province": "CITY_OF_BUENOS_AIRES",
                           "district": "Comuna 5",
                           "locality": "Almagro",
                           "street": "Gascón 1234",
-                          "description": "Panificados",
+                          "additionalReferences": "Portón verde",
                           "phone": "11 1234-5678",
+                          "whatsapp": "11 8765-4321",
                           "email": "contacto@example.org",
-                          "location": {"latitude": -34.6, "longitude": -58.42}
+                          "website": "https://lacacerola.example.org",
+                          "socialMedia": "@lacacerola",
+                          "openingHours": "Lunes a viernes de 8 a 17",
+                          "responseTime": "TWO_DAYS",
+                          "location": {"latitude": -34.60391, "longitude": -58.42167},
+                          "exactLocation": true
+                        }
+                        """);
+    }
+
+    @Test
+    void leavesOutTheFieldsTheOrganizationKeptPrivate() {
+        Organization organization = approved("La Cacerola", "la-cacerola", "30-71234567-1");
+        fillProfile(organization, false);
+        organizations.saveAndFlush(organization);
+
+        assertThat(mvc.get().uri("/api/organizations/la-cacerola"))
+                .hasStatusOk()
+                .bodyJson()
+                .isStrictlyEqualTo("""
+                        {
+                          "slug": "la-cacerola",
+                          "name": "La Cacerola",
+                          "type": "ERT",
+                          "legalName": null,
+                          "sectors": ["FOOD", "SERVICES"],
+                          "activityTypes": ["SERVICE", "PRODUCT"],
+                          "description": "Panificados",
+                          "foundingYear": 2003,
+                          "workerCount": null,
+                          "province": "CITY_OF_BUENOS_AIRES",
+                          "district": "Comuna 5",
+                          "locality": "Almagro",
+                          "street": null,
+                          "additionalReferences": "Portón verde",
+                          "phone": null,
+                          "whatsapp": null,
+                          "email": null,
+                          "website": "https://lacacerola.example.org",
+                          "socialMedia": "@lacacerola",
+                          "openingHours": "Lunes a viernes de 8 a 17",
+                          "responseTime": "TWO_DAYS",
+                          "location": {"latitude": -34.6, "longitude": -58.42},
+                          "exactLocation": false
                         }
                         """);
     }
 
     @Test
     void exposesNoFieldBeyondThePublicOnes() {
-        organizations.saveAndFlush(approved("Sin Datos", "sin-datos", "20-12345678-6"));
+        Organization organization = approved("La Cacerola", "la-cacerola", "30-71234567-1");
+        fillProfile(organization, true);
+        organizations.saveAndFlush(organization);
 
-        assertThat(mvc.get().uri("/api/organizations/sin-datos"))
+        assertThat(mvc.get().uri("/api/organizations/la-cacerola"))
                 .hasStatusOk()
                 .bodyJson()
                 .convertTo(InstanceOfAssertFactories.map(String.class, Object.class))
                 .containsOnlyKeys(
                         "slug",
                         "name",
+                        "type",
+                        "legalName",
                         "sectors",
+                        "activityTypes",
+                        "description",
+                        "foundingYear",
+                        "workerCount",
                         "province",
                         "district",
                         "locality",
                         "street",
-                        "description",
+                        "additionalReferences",
                         "phone",
+                        "whatsapp",
                         "email",
-                        "location");
+                        "website",
+                        "socialMedia",
+                        "openingHours",
+                        "responseTime",
+                        "location",
+                        "exactLocation");
+    }
+
+    @Test
+    void keepsEveryConfigurableFieldPrivateUntilTheOrganizationChooses() {
+        Organization organization = approved("Sin Datos", "sin-datos", "20-12345678-6");
+        organization.updateContact(new ContactProfile(
+                "11 1234-5678", false, null, false, "contacto@example.org", false, null, null, null, null));
+        organizations.saveAndFlush(organization);
+
+        assertThat(mvc.get().uri("/api/organizations/sin-datos"))
+                .hasStatusOk()
+                .bodyJson()
+                .isStrictlyEqualTo("""
+                        {
+                          "slug": "sin-datos",
+                          "name": "Sin Datos",
+                          "type": "ERT",
+                          "legalName": null,
+                          "sectors": ["FOOD", "SERVICES"],
+                          "activityTypes": ["PRODUCT"],
+                          "description": null,
+                          "foundingYear": null,
+                          "workerCount": null,
+                          "province": "CITY_OF_BUENOS_AIRES",
+                          "district": "Comuna 5",
+                          "locality": "Almagro",
+                          "street": null,
+                          "additionalReferences": null,
+                          "phone": null,
+                          "whatsapp": null,
+                          "email": null,
+                          "website": null,
+                          "socialMedia": null,
+                          "openingHours": null,
+                          "responseTime": null,
+                          "location": null,
+                          "exactLocation": false
+                        }
+                        """);
     }
 
     @Test
@@ -129,6 +226,30 @@ class OrganizationProfileIntegrationTest {
                         """);
     }
 
+    /** Every field filled in; the configurable ones public or private as given. */
+    private static void fillProfile(Organization organization, boolean configurablePublic) {
+        organization.updateIdentification(organization.getName(), organization.getLegalName(), configurablePublic);
+        organization.updateActivity(new ActivityProfile(
+                Set.of(Sector.FOOD, Sector.SERVICES),
+                Set.of(ActivityType.PRODUCT, ActivityType.SERVICE),
+                "Panificados",
+                2003,
+                45,
+                configurablePublic));
+        organization.updateLocation(organization.getAddress(), configurablePublic, GeoPoints.of(-34.60391, -58.42167));
+        organization.updateContact(new ContactProfile(
+                "11 1234-5678",
+                configurablePublic,
+                "11 8765-4321",
+                configurablePublic,
+                "contacto@example.org",
+                configurablePublic,
+                "https://lacacerola.example.org",
+                "@lacacerola",
+                "Lunes a viernes de 8 a 17",
+                ResponseTime.TWO_DAYS));
+    }
+
     private Organization approved(String name, String slug, String cuit) {
         UserAccount account = verifiedAccount();
         return organization(name, slug, cuit, account);
@@ -146,7 +267,7 @@ class OrganizationProfileIntegrationTest {
                 new OrganizationDetails(
                         name,
                         name + " Ltda.",
-                        OrganizationType.COOPERATIVE,
+                        OrganizationType.ERT,
                         cuit,
                         Set.of(Sector.FOOD, Sector.SERVICES),
                         Set.of(ActivityType.PRODUCT),

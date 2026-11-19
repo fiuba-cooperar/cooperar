@@ -65,11 +65,52 @@ public class Organization {
     @Embedded
     private Address address;
 
+    /** Whether the public profile shows the legal name; the organization chooses it. */
+    @Column(name = "legal_name_public", nullable = false)
+    private boolean legalNamePublic;
+
+    /** Whether the public profile shows the street and the exact point; otherwise it only shows the area. */
+    @Column(name = "street_public", nullable = false)
+    private boolean streetPublic;
+
     private String description;
+
+    /** For an ERT, the year the workers recovered it. */
+    @Column(name = "founding_year")
+    private Integer foundingYear;
+
+    @Column(name = "worker_count")
+    private Integer workerCount;
+
+    @Column(name = "worker_count_public", nullable = false)
+    private boolean workerCountPublic;
 
     private String phone;
 
+    @Column(name = "phone_public", nullable = false)
+    private boolean phonePublic;
+
+    private String whatsapp;
+
+    @Column(name = "whatsapp_public", nullable = false)
+    private boolean whatsappPublic;
+
     private String email;
+
+    @Column(name = "email_public", nullable = false)
+    private boolean emailPublic;
+
+    private String website;
+
+    @Column(name = "social_media")
+    private String socialMedia;
+
+    @Column(name = "opening_hours")
+    private String openingHours;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "response_time")
+    private ResponseTime responseTime;
 
     private Point location;
 
@@ -117,11 +158,53 @@ public class Organization {
         return value == null ? null : value.trim();
     }
 
-    public void updateProfile(OrganizationProfile profile) {
-        this.description = profile.description();
-        this.phone = profile.phone();
-        this.email = profile.email();
-        this.location = profile.location();
+    /** Optional profile fields: a blank value means the organization left it empty. */
+    private static String optional(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    /** The type and the CUIT are not here: the observatory validated them and only it can change them. */
+    public void updateIdentification(String name, String legalName, boolean legalNamePublic) {
+        this.name = name.trim();
+        this.legalName = trimmed(legalName);
+        this.legalNamePublic = legalNamePublic;
+    }
+
+    public void updateActivity(ActivityProfile activity) {
+        if (activity.sectors().isEmpty()) {
+            throw new IllegalArgumentException("An organization needs at least one sector");
+        }
+        if (activity.activityTypes().isEmpty()) {
+            throw new IllegalArgumentException("An organization needs at least one activity type");
+        }
+        this.sectors.clear();
+        this.sectors.addAll(activity.sectors());
+        this.activityTypes.clear();
+        this.activityTypes.addAll(activity.activityTypes());
+        this.description = optional(activity.description());
+        this.foundingYear = activity.foundingYear();
+        this.workerCount = activity.workerCount();
+        this.workerCountPublic = activity.workerCountPublic();
+    }
+
+    /** The location is the point on the map; missing until the organization places it. */
+    public void updateLocation(Address address, boolean streetPublic, Point location) {
+        this.address = address;
+        this.streetPublic = streetPublic;
+        this.location = location;
+    }
+
+    public void updateContact(ContactProfile contact) {
+        this.phone = optional(contact.phone());
+        this.phonePublic = contact.phonePublic();
+        this.whatsapp = optional(contact.whatsapp());
+        this.whatsappPublic = contact.whatsappPublic();
+        this.email = optional(contact.email());
+        this.emailPublic = contact.emailPublic();
+        this.website = optional(contact.website());
+        this.socialMedia = optional(contact.socialMedia());
+        this.openingHours = optional(contact.openingHours());
+        this.responseTime = contact.responseTime();
     }
 
     public UUID getId() {
@@ -176,6 +259,58 @@ public class Organization {
 
     public Point getLocation() {
         return location;
+    }
+
+    public boolean isLegalNamePublic() {
+        return legalNamePublic;
+    }
+
+    public boolean isStreetPublic() {
+        return streetPublic;
+    }
+
+    public Integer getFoundingYear() {
+        return foundingYear;
+    }
+
+    public Integer getWorkerCount() {
+        return workerCount;
+    }
+
+    public boolean isWorkerCountPublic() {
+        return workerCountPublic;
+    }
+
+    public boolean isPhonePublic() {
+        return phonePublic;
+    }
+
+    public String getWhatsapp() {
+        return whatsapp;
+    }
+
+    public boolean isWhatsappPublic() {
+        return whatsappPublic;
+    }
+
+    public boolean isEmailPublic() {
+        return emailPublic;
+    }
+
+    public String getWebsite() {
+        return website;
+    }
+
+    public String getSocialMedia() {
+        return socialMedia;
+    }
+
+    public String getOpeningHours() {
+        return openingHours;
+    }
+
+    public ResponseTime getResponseTime() {
+        return responseTime;
     }
 
     /** The account that sent the registration request; missing if that account was deleted. */

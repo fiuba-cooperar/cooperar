@@ -56,6 +56,25 @@ public class ProductService {
         return products.findByOrganizationIdAndStatusOrderByNameAsc(organization.getId(), ProductStatus.PUBLISHED);
     }
 
+    /** A published product, with the organization that offers it; an unpublished one does not exist for the public. */
+    @Transactional(readOnly = true)
+    public Product getPublic(UUID productId) {
+        return products.findByIdAndStatus(productId, ProductStatus.PUBLISHED)
+                .orElseThrow(ProductNotFoundException::new);
+    }
+
+    /** Other published products of the same organization, by name. */
+    @Transactional(readOnly = true)
+    public List<Product> listMorePublic(Product product, int limit) {
+        return products
+                .findByOrganizationIdAndStatusOrderByNameAsc(
+                        product.getOrganization().getId(), ProductStatus.PUBLISHED)
+                .stream()
+                .filter(other -> !other.getId().equals(product.getId()))
+                .limit(limit)
+                .toList();
+    }
+
     /** Not found also when the account does not manage the organization, so that is not revealed. */
     @Transactional(readOnly = true)
     public List<Product> listManaged(UUID organizationId, UUID accountId) {

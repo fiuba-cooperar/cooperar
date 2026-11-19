@@ -1,0 +1,39 @@
+.panel {
+  flex: 0 0 290px;
+  padding: 20px 22px;
+}
+
+/* Under the width where results and filters fit side by side, the panel takes the whole row. */
+@media (max-width: 52em) {
+  .panel {
+    flex-basis: 100%;
+  }
+}
+
+.legend {
+  margin-bottom: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.option {
+  align-items: center;
+  min-height: 40px;
+}
+
+.optionLabel {
+  flex: 1;
+}
+
+.optionLabel label {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.count {
+  font-size: 13px;
+  color: var(--mantine-color-dimmed);
+}

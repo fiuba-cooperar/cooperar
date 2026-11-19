@@ -1,7 +1,9 @@
 import { Anchor, Badge, Button, Container, Group, Paper, Stack, Text, Title } from '@mantine/core';
 import { IconMapPinFilled, IconSearch } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
-import { Link } from 'react-router';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router';
+import { searchPath } from '@/features/organizations/organizationSearch';
 import { REGISTER_PATH } from '@/components/layout/publicSections';
 import styles from './HomePage.module.css';
 
@@ -136,34 +138,38 @@ function Hero() {
   );
 }
 
-// TODO(#15): enable the search once it exists.
 function Search() {
+  const navigate = useNavigate();
+  const [query, setQuery] = useState('');
   return (
-    <Stack gap={8} maw={600}>
-      <form role="search" aria-label="Buscador" className={styles.search}>
-        <IconSearch size={20} stroke={2.2} aria-hidden="true" className={styles.searchIcon} />
-        <label htmlFor="home-search" className={styles.visuallyHidden}>
-          Buscar
-        </label>
-        <input
-          id="home-search"
-          type="search"
-          placeholder="Buscá una entidad, un producto o una zona"
-          aria-describedby="home-search-soon"
-          className={styles.searchInput}
-          disabled
-        />
-        <Button type="submit" h={44} px={22} fz={16} className={styles.searchButton} disabled>
-          Buscar
-        </Button>
-      </form>
-      <Group gap="xs" id="home-search-soon">
-        <ComingSoonBadge />
-        <Text size="sm" c="dimmed">
-          El buscador va a estar disponible muy pronto.
-        </Text>
-      </Group>
-    </Stack>
+    <form
+      role="search"
+      aria-label="Buscador"
+      className={styles.search}
+      onSubmit={(event) => {
+        event.preventDefault();
+        void navigate(searchPath({ query: query.trim() }));
+      }}
+    >
+      <IconSearch size={20} stroke={2.2} aria-hidden="true" className={styles.searchIcon} />
+      <label htmlFor="home-search" className={styles.visuallyHidden}>
+        Buscar
+      </label>
+      <input
+        id="home-search"
+        type="search"
+        value={query}
+        maxLength={200}
+        placeholder="Buscá una entidad, un rubro o una zona"
+        className={styles.searchInput}
+        onChange={(event) => {
+          setQuery(event.target.value);
+        }}
+      />
+      <Button type="submit" h={44} px={22} fz={16} radius={9} className={styles.searchButton}>
+        Buscar
+      </Button>
+    </form>
   );
 }
 

@@ -14,6 +14,16 @@ const MENU = [
   ['Historia del sector', '/history'],
 ] as const;
 
+const EMPTY_SEARCH = {
+  items: [],
+  total: 0,
+  page: 0,
+  size: 20,
+  types: [],
+  sectors: [],
+  activityTypes: [],
+};
+
 describe('public site', () => {
   it('shows the menu, the account buttons and the footer on every public page', async () => {
     stubFetchRoutes({});
@@ -102,16 +112,21 @@ describe('public site', () => {
     }
   });
 
-  it('shows the search as coming soon until it exists', () => {
-    stubFetchRoutes({});
+  it('takes the search to the directory', async () => {
+    const fetchMock = stubFetchRoutes({ 'GET /api/organizations': { body: EMPTY_SEARCH } });
 
     renderRoute('/');
 
     const search = screen.getByRole('search', { name: 'Buscador' });
-    const input = within(search).getByLabelText('Buscar');
-    expect(input).toBeDisabled();
-    expect(input).toHaveAccessibleDescription(/Próximamente/);
-    expect(within(search).getByRole('button', { name: 'Buscar' })).toBeDisabled();
+    await userEvent.type(within(search).getByLabelText('Buscar'), '  panaderia ');
+    await userEvent.click(within(search).getByRole('button', { name: 'Buscar' }));
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Entidades' })).toBeInTheDocument();
+    expect(screen.getByRole('searchbox', { name: 'Buscar entidades' })).toHaveValue('panaderia');
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/organizations?q=panaderia&size=20',
+      expect.anything(),
+    );
   });
 
   it('says coming soon on the sections that do not exist yet', async () => {

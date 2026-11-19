@@ -39,6 +39,8 @@ import { NotFoundPage } from '@/features/errors/NotFoundPage';
 import { ComingSoonPage } from '@/features/home/ComingSoonPage';
 import { HomePage } from '@/features/home/HomePage';
 import { OrganizationProfilePage } from '@/features/organizations/OrganizationProfilePage';
+import { OrganizationSearchPage } from '@/features/organizations/OrganizationSearchPage';
+import { ORGANIZATIONS_PATH } from '@/features/organizations/organizationSearch';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { PUBLIC_SECTIONS, REGISTER_PATH } from '@/components/layout/publicSections';
 
@@ -50,10 +52,13 @@ export const routes: RouteObject[] = [
       { path: 'login', element: <LoginPage /> },
       { path: REGISTER_PATH, element: <RegisterPage /> },
       { path: VERIFY_EMAIL_PATH, element: <VerifyEmailPage /> },
-      ...PUBLIC_SECTIONS.map(({ path, label }) => ({
-        path,
-        element: <ComingSoonPage title={label} />,
-      })),
+      { path: ORGANIZATIONS_PATH, element: <OrganizationSearchPage /> },
+      ...PUBLIC_SECTIONS.filter(({ path }) => path !== ORGANIZATIONS_PATH).map(
+        ({ path, label }) => ({
+          path,
+          element: <ComingSoonPage title={label} />,
+        }),
+      ),
       { path: 'forbidden', element: <ForbiddenPage /> },
       { path: 'organizations/:slug', element: <OrganizationProfilePage /> },
       { path: '*', element: <NotFoundPage /> },

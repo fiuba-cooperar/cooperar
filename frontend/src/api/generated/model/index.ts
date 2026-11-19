@@ -7,6 +7,7 @@
  */
 
 export * from './activityType';
+export * from './activityTypeCount';
 export * from './addProductPhotoBody';
 export * from './adminOrganizationResponse';
 export * from './adminProductCategoryResponse';
@@ -24,7 +25,10 @@ export * from './listOrganizationsParams';
 export * from './listRegistrationRequestsParams';
 export * from './loginRequest';
 export * from './organizationProfileResponse';
+export * from './organizationSearchResponse';
+export * from './organizationSearchSort';
 export * from './organizationSummary';
+export * from './organizationSummaryResponse';
 export * from './organizationType';
 export * from './photoOrderRequest';
 export * from './productCategoryRequest';
@@ -62,7 +66,10 @@ export * from './reviewOutcome';
 export * from './reviewResponse';
 export * from './role';
 export * from './saleMode';
+export * from './searchOrganizationsParams';
 export * from './sector';
+export * from './sectorCount';
 export * from './tokenResponse';
+export * from './typeCount';
 export * from './verifyEmailRequest';
 export * from './visibility';

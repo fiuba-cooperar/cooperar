@@ -2,7 +2,7 @@ import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { expectNoA11yViolations } from '@/test/axe';
-import { stubFetchJson, stubFetchNetworkError, stubFetchRoutes } from '@/test/http';
+import { stubFetchNetworkError, stubFetchRoutes } from '@/test/http';
 import { renderRoute } from '@/test/render';
 
 const fullProfile = {
@@ -55,9 +55,17 @@ const minimalProfile = {
   location: null,
 };
 
+/** Answers the profile of `slug` and an empty product list. */
+function stubProfile(slug: string, profile: unknown) {
+  return stubFetchRoutes({
+    [`GET /api/organizations/${slug}`]: { body: profile },
+    [`GET /api/organizations/${slug}/products`]: { body: [] },
+  });
+}
+
 describe('OrganizationProfilePage', () => {
   it('asks the API for the organization in the URL', async () => {
-    const fetchMock = stubFetchJson(fullProfile);
+    const fetchMock = stubProfile('la-cacerola', fullProfile);
 
     renderRoute('/organizations/la-cacerola');
 
@@ -66,7 +74,7 @@ describe('OrganizationProfilePage', () => {
   });
 
   it('shows the public data, the contact details and the map', async () => {
-    stubFetchJson(fullProfile);
+    stubProfile('la-cacerola', fullProfile);
 
     renderRoute('/organizations/la-cacerola');
 
@@ -110,17 +118,57 @@ describe('OrganizationProfilePage', () => {
     ).toBeVisible();
   });
 
-  it('shows the products section empty until the catalog exists', async () => {
-    stubFetchJson(fullProfile);
+  it('shows the products section empty when the organization has none', async () => {
+    stubFetchRoutes({
+      'GET /api/organizations/la-cacerola': { body: fullProfile },
+      'GET /api/organizations/la-cacerola/products': { body: [] },
+    });
 
     renderRoute('/organizations/la-cacerola');
 
     expect(await screen.findByRole('heading', { name: 'Productos y servicios' })).toBeVisible();
-    expect(screen.getByText('Esta entidad todavía no cargó productos.')).toBeVisible();
+    expect(await screen.findByText('Esta entidad todavía no cargó productos.')).toBeVisible();
+  });
+
+  it('lists the active products and services of the organization', async () => {
+    stubFetchRoutes({
+      'GET /api/organizations/la-cacerola': { body: fullProfile },
+      'GET /api/organizations/la-cacerola/products': {
+        body: [
+          {
+            id: 'p1',
+            name: 'Pan de campo',
+            category: { id: 'k2', name: 'Alimentos' },
+            saleModes: ['RETAIL', 'WHOLESALE'],
+            description: 'Horneado a leña',
+            indicativePrice: 2200,
+            photos: [],
+          },
+          {
+            id: 'p2',
+            name: 'Capacitación',
+            category: { id: 'k4', name: 'Servicios' },
+            saleModes: ['WHOLESALE'],
+            description: null,
+            indicativePrice: null,
+            photos: [],
+          },
+        ],
+      },
+    });
+
+    renderRoute('/organizations/la-cacerola');
+
+    expect(await screen.findByText('Pan de campo')).toBeVisible();
+    expect(screen.getByText('Desde $ 2.200')).toBeVisible();
+    expect(screen.getByText('Minorista y mayorista')).toBeVisible();
+    expect(screen.getByText('Horneado a leña')).toBeVisible();
+    expect(screen.getByText('Capacitación')).toBeVisible();
+    expect(screen.getByText('Sin precio')).toBeVisible();
   });
 
   it('leaves out the data the organization did not load or keeps private', async () => {
-    stubFetchJson(minimalProfile);
+    stubProfile('sin-datos', minimalProfile);
 
     renderRoute('/organizations/sin-datos');
 
@@ -135,7 +183,7 @@ describe('OrganizationProfilePage', () => {
   });
 
   it('marks only the area on the map when the street is private', async () => {
-    stubFetchJson({
+    stubProfile('sin-datos', {
       ...minimalProfile,
       location: { latitude: -32.95, longitude: -60.64, approximate: true },
     });
@@ -155,7 +203,7 @@ describe('OrganizationProfilePage', () => {
   it('copies the link to the profile', async () => {
     const writeText = vi.fn(() => Promise.resolve());
     Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
-    stubFetchJson(fullProfile);
+    stubProfile('la-cacerola', fullProfile);
 
     renderRoute('/organizations/la-cacerola');
     await userEvent.click(await screen.findByRole('button', { name: 'Copiar enlace' }));
@@ -183,7 +231,7 @@ describe('OrganizationProfilePage', () => {
   });
 
   it('has no accessibility violations', async () => {
-    stubFetchJson(fullProfile);
+    stubProfile('la-cacerola', fullProfile);
 
     const { container } = renderRoute('/organizations/la-cacerola');
     await screen.findByRole('heading', { level: 1, name: 'La Cacerola' });

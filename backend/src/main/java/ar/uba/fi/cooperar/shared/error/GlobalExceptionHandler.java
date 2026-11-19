@@ -1,9 +1,19 @@
 package ar.uba.fi.cooperar.shared.error;
 
+import ar.uba.fi.cooperar.domain.catalog.TooManyPhotosException;
 import ar.uba.fi.cooperar.domain.organizations.ChangesNotRequestedException;
 import ar.uba.fi.cooperar.domain.organizations.InvalidCuitException;
 import ar.uba.fi.cooperar.domain.organizations.InvalidStartYearException;
 import ar.uba.fi.cooperar.domain.organizations.RegistrationNotAwaitingReviewException;
+import ar.uba.fi.cooperar.service.catalog.ImageStorageException;
+import ar.uba.fi.cooperar.service.catalog.InvalidImageException;
+import ar.uba.fi.cooperar.service.catalog.InvalidPhotoOrderException;
+import ar.uba.fi.cooperar.service.catalog.InvalidProductCategoryException;
+import ar.uba.fi.cooperar.service.catalog.ProductCategoryInUseException;
+import ar.uba.fi.cooperar.service.catalog.ProductCategoryNameTakenException;
+import ar.uba.fi.cooperar.service.catalog.ProductCategoryNotFoundException;
+import ar.uba.fi.cooperar.service.catalog.ProductNotFoundException;
+import ar.uba.fi.cooperar.service.catalog.ProductPhotoNotFoundException;
 import ar.uba.fi.cooperar.service.organizations.CuitAlreadyRegisteredException;
 import ar.uba.fi.cooperar.service.organizations.OrganizationNotFoundException;
 import ar.uba.fi.cooperar.service.organizations.RegistrationRequestNotFoundException;
@@ -44,6 +54,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler({
         InvalidCuitException.class,
         InvalidStartYearException.class,
+        InvalidProductCategoryException.class,
+        InvalidImageException.class,
+        InvalidPhotoOrderException.class,
         PasswordTooLongException.class,
         InvalidVerificationTokenException.class
     })
@@ -51,7 +64,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, exception.getMessage());
     }
 
-    @ExceptionHandler({OrganizationNotFoundException.class, RegistrationRequestNotFoundException.class})
+    @ExceptionHandler({
+        OrganizationNotFoundException.class,
+        RegistrationRequestNotFoundException.class,
+        ProductNotFoundException.class,
+        ProductCategoryNotFoundException.class,
+        ProductPhotoNotFoundException.class
+    })
     public ProblemDetail handleNotFound(RuntimeException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());
     }
@@ -59,7 +78,10 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler({
         RegistrationNotAwaitingReviewException.class,
         ChangesNotRequestedException.class,
-        EmailAlreadyVerifiedException.class
+        EmailAlreadyVerifiedException.class,
+        ProductCategoryNameTakenException.class,
+        ProductCategoryInUseException.class,
+        TooManyPhotosException.class
     })
     public ProblemDetail handleStateConflict(RuntimeException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
@@ -81,6 +103,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
         problem.setProperty("conflicts", List.of("CUIT"));
         return problem;
+    }
+
+    /** The image storage is down or refused the image: not the client's fault, and worth retrying later. */
+    @ExceptionHandler(ImageStorageException.class)
+    public ProblemDetail handleImageStorage(ImageStorageException exception) {
+        log.error("Image storage failed", exception);
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_GATEWAY, "The photo could not be stored");
     }
 
     @ExceptionHandler(Exception.class)

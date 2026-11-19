@@ -16,6 +16,11 @@ spring:
   threads:
     virtual:
       enabled: true
+  servlet:
+    multipart:
+      # A photo is at most 5 MB (ProductPhotoService.MAX_BYTES); the request adds a little on top.
+      max-file-size: 5MB
+      max-request-size: 6MB
   # Any SMTP server works (the Faculty's or a self-hosted one). MAIL_HOST is mandatory outside dev.
   mail:
     host: ${MAIL_HOST}
@@ -47,6 +52,16 @@ cooperar:
     # Where people open the frontend; the links in the emails point here.
     public-url: ${PUBLIC_URL}
     from: ${MAIL_FROM}
+  images:
+    # Where the photos of the products live: disk (a directory of the server, a volume in Docker) or cloud (the
+    # public demo, whose host loses its disk on every deploy). The cloud needs the three IMAGE_CLOUD_* variables (the implementation talks to Cloudinary).
+    provider: ${IMAGE_STORAGE:disk}
+    disk:
+      directory: ${IMAGE_DIR:./data/images}
+    cloud:
+      cloud-name: ${IMAGE_CLOUD_NAME:}
+      api-key: ${IMAGE_CLOUD_API_KEY:}
+      api-secret: ${IMAGE_CLOUD_API_SECRET:}
   geocoding:
     # nominatim (the public instance by default, or a self-hosted one in NOMINATIM_URL) or none.
     provider: ${GEOCODING_PROVIDER:nominatim}

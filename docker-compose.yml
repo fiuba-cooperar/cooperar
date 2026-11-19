@@ -39,6 +39,12 @@ services:
       PUBLIC_URL: ${PUBLIC_URL:-http://localhost:5173}
       GEOCODING_PROVIDER: ${GEOCODING_PROVIDER:-nominatim}
       NOMINATIM_URL: ${NOMINATIM_URL:-https://nominatim.openstreetmap.org}
+      IMAGE_STORAGE: ${IMAGE_STORAGE:-disk}
+      IMAGE_CLOUD_NAME: ${IMAGE_CLOUD_NAME:-}
+      IMAGE_CLOUD_API_KEY: ${IMAGE_CLOUD_API_KEY:-}
+      IMAGE_CLOUD_API_SECRET: ${IMAGE_CLOUD_API_SECRET:-}
+    volumes:
+      - image-data:/data/images
     ports:
       - '${BACKEND_PORT:-8080}:8080'
     depends_on:
@@ -64,3 +70,4 @@ services:
 
 volumes:
   db-data:
+  image-data:

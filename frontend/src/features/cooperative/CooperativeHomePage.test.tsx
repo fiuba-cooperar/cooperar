@@ -261,10 +261,9 @@ describe('cooperative panel', () => {
     expect(within(steps).queryByRole('link', { name: 'Completar ficha' })).not.toBeInTheDocument();
   });
 
-  it.each([
-    ['/cooperative/products', 'Productos y servicios'],
-    ['/cooperative/team', 'Usuarios'],
-  ])('shows a coming soon page for %s inside the panel', async (path, title) => {
+  it('shows a coming soon page for the team inside the panel', async () => {
+    const path = '/cooperative/team';
+    const title = 'Usuarios';
     signedIn();
 
     renderRoute(path);

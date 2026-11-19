@@ -11,12 +11,15 @@ RUN ./gradlew --no-daemon bootJar \
 # Runtime: JRE only, unprivileged user and split layers for better caching.
 FROM eclipse-temurin:25-jre-alpine
 RUN addgroup -S cooperar && adduser -S cooperar -G cooperar
+# Photos are kept here; docker compose mounts a volume on it so they survive a new image.
+RUN mkdir -p /data/images && chown cooperar:cooperar /data/images
 USER cooperar
 WORKDIR /app
 COPY --from=build /workspace/extracted/dependencies/ ./
 COPY --from=build /workspace/extracted/spring-boot-loader/ ./
 COPY --from=build /workspace/extracted/snapshot-dependencies/ ./
 COPY --from=build /workspace/extracted/application/ ./
+ENV IMAGE_DIR=/data/images
 ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75 -XX:+ExitOnOutOfMemoryError"
 EXPOSE 8080
 HEALTHCHECK --interval=15s --timeout=3s --start-period=60s --retries=5 \

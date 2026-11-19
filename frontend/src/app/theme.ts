@@ -53,6 +53,7 @@ export const theme = createTheme({
     }),
     Title: Title.extend({ styles: { root: { letterSpacing: '-0.02em' } } }),
     TextInput: { defaultProps: { size: 'md' } },
+    Textarea: { defaultProps: { size: 'md' } },
     PasswordInput: { defaultProps: { size: 'md' } },
     // The group's size also sets its description and its checkboxes, so they match the other fields.
     CheckboxGroup: { defaultProps: { size: 'md' } },

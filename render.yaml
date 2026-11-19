@@ -53,6 +53,15 @@ services:
         sync: false
       - key: MAIL_FROM
         sync: false
+      # The free plan's disk is wiped on every deploy, so the photos go to the cloud (Cloudinary, free plan, test data only).
+      - key: IMAGE_STORAGE
+        value: cloud
+      - key: IMAGE_CLOUD_NAME
+        sync: false
+      - key: IMAGE_CLOUD_API_KEY
+        sync: false
+      - key: IMAGE_CLOUD_API_SECRET
+        sync: false
       # URL of the frontend service below; the links in the emails point here.
       - key: PUBLIC_URL
         sync: false

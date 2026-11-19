@@ -23,6 +23,8 @@ import type {
 
 import type {
   AddProductPhotoBody,
+  ListManagedProductsParams,
+  ManagedProductPageResponse,
   PhotoOrderRequest,
   ProductRequest,
   ProductResponse,
@@ -48,7 +50,7 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 };
 
 export type listManagedProductsResponse200 = {
-  data: ProductResponse[];
+  data: ManagedProductPageResponse;
   status: 200;
 };
 
@@ -57,25 +59,47 @@ export type listManagedProductsResponseSuccess = listManagedProductsResponse200 
 };
 export type listManagedProductsResponse = listManagedProductsResponseSuccess;
 
-export const getListManagedProductsUrl = (organizationId: string) => {
-  return `/api/cooperative/organizations/${organizationId}/products`;
+export const getListManagedProductsUrl = (
+  organizationId: string,
+  params?: ListManagedProductsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/cooperative/organizations/${organizationId}/products?${stringifiedParams}`
+    : `/api/cooperative/organizations/${organizationId}/products`;
 };
 
 /**
- * @summary Every product of an organization the account manages, unpublished ones included
+ * @summary A page of the products of an organization the account manages, unpublished ones included
  */
 export const listManagedProducts = async (
   organizationId: string,
+  params?: ListManagedProductsParams,
   options?: Parameters<typeof apiFetch>[1],
 ): Promise<listManagedProductsResponse> => {
-  return apiFetch<listManagedProductsResponse>(getListManagedProductsUrl(organizationId), {
+  return apiFetch<listManagedProductsResponse>(getListManagedProductsUrl(organizationId, params), {
     ...options,
     method: 'GET',
   });
 };
 
-export const getListManagedProductsQueryKey = (organizationId: string) => {
-  return [`/api/cooperative/organizations/${organizationId}/products`] as const;
+export const getListManagedProductsQueryKey = (
+  organizationId: string,
+  params?: ListManagedProductsParams,
+) => {
+  return [
+    `/api/cooperative/organizations/${organizationId}/products`,
+    ...(params ? [params] : []),
+  ] as const;
 };
 
 export const getListManagedProductsQueryOptions = <
@@ -83,6 +107,7 @@ export const getListManagedProductsQueryOptions = <
   TError = unknown,
 >(
   organizationId: string,
+  params?: ListManagedProductsParams,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof listManagedProducts>>, TError, TData>
@@ -92,10 +117,10 @@ export const getListManagedProductsQueryOptions = <
 ) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
-  const queryKey = queryOptions?.queryKey ?? getListManagedProductsQueryKey(organizationId);
+  const queryKey = queryOptions?.queryKey ?? getListManagedProductsQueryKey(organizationId, params);
 
   const queryFn: QueryFunction<Awaited<ReturnType<typeof listManagedProducts>>> = ({ signal }) =>
-    listManagedProducts(organizationId, { signal, ...requestOptions });
+    listManagedProducts(organizationId, params, { signal, ...requestOptions });
 
   return {
     queryKey,
@@ -117,6 +142,7 @@ export function useListManagedProducts<
   TError = unknown,
 >(
   organizationId: string,
+  params: undefined | ListManagedProductsParams,
   options: {
     query: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof listManagedProducts>>, TError, TData>
@@ -138,6 +164,7 @@ export function useListManagedProducts<
   TError = unknown,
 >(
   organizationId: string,
+  params?: ListManagedProductsParams,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof listManagedProducts>>, TError, TData>
@@ -159,6 +186,7 @@ export function useListManagedProducts<
   TError = unknown,
 >(
   organizationId: string,
+  params?: ListManagedProductsParams,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof listManagedProducts>>, TError, TData>
@@ -168,7 +196,7 @@ export function useListManagedProducts<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
- * @summary Every product of an organization the account manages, unpublished ones included
+ * @summary A page of the products of an organization the account manages, unpublished ones included
  */
 
 export function useListManagedProducts<
@@ -176,6 +204,7 @@ export function useListManagedProducts<
   TError = unknown,
 >(
   organizationId: string,
+  params?: ListManagedProductsParams,
   options?: {
     query?: Partial<
       UseQueryOptions<Awaited<ReturnType<typeof listManagedProducts>>, TError, TData>
@@ -184,7 +213,7 @@ export function useListManagedProducts<
   },
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-  const queryOptions = getListManagedProductsQueryOptions(organizationId, options);
+  const queryOptions = getListManagedProductsQueryOptions(organizationId, params, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;

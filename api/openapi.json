@@ -901,23 +901,80 @@
             "type" : "string",
             "format" : "uuid"
           }
+        }, {
+          "description" : "A part of the name, without caring about case or accents",
+          "in" : "query",
+          "name" : "q",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "description" : "A part of the name, without caring about case or accents",
+            "maxLength" : 200,
+            "minLength" : 0
+          }
+        }, {
+          "description" : "Only the published or only the unpublished ones",
+          "in" : "query",
+          "name" : "status",
+          "required" : false,
+          "schema" : {
+            "$ref" : "#/components/schemas/ProductStatus"
+          }
+        }, {
+          "description" : "Only this category",
+          "in" : "query",
+          "name" : "category",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "Only this category"
+          }
+        }, {
+          "description" : "Only products sold this way",
+          "in" : "query",
+          "name" : "saleMode",
+          "required" : false,
+          "schema" : {
+            "$ref" : "#/components/schemas/SaleMode"
+          }
+        }, {
+          "description" : "From 0; 0 by default",
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "From 0; 0 by default",
+            "minimum" : 0
+          }
+        }, {
+          "description" : "20 by default",
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "20 by default",
+            "maximum" : 50,
+            "minimum" : 1
+          }
         } ],
         "responses" : {
           "200" : {
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/ProductResponse"
-                  }
+                  "$ref" : "#/components/schemas/ManagedProductPageResponse"
                 }
               }
             },
             "description" : "OK"
           }
         },
-        "summary" : "Every product of an organization the account manages, unpublished ones included",
+        "summary" : "A page of the products of an organization the account manages, unpublished ones included",
         "tags" : [ "cooperative-products" ]
       },
       "post" : {
@@ -2291,6 +2348,31 @@
           }
         },
         "required" : [ "email", "password" ]
+      },
+      "ManagedProductPageResponse" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ProductResponse"
+            }
+          },
+          "page" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "size" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "total" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Products found, on every page"
+          }
+        },
+        "required" : [ "items", "page", "size", "total" ]
       },
       "OrganizationProfileResponse" : {
         "type" : "object",

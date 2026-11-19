@@ -19,6 +19,7 @@ import ar.uba.fi.cooperar.repository.user.UserAccountRepository;
 import com.jayway.jsonpath.JsonPath;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -124,7 +125,7 @@ class ProductIntegrationTest {
                 .isEmpty();
         assertThat(send(HttpMethod.GET, products(), token, null))
                 .bodyJson()
-                .extractingPath("$[0].status")
+                .extractingPath("$.items[0].status")
                 .isEqualTo("UNPUBLISHED");
     }
 
@@ -205,7 +206,7 @@ class ProductIntegrationTest {
     }
 
     @Test
-    void listsThePublishedProductsFirstIncludingTheUnpublishedOnes() {
+    void listsEveryProductByNameWhetherPublishedOrNot() {
         String token = token("coop@test.local");
         String bags = create(token, "Bolsas de tela");
         create(token, "Remera");
@@ -215,8 +216,70 @@ class ProductIntegrationTest {
                 .hasStatusOk()
                 .bodyJson()
                 .isLenientlyEqualTo("""
-                        [{"name": "Remera", "status": "PUBLISHED"}, {"name": "Bolsas de tela", "status": "UNPUBLISHED"}]
+                        {"total": 2, "page": 0, "size": 20,
+                         "items": [{"name": "Bolsas de tela", "status": "UNPUBLISHED"},
+                                   {"name": "Remera", "status": "PUBLISHED"}]}
                         """);
+    }
+
+    @Test
+    void searchesByAPartOfTheNameWithoutCaringAboutCaseOrAccents() {
+        String token = token("coop@test.local");
+        create(token, "Camiseta de algodón");
+        create(token, "Bolsas de tela");
+        create(token, "100% lana");
+
+        assertThat(names(token, "?q=ALGODON")).containsExactly("Camiseta de algodón");
+        assertThat(names(token, "?q=bolsa")).containsExactly("Bolsas de tela");
+        assertThat(names(token, "?q=100%")).containsExactly("100% lana");
+        assertThat(names(token, "?q=zzz")).isEmpty();
+        assertThat(names(token, "?q= ")).hasSize(3);
+    }
+
+    @Test
+    void filtersByStatusCategoryAndSaleMode() {
+        String token = token("coop@test.local");
+        ProductCategory food = categories.save(new ProductCategory("Comida de prueba", Instant.now()));
+        String hidden = create(token, "Remera oculta");
+        send(HttpMethod.POST, products() + "/" + hidden + "/unpublish", token, null);
+        create(token, "Remera visible");
+        send(HttpMethod.POST, products(), token, """
+                {"name": "Pan", "categoryId": "%s", "saleModes": ["WHOLESALE"], "publish": true}
+                """.formatted(food.getId()));
+
+        assertThat(names(token, "?status=UNPUBLISHED")).containsExactly("Remera oculta");
+        assertThat(names(token, "?status=PUBLISHED")).containsExactly("Pan", "Remera visible");
+        assertThat(names(token, "?category=" + food.getId())).containsExactly("Pan");
+        assertThat(names(token, "?saleMode=WHOLESALE")).containsExactly("Pan");
+        assertThat(names(token, "?saleMode=RETAIL&status=PUBLISHED")).containsExactly("Remera visible");
+        assertThat(names(token, "?q=remera&status=PUBLISHED&category=" + category.getId()))
+                .containsExactly("Remera visible");
+    }
+
+    @Test
+    void paginatesTheList() {
+        String token = token("coop@test.local");
+        for (String name : List.of("Ajo", "Bolsa", "Cinta", "Dedal", "Etiqueta")) {
+            create(token, name);
+        }
+
+        assertThat(send(HttpMethod.GET, products() + "?size=2&page=1", token, null))
+                .hasStatusOk()
+                .bodyJson()
+                .isLenientlyEqualTo("""
+                        {"total": 5, "page": 1, "size": 2, "items": [{"name": "Cinta"}, {"name": "Dedal"}]}
+                        """);
+        assertThat(names(token, "?size=2&page=2")).containsExactly("Etiqueta");
+        assertThat(names(token, "?size=2&page=3")).isEmpty();
+    }
+
+    @Test
+    void rejectsAnInvalidPage() {
+        String token = token("coop@test.local");
+
+        assertThat(send(HttpMethod.GET, products() + "?size=0", token, null)).hasStatus(HttpStatus.BAD_REQUEST);
+        assertThat(send(HttpMethod.GET, products() + "?size=51", token, null)).hasStatus(HttpStatus.BAD_REQUEST);
+        assertThat(send(HttpMethod.GET, products() + "?page=-1", token, null)).hasStatus(HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -499,6 +562,12 @@ class ProductIntegrationTest {
                 {"name": "%s", "categoryId": "<category>", "saleModes": ["RETAIL"], "publish": true}
                 """.formatted(name));
         return JsonPath.read(body(created), "$.id");
+    }
+
+    private List<String> names(String token, String query) {
+        MvcTestResult result = send(HttpMethod.GET, products() + query, token, null);
+        assertThat(result).hasStatusOk();
+        return JsonPath.read(body(result), "$.items[*].name");
     }
 
     private UserAccount account(String email) {

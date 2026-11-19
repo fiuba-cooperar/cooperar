@@ -28,6 +28,11 @@ function finishDrag(activeId: string, overId: string) {
   });
 }
 
+/** The answer of the list: one page with these products. */
+function page(items: unknown[], total = items.length) {
+  return { items, total, page: 0, size: 20 };
+}
+
 const PRODUCTS_URL = '/api/cooperative/organizations/c1/products';
 
 const ACCOUNT = {
@@ -83,7 +88,7 @@ function signedIn(routes: Routes = {}) {
   saveTokens({ accessToken: 'access-1', refreshToken: 'refresh-1' });
   return stubFetchRoutes({
     'GET /api/me': { body: ACCOUNT },
-    [`GET ${PRODUCTS_URL}`]: { body: [SHIRT, PRINTING, BAGS] },
+    [`GET ${PRODUCTS_URL}`]: { body: page([SHIRT, PRINTING, BAGS]) },
     'GET /api/product-categories': { body: CATEGORIES },
     ...routes,
   });
@@ -92,6 +97,13 @@ function signedIn(routes: Routes = {}) {
 /** Opens the "more actions" menu of the row of `name`. */
 async function openActions(name: string) {
   await userEvent.click(await screen.findByRole('button', { name: `Más acciones de ${name}` }));
+}
+
+/** The URLs of the list the page asked for, in order. */
+function requestedUrls(fetchMock: ReturnType<typeof stubFetchRoutes>) {
+  return fetchMock.mock.calls
+    .map(([input]) => input)
+    .filter((url): url is string => typeof url === 'string' && url.startsWith(PRODUCTS_URL));
 }
 
 function sentBody(fetchMock: ReturnType<typeof stubFetchRoutes>, method: string, url: string) {
@@ -105,6 +117,89 @@ function sentBody(fetchMock: ReturnType<typeof stubFetchRoutes>, method: string,
 const FORM_TIMEOUT = 20_000;
 
 describe('ProductsPage', { timeout: FORM_TIMEOUT }, () => {
+  it('searches by name and filters, keeping them in the address', async () => {
+    const fetchMock = signedIn();
+
+    renderRoute('/cooperative/products?q=remera&status=published&saleMode=retail&category=k1');
+
+    expect(await screen.findByRole('searchbox', { name: 'Buscar por nombre' })).toHaveValue(
+      'remera',
+    );
+    expect(requestedUrls(fetchMock)).toContain(
+      `${PRODUCTS_URL}?q=remera&status=PUBLISHED&category=k1&saleMode=RETAIL&size=20`,
+    );
+
+    await userEvent.clear(screen.getByRole('searchbox', { name: 'Buscar por nombre' }));
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Buscar por nombre' }), 'bolsa');
+
+    await waitFor(() => {
+      expect(requestedUrls(fetchMock)).toContain(
+        `${PRODUCTS_URL}?q=bolsa&status=PUBLISHED&category=k1&saleMode=RETAIL&size=20`,
+      );
+    });
+  });
+
+  it('clears the search from the box', async () => {
+    const fetchMock = signedIn();
+
+    renderRoute('/cooperative/products?q=remera');
+    expect(await screen.findByRole('searchbox', { name: 'Buscar por nombre' })).toHaveValue(
+      'remera',
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Limpiar la búsqueda' }));
+
+    expect(screen.getByRole('searchbox', { name: 'Buscar por nombre' })).toHaveValue('');
+    expect(screen.queryByRole('button', { name: 'Limpiar la búsqueda' })).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(requestedUrls(fetchMock).at(-1)).toBe(`${PRODUCTS_URL}?size=20`);
+    });
+  });
+
+  it('filters by status from the filters', async () => {
+    const fetchMock = signedIn();
+    renderRoute('/cooperative/products');
+    await screen.findByText('Estampado de prendas');
+
+    await userEvent.click(screen.getByRole('combobox', { name: 'Estado' }));
+    await userEvent.click(await screen.findByRole('option', { name: /^No publicados/ }));
+
+    await waitFor(() => {
+      expect(requestedUrls(fetchMock)).toContain(`${PRODUCTS_URL}?status=UNPUBLISHED&size=20`);
+    });
+  });
+
+  it('says so when nothing matches and clears the filters', async () => {
+    const fetchMock = signedIn({
+      [`GET ${PRODUCTS_URL}`]: { body: page([]) },
+    });
+
+    renderRoute('/cooperative/products?q=zzz');
+
+    expect(await screen.findByText('No encontramos productos con esos filtros')).toBeVisible();
+    expect(screen.queryByText('Mostrá lo que ofrecés')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Limpiar los filtros' }));
+
+    await waitFor(() => {
+      expect(requestedUrls(fetchMock).at(-1)).toBe(`${PRODUCTS_URL}?size=20`);
+    });
+  });
+
+  it('pages through the products', async () => {
+    const fetchMock = signedIn({
+      [`GET ${PRODUCTS_URL}`]: { body: page([SHIRT, PRINTING], 45) },
+    });
+
+    renderRoute('/cooperative/products');
+
+    expect(await screen.findByText('45 productos y servicios')).toBeVisible();
+    await userEvent.click(screen.getByRole('button', { name: 'Página 2' }));
+
+    await waitFor(() => {
+      expect(requestedUrls(fetchMock)).toContain(`${PRODUCTS_URL}?page=1&size=20`);
+    });
+  });
+
   it('lists the products with their category, mode, price and status', async () => {
     signedIn();
 
@@ -133,7 +228,7 @@ describe('ProductsPage', { timeout: FORM_TIMEOUT }, () => {
   });
 
   it('says so when there are no products yet', async () => {
-    signedIn({ [`GET ${PRODUCTS_URL}`]: { body: [] } });
+    signedIn({ [`GET ${PRODUCTS_URL}`]: { body: page([]) } });
 
     renderRoute('/cooperative/products');
 

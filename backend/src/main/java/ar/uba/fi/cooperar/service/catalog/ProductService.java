@@ -1,5 +1,6 @@
 package ar.uba.fi.cooperar.service.catalog;
 
+import ar.uba.fi.cooperar.domain.catalog.ManagedProductCriteria;
 import ar.uba.fi.cooperar.domain.catalog.Product;
 import ar.uba.fi.cooperar.domain.catalog.ProductDetails;
 import ar.uba.fi.cooperar.domain.catalog.ProductPhoto;
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -77,8 +79,9 @@ public class ProductService {
 
     /** Not found also when the account does not manage the organization, so that is not revealed. */
     @Transactional(readOnly = true)
-    public List<Product> listManaged(UUID organizationId, UUID accountId) {
-        return products.findAllOf(managed(organizationId, accountId).getId());
+    public Page<Product> listManaged(
+            UUID organizationId, UUID accountId, ManagedProductCriteria criteria, int page, int size) {
+        return products.search(managed(organizationId, accountId).getId(), criteria, page, size);
     }
 
     @Transactional(readOnly = true)

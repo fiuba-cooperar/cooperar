@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   addProductPhoto,
   createProduct,
@@ -13,21 +13,30 @@ import {
   reorderProductPhotos,
   updateProduct,
 } from '@/api/generated/cooperative-products/cooperative-products';
-import type { ProductRequest, ProductResponse } from '@/api/generated/model';
+import type {
+  ListManagedProductsParams,
+  ManagedProductPageResponse,
+  ProductRequest,
+  ProductResponse,
+} from '@/api/generated/model';
 import { getListOrganizationProductsQueryKey } from '@/api/generated/products/products';
 
-async function fetchProducts(organizationId: string): Promise<ProductResponse[]> {
-  const response = await listManagedProducts(organizationId);
+async function fetchProducts(
+  organizationId: string,
+  params: ListManagedProductsParams,
+): Promise<ManagedProductPageResponse> {
+  const response = await listManagedProducts(organizationId, params);
   const httpStatus: number = response.status;
   if (httpStatus !== 200) throw new Error(`Unexpected status ${String(httpStatus)}`);
   return response.data;
 }
 
-/** Every product of the organization, the unpublished ones included. */
-export function useProducts(organizationId: string) {
+/** A page of the products of the organization, the unpublished ones included. While the next one loads, the last stays. */
+export function useProducts(organizationId: string, params: ListManagedProductsParams) {
   return useQuery({
-    queryKey: getListManagedProductsQueryKey(organizationId),
-    queryFn: () => fetchProducts(organizationId),
+    queryKey: getListManagedProductsQueryKey(organizationId, params),
+    queryFn: () => fetchProducts(organizationId, params),
+    placeholderData: keepPreviousData,
   });
 }
 

@@ -2,11 +2,15 @@ import {
   ActionIcon,
   Alert,
   Button,
+  CloseButton,
   Group,
   Menu,
+  Pagination,
   Paper,
+  Select,
   Stack,
   Text,
+  TextInput,
   ThemeIcon,
   Title,
   VisuallyHidden,
@@ -18,17 +22,20 @@ import {
   IconEye,
   IconEyeOff,
   IconPencil,
+  IconSearch,
   IconTrash,
 } from '@tabler/icons-react';
-import { useState } from 'react';
-import { Link } from 'react-router';
+import { useEffect, useState } from 'react';
+import { Link, useSearchParams } from 'react-router';
 import {
   ProductStatus,
+  SaleMode,
   type OrganizationSummary,
   type ProductResponse,
 } from '@/api/generated/model';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
-import { indicativePriceLabel, saleModesLabel } from '@/features/catalog/labels';
+import { useProductCategories } from '@/features/catalog/api/useProductCategories';
+import { indicativePriceLabel, SALE_MODE_LABELS, saleModesLabel } from '@/features/catalog/labels';
 import {
   useDeleteProduct,
   useUnpublishProduct,
@@ -36,6 +43,14 @@ import {
   usePublishProduct,
 } from './api/useProducts';
 import { editProductPath, NEW_PRODUCT_PATH } from './cooperativeSections';
+import {
+  hasFilters,
+  PRODUCTS_PAGE_SIZE,
+  readFilters,
+  toParams,
+  writeFilters,
+  type ProductFilters,
+} from './productFilters';
 import { useActiveOrganization } from './useActiveOrganization';
 import styles from './ProductsPage.module.css';
 
@@ -54,12 +69,34 @@ export function ProductsPage() {
 }
 
 function ProductsList({ organization }: { organization: OrganizationSummary }) {
-  const { data: products, isPending, isError } = useProducts(organization.id);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const filters = readFilters(searchParams);
+  const filtered = hasFilters(filters);
+  const { data, isPending, isError, isPlaceholderData } = useProducts(
+    organization.id,
+    toParams(filters),
+  );
+  const products = data?.items;
+  const pages = data ? Math.ceil(data.total / PRODUCTS_PAGE_SIZE) : 0;
   const unpublish = useUnpublishProduct(organization);
   const publish = usePublishProduct(organization);
   const remove = useDeleteProduct(organization);
   const [toUnpublish, setToUnpublish] = useState<ProductResponse>();
   const [toDelete, setToDelete] = useState<ProductResponse>();
+
+  function update(changes: Partial<ProductFilters>) {
+    // Changing what is searched starts again from the first page.
+    setSearchParams(writeFilters({ ...filters, page: 1, ...changes }));
+  }
+
+  // Deleting or hiding the last product of the last page leaves it empty: go back to the one before.
+  useEffect(() => {
+    if (data && !isPlaceholderData && pages > 0 && filters.page > pages) {
+      setSearchParams(writeFilters({ ...readFilters(searchParams), page: pages }), {
+        replace: true,
+      });
+    }
+  }, [data, isPlaceholderData, pages, filters.page, searchParams, setSearchParams]);
 
   function confirmUnpublish() {
     if (!toUnpublish) return;
@@ -87,13 +124,16 @@ function ProductsList({ organization }: { organization: OrganizationSummary }) {
             Productos y servicios
           </Title>
           <Text c="dimmed" fz={16}>
-            Lo que ofrecés se muestra en tu ficha y en el catálogo público.
+            Lo que publiques se muestra en tu ficha y en el catálogo público.
           </Text>
         </Stack>
         <Button component={Link} to={NEW_PRODUCT_PATH} h={48} px={22}>
           Agregar producto o servicio
         </Button>
       </Group>
+      {(filtered || (data && data.total > 0)) && (
+        <Filters filters={filters} onChange={update} total={data?.total} />
+      )}
       {isPending && <Text role="status">Cargando tus productos y servicios…</Text>}
       {isError && (
         <Alert
@@ -114,7 +154,7 @@ function ProductsList({ organization }: { organization: OrganizationSummary }) {
           No pudimos ocultar el producto. Probá de nuevo en unos minutos.
         </Alert>
       )}
-      {products?.length === 0 && (
+      {data?.total === 0 && !filtered && (
         <Paper withBorder radius="lg" className={styles.empty}>
           <ThemeIcon variant="light" size={64} radius="xl" aria-hidden>
             <IconBox size={32} stroke={1.6} />
@@ -133,8 +173,27 @@ function ProductsList({ organization }: { organization: OrganizationSummary }) {
           </Button>
         </Paper>
       )}
+      {data?.total === 0 && filtered && (
+        <Paper withBorder radius="lg" className={styles.empty}>
+          <Stack gap={6} align="center" maw={440}>
+            <Title order={2} fz={20}>
+              No encontramos productos con esos filtros
+            </Title>
+            <Text c="dimmed">Probá con otras palabras o quitá algún filtro.</Text>
+          </Stack>
+          <Button
+            variant="default"
+            h={44}
+            onClick={() => {
+              setSearchParams({});
+            }}
+          >
+            Limpiar los filtros
+          </Button>
+        </Paper>
+      )}
       {products && products.length > 0 && (
-        <Paper withBorder radius="lg" className={styles.tableCard}>
+        <Paper withBorder radius="lg" className={styles.tableCard} aria-busy={isPlaceholderData}>
           <table className={styles.table}>
             <VisuallyHidden component="caption">Listado de productos y servicios</VisuallyHidden>
             <thead>
@@ -170,6 +229,26 @@ function ProductsList({ organization }: { organization: OrganizationSummary }) {
           </table>
         </Paper>
       )}
+      {pages > 1 && (
+        <Group component="nav" aria-label="Páginas de productos" justify="center">
+          <Pagination
+            total={pages}
+            value={filters.page}
+            withEdges={false}
+            getItemProps={(page) => ({ 'aria-label': `Página ${String(page)}` })}
+            getControlProps={(control) =>
+              control === 'previous'
+                ? { 'aria-label': 'Página anterior' }
+                : control === 'next'
+                  ? { 'aria-label': 'Página siguiente' }
+                  : {}
+            }
+            onChange={(page) => {
+              setSearchParams(writeFilters({ ...filters, page }));
+            }}
+          />
+        </Group>
+      )}
       <Text fz={13} c="dimmed">
         Los productos no publicados no se muestran al público. Los precios son solo orientativos.
       </Text>
@@ -201,6 +280,148 @@ function ProductsList({ organization }: { organization: OrganizationSummary }) {
         <strong>{toUnpublish?.name}</strong> va a dejar de verse en tu ficha y en el catálogo
         público. Lo vas a seguir viendo en este listado y lo podés publicar de nuevo cuando quieras.
       </ConfirmDialog>
+    </Stack>
+  );
+}
+
+/** How long the search waits after the last key before asking the server. */
+const SEARCH_DELAY_MS = 300;
+
+const STATUS_OPTIONS = [
+  {
+    value: ProductStatus.PUBLISHED,
+    label: 'Publicados',
+    hint: 'Se ven en tu ficha y en el catálogo público.',
+  },
+  {
+    value: ProductStatus.UNPUBLISHED,
+    label: 'No publicados',
+    hint: 'Solo los ves vos; el público no los ve.',
+  },
+];
+
+const SALE_MODE_OPTIONS = [SaleMode.RETAIL, SaleMode.WHOLESALE].map((mode) => ({
+  value: mode,
+  label: SALE_MODE_LABELS[mode],
+}));
+
+/** The search by name and the filters of the list. */
+function Filters({
+  filters,
+  onChange,
+  total,
+}: {
+  filters: ProductFilters;
+  onChange: (changes: Partial<ProductFilters>) => void;
+  total: number | undefined;
+}) {
+  const { data: categories } = useProductCategories();
+  const [text, setText] = useState(filters.query);
+  const [lastQuery, setLastQuery] = useState(filters.query);
+  // Clearing the filters, or going back, changes the query from outside the box.
+  if (filters.query !== lastQuery) {
+    setLastQuery(filters.query);
+    setText(filters.query);
+  }
+  // Searches while typing, once the person pauses; Enter does not wait.
+  useEffect(() => {
+    const query = text.trim();
+    if (query === filters.query) return;
+    const timer = setTimeout(() => {
+      onChange({ query });
+    }, SEARCH_DELAY_MS);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [text, filters.query, onChange]);
+
+  return (
+    <Stack gap="sm">
+      <div className={styles.filters} role="search" aria-label="Buscar entre tus productos">
+        <form
+          className={styles.search}
+          onSubmit={(event) => {
+            event.preventDefault();
+            onChange({ query: text.trim() });
+          }}
+        >
+          <TextInput
+            type="search"
+            label="Buscar por nombre"
+            placeholder="Buscá por nombre"
+            value={text}
+            maxLength={200}
+            leftSection={<IconSearch size={18} aria-hidden />}
+            rightSection={
+              text ? (
+                <CloseButton
+                  size="sm"
+                  aria-label="Limpiar la búsqueda"
+                  onClick={() => {
+                    setText('');
+                    if (filters.query) onChange({ query: '' });
+                  }}
+                />
+              ) : null
+            }
+            onChange={(event) => {
+              setText(event.currentTarget.value);
+            }}
+          />
+        </form>
+        <Select
+          label="Estado"
+          placeholder="Todos"
+          data={STATUS_OPTIONS.map(({ value, label }) => ({ value, label }))}
+          comboboxProps={{ width: 300, position: 'bottom-start' }}
+          renderOption={({ option }) => (
+            <Stack gap={0}>
+              <Text fz={14} fw={600}>
+                {option.label}
+              </Text>
+              <Text fz={13} c="dimmed">
+                {STATUS_OPTIONS.find(({ value }) => value === option.value)?.hint}
+              </Text>
+            </Stack>
+          )}
+          value={filters.status}
+          clearable
+          allowDeselect
+          onChange={(value) => {
+            onChange({
+              status: STATUS_OPTIONS.find((option) => option.value === value)?.value ?? null,
+            });
+          }}
+        />
+        <Select
+          label="Categoría"
+          placeholder="Todas"
+          data={(categories ?? []).map(({ id, name }) => ({ value: id, label: name }))}
+          value={filters.categoryId}
+          clearable
+          searchable
+          onChange={(value) => {
+            onChange({ categoryId: value });
+          }}
+        />
+        <Select
+          label="Modalidad"
+          placeholder="Todas"
+          data={SALE_MODE_OPTIONS}
+          value={filters.saleMode}
+          clearable
+          onChange={(value) => {
+            onChange({
+              saleMode: SALE_MODE_OPTIONS.find((option) => option.value === value)?.value ?? null,
+            });
+          }}
+        />
+      </div>
+      {total !== undefined && (
+        <Text fz={14} c="dimmed" role="status">
+          {total === 1 ? '1 producto o servicio' : `${String(total)} productos y servicios`}
+        </Text>
+      )}
     </Stack>
   );
 }

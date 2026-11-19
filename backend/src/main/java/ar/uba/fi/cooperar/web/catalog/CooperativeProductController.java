@@ -6,8 +6,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.io.IOException;
-import java.util.List;
 import java.util.UUID;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -43,11 +43,13 @@ public class CooperativeProductController {
     @GetMapping
     @Operation(
             operationId = "listManagedProducts",
-            summary = "Every product of an organization the account manages, unpublished ones included")
-    public List<ProductResponse> list(@PathVariable UUID organizationId, @AuthenticationPrincipal Jwt jwt) {
-        return productService.listManaged(organizationId, accountId(jwt)).stream()
-                .map(ProductResponse::from)
-                .toList();
+            summary = "A page of the products of an organization the account manages, unpublished ones included")
+    public ManagedProductPageResponse list(
+            @PathVariable UUID organizationId,
+            @Valid @ParameterObject ManagedProductSearchRequest request,
+            @AuthenticationPrincipal Jwt jwt) {
+        return ManagedProductPageResponse.from(productService.listManaged(
+                organizationId, accountId(jwt), request.criteria(), request.pageOrDefault(), request.sizeOrDefault()));
     }
 
     @GetMapping("/{productId}")

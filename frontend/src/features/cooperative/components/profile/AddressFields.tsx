@@ -2,6 +2,11 @@ import { Alert, Select, SimpleGrid, Stack, Text, TextInput } from '@mantine/core
 import { IconMapPinOff } from '@tabler/icons-react';
 import { lazy, Suspense } from 'react';
 import { Province, Visibility } from '@/api/generated/model';
+import {
+  DistrictInput,
+  LocalityInput,
+  StreetInput,
+} from '@/features/geography/components/PlaceFields';
 import { PROVINCE_LABELS } from '@/features/organizations/labels';
 import { ADDRESS_NAME_MAX, type AddressDraft, type AddressForm } from './addressDraft';
 import { FieldHeader, VisibilityBadge, VisibilityToggle } from './Visibility';
@@ -94,13 +99,14 @@ export function AddressFields({ idPrefix, draft, onChange, mapSubject, namePlace
             label="Departamento/Partido/Comuna"
             visibility={<VisibilityBadge visibility={Visibility.PUBLIC} />}
           />
-          <TextInput
+          <DistrictInput
             id={id('district')}
+            province={form.province}
             maxLength={100}
             value={form.district}
             error={errors.district}
-            onChange={(event) => {
-              updateAddress('district', event.currentTarget.value);
+            onChange={(value) => {
+              updateAddress('district', value);
             }}
           />
         </div>
@@ -110,14 +116,18 @@ export function AddressFields({ idPrefix, draft, onChange, mapSubject, namePlace
             label="Localidad/Barrio"
             visibility={<VisibilityBadge visibility={Visibility.PUBLIC} />}
           />
-          <TextInput
+          <LocalityInput
             id={id('locality')}
-            autoComplete="address-level2"
+            province={form.province}
+            district={form.district}
             maxLength={100}
             value={form.locality}
             error={errors.locality}
-            onChange={(event) => {
-              updateAddress('locality', event.currentTarget.value);
+            onChange={(value) => {
+              updateAddress('locality', value);
+            }}
+            onDistrictFound={(district) => {
+              updateAddress('district', district);
             }}
           />
         </div>
@@ -136,14 +146,15 @@ export function AddressFields({ idPrefix, draft, onChange, mapSubject, namePlace
             />
           }
         />
-        <TextInput
+        <StreetInput
           id={id('street')}
-          autoComplete="address-line1"
+          province={form.province}
+          district={form.district}
           maxLength={200}
           value={form.street}
           error={errors.street}
-          onChange={(event) => {
-            updateAddress('street', event.currentTarget.value);
+          onChange={(value) => {
+            updateAddress('street', value);
           }}
         />
         <Text size="sm" c="dimmed" mt={6} aria-live="polite">

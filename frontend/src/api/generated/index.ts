@@ -5,6 +5,7 @@ export * from './auth/auth';
 export * from './cooperative-organization-profile/cooperative-organization-profile';
 export * from './cooperative-products/cooperative-products';
 export * from './cooperative-registration-requests/cooperative-registration-requests';
+export * from './geography/geography';
 export * from './health/health';
 export * from './organizations/organizations';
 export * from './products/products';

@@ -88,7 +88,7 @@ describe('correcting a registration', () => {
       'La Litoraleña',
     );
     expect(screen.getByRole('textbox', { name: 'CUIT' })).toHaveValue('30-12345678-1');
-    expect(screen.getByRole('textbox', { name: 'Calle y número' })).toHaveValue('Rivadavia 100');
+    expect(screen.getByRole('combobox', { name: 'Calle y número' })).toHaveValue('Rivadavia 100');
     expect(screen.getByRole('textbox', { name: 'Tu rol en la entidad' })).toHaveValue('Presidenta');
   });
 
@@ -100,7 +100,7 @@ describe('correcting a registration', () => {
       });
 
       renderRoute(PAGE);
-      const street = await screen.findByRole('textbox', { name: 'Calle y número' });
+      const street = await screen.findByRole('combobox', { name: 'Calle y número' });
       await userEvent.clear(street);
       await userEvent.type(street, 'San Martín 50');
       await userEvent.click(screen.getByRole('button', { name: 'Reenviar la solicitud' }));

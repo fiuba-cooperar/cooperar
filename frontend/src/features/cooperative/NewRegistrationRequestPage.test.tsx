@@ -38,11 +38,11 @@ async function fillIn() {
   await userEvent.type(screen.getByRole('combobox', { name: 'Provincia' }), 'Córd');
   await userEvent.click(await screen.findByRole('option', { name: 'Córdoba' }));
   await userEvent.type(
-    screen.getByRole('textbox', { name: 'Departamento/Partido/Comuna' }),
+    screen.getByRole('combobox', { name: 'Departamento/Partido/Comuna' }),
     'Capital',
   );
-  await userEvent.type(screen.getByRole('textbox', { name: 'Localidad/Barrio' }), 'Centro');
-  await userEvent.type(screen.getByRole('textbox', { name: 'Calle y número' }), 'San Martín 50');
+  await userEvent.type(screen.getByRole('combobox', { name: 'Localidad/Barrio' }), 'Centro');
+  await userEvent.type(screen.getByRole('combobox', { name: 'Calle y número' }), 'San Martín 50');
   await userEvent.type(screen.getByRole('textbox', { name: 'Tu rol en la entidad' }), 'Tesorera');
 }
 

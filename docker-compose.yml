@@ -39,6 +39,8 @@ services:
       PUBLIC_URL: ${PUBLIC_URL:-http://localhost:5173}
       GEOCODING_PROVIDER: ${GEOCODING_PROVIDER:-nominatim}
       NOMINATIM_URL: ${NOMINATIM_URL:-https://nominatim.openstreetmap.org}
+      GEOGRAPHY_PROVIDER: ${GEOGRAPHY_PROVIDER:-georef}
+      GEOREF_URL: ${GEOREF_URL:-https://apis.datos.gob.ar/georef/api}
       IMAGE_STORAGE: ${IMAGE_STORAGE:-disk}
       IMAGE_CLOUD_NAME: ${IMAGE_CLOUD_NAME:-}
       IMAGE_CLOUD_API_KEY: ${IMAGE_CLOUD_API_KEY:-}

@@ -10,6 +10,11 @@ import {
   Title,
 } from '@mantine/core';
 import { ActivityType, Province, Sector } from '@/api/generated/model';
+import {
+  DistrictInput,
+  LocalityInput,
+  StreetInput,
+} from '@/features/geography/components/PlaceFields';
 import { ACTIVITY_TYPE_LABELS, PROVINCE_LABELS, SECTOR_LABELS } from '../labels';
 import type { FormErrors, OrganizationForm } from '../registrationForm';
 import { OrganizationTypePicker } from './OrganizationTypePicker';
@@ -132,36 +137,42 @@ export function OrganizationRegistrationFields({
                 onChange('province', PROVINCES.find((province) => province === value) ?? null);
               }}
             />
-            <TextInput
+            <DistrictInput
               label="Departamento/Partido/Comuna"
+              province={value.province}
               maxLength={100}
               value={value.district}
               error={errors.district}
-              onChange={(event) => {
-                onChange('district', event.currentTarget.value);
+              onChange={(district) => {
+                onChange('district', district);
               }}
             />
           </SimpleGrid>
           <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="md">
-            <TextInput
+            <LocalityInput
               label="Localidad/Barrio"
-              autoComplete="address-level2"
+              province={value.province}
+              district={value.district}
               maxLength={100}
               value={value.locality}
               error={errors.locality}
-              onChange={(event) => {
-                onChange('locality', event.currentTarget.value);
+              onChange={(locality) => {
+                onChange('locality', locality);
+              }}
+              onDistrictFound={(district) => {
+                onChange('district', district);
               }}
             />
-            <TextInput
+            <StreetInput
               label="Calle y número"
               placeholder="Av. Rivadavia 1234"
-              autoComplete="address-line1"
+              province={value.province}
+              district={value.district}
               maxLength={200}
               value={value.street}
               error={errors.street}
-              onChange={(event) => {
-                onChange('street', event.currentTarget.value);
+              onChange={(street) => {
+                onChange('street', street);
               }}
             />
           </SimpleGrid>

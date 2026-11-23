@@ -1457,6 +1457,120 @@
         "tags" : [ "cooperative-registration-requests" ]
       }
     },
+    "/api/geography/districts" : {
+      "get" : {
+        "operationId" : "listDistricts",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "province",
+          "required" : true,
+          "schema" : {
+            "$ref" : "#/components/schemas/Province"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/DistrictResponse"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "The departamentos, partidos or comunas of a province",
+        "tags" : [ "geography" ]
+      }
+    },
+    "/api/geography/localities" : {
+      "get" : {
+        "operationId" : "listLocalities",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "province",
+          "required" : true,
+          "schema" : {
+            "$ref" : "#/components/schemas/Province"
+          }
+        }, {
+          "description" : "Name of the district; without it, the whole province",
+          "in" : "query",
+          "name" : "district",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/LocalityResponse"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "The localities (neighborhoods in the City of Buenos Aires) of a province or of one district",
+        "tags" : [ "geography" ]
+      }
+    },
+    "/api/geography/streets" : {
+      "get" : {
+        "description" : "Needs at least 3 characters and returns at most 10 streets. Not cached: every call reaches the provider.",
+        "operationId" : "listStreets",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "province",
+          "required" : true,
+          "schema" : {
+            "$ref" : "#/components/schemas/Province"
+          }
+        }, {
+          "description" : "Name of the district",
+          "in" : "query",
+          "name" : "district",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "q",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/StreetResponse"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Streets whose name matches the text, in a province and optionally a district",
+        "tags" : [ "geography" ]
+      }
+    },
     "/api/health" : {
       "get" : {
         "operationId" : "getHealth",
@@ -2262,6 +2376,14 @@
         },
         "required" : [ "outcome", "reviewedAt" ]
       },
+      "DistrictResponse" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          }
+        }
+      },
       "GalleryOrderRequest" : {
         "type" : "object",
         "properties" : {
@@ -2338,6 +2460,18 @@
       "HealthStatus" : {
         "type" : "string",
         "enum" : [ "UP", "DOWN" ]
+      },
+      "LocalityResponse" : {
+        "type" : "object",
+        "properties" : {
+          "district" : {
+            "type" : "string",
+            "description" : "The departamento, partido or comuna it belongs to"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        }
       },
       "LoginRequest" : {
         "type" : "object",
@@ -3518,6 +3652,14 @@
           }
         },
         "required" : [ "count", "sector" ]
+      },
+      "StreetResponse" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          }
+        }
       },
       "TokenResponse" : {
         "type" : "object",

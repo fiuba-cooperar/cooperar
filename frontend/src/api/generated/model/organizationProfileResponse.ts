@@ -10,6 +10,7 @@ import type { OrganizationType } from './organizationType';
 import type { ProfilePhotosResponse } from './profilePhotosResponse';
 import type { Province } from './province';
 import type { PublicLocation } from './publicLocation';
+import type { PublicOtherAddressResponse } from './publicOtherAddressResponse';
 import type { ResponseTime } from './responseTime';
 import type { Sector } from './sector';
 
@@ -17,6 +18,8 @@ export interface OrganizationProfileResponse {
   activityTypes: ActivityType[];
   /** Only along with the street */
   additionalReferences?: string;
+  /** How the organization calls its main address */
+  addressName?: string;
   description?: string;
   district: string;
   email?: string;
@@ -25,6 +28,8 @@ export interface OrganizationProfileResponse {
   location?: PublicLocation;
   name: string;
   openingHours?: string;
+  /** Besides the main one, in order */
+  otherAddresses: PublicOtherAddressResponse[];
   phone?: string;
   photos: ProfilePhotosResponse;
   province: Province;

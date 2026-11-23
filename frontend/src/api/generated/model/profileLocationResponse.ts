@@ -6,11 +6,16 @@
  * OpenAPI spec version: v1
  */
 import type { GeoPointResponse } from './geoPointResponse';
+import type { OtherAddressResponse } from './otherAddressResponse';
 import type { RegistrationAddressResponse } from './registrationAddressResponse';
 import type { Visibility } from './visibility';
 
 export interface ProfileLocationResponse {
   address: RegistrationAddressResponse;
+  /** How the organization calls its main address */
+  addressName?: string;
+  /** Besides the main one, in order */
+  otherAddresses: OtherAddressResponse[];
   /** Missing when the address could not be located */
   point?: GeoPointResponse;
   streetVisibility: Visibility;

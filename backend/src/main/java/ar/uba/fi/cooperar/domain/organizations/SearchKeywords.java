@@ -58,16 +58,24 @@ public final class SearchKeywords {
 
     private SearchKeywords() {}
 
+    /**
+     * {@code otherAddresses} are the addresses besides the main one: their place (locality, district and province) is
+     * searched too, while the main one's locality and district are already in the index.
+     */
     static String of(
             OrganizationType type,
             Collection<Sector> sectors,
             Collection<ActivityType> activityTypes,
-            Province province) {
+            Province province,
+            Collection<Address> otherAddresses) {
         return Stream.of(
                         Stream.of(TYPES.get(type)),
                         sectors.stream().map(SECTORS::get),
                         activityTypes.stream().map(ACTIVITY_TYPES::get),
-                        Stream.of(PROVINCES.get(province)))
+                        Stream.of(PROVINCES.get(province)),
+                        otherAddresses.stream()
+                                .flatMap(other ->
+                                        Stream.of(other.locality(), other.district(), PROVINCES.get(other.province()))))
                 .flatMap(words -> words)
                 .filter(words -> !words.isEmpty())
                 .collect(Collectors.joining(" "));

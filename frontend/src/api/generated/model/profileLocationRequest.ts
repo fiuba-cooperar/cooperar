@@ -6,11 +6,24 @@
  * OpenAPI spec version: v1
  */
 import type { GeoPointRequest } from './geoPointRequest';
+import type { OtherAddressRequest } from './otherAddressRequest';
 import type { RegistrationAddressRequest } from './registrationAddressRequest';
 import type { Visibility } from './visibility';
 
 export interface ProfileLocationRequest {
   address: RegistrationAddressRequest;
+  /**
+   * How the organization calls its main address; blank removes it
+   * @minLength 0
+   * @maxLength 50
+   */
+  addressName?: string;
+  /**
+   * Every address besides the main one, in order: the ones left out are removed. Missing leaves them as they are.
+   * @minItems 0
+   * @maxItems 10
+   */
+  otherAddresses?: OtherAddressRequest[];
   /** Where the organization placed the pin. Without it, a changed address is located again and an unchanged one keeps its point. */
   point?: GeoPointRequest;
   /** A private street also hides the additional references and the exact point */

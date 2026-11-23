@@ -1,4 +1,5 @@
-import { Chip, Group, NumberInput, SimpleGrid, Stack, Text, Textarea } from '@mantine/core';
+import { Button, Chip, Group, NumberInput, SimpleGrid, Stack, Text, Textarea } from '@mantine/core';
+import { IconArrowsMaximize, IconArrowsMinimize } from '@tabler/icons-react';
 import { useState } from 'react';
 import {
   ActivityType,
@@ -63,6 +64,7 @@ function validate(form: Form, currentYear: number): Errors<Form> {
 
 export function ActivitySection({ profile, hidden, saving, next, save }: SectionProps) {
   const [form, setForm] = useState(() => fromProfile(profile));
+  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const [errors, setErrors] = useState<Errors<Form>>({});
   const currentYear = new Date().getFullYear();
 
@@ -173,7 +175,9 @@ export function ActivitySection({ profile, hidden, saving, next, save }: Section
           />
           <Textarea
             id="profile-description"
-            rows={5}
+            rows={descriptionExpanded ? 15 : 5}
+            // Dragging the corner makes it taller too; the text keeps its own scroll at any size.
+            resize="vertical"
             maxLength={DESCRIPTION_MAX}
             placeholder="Contá qué producen, desde cuándo trabajan, cómo se organizan y quiénes la integran."
             aria-description={DESCRIPTION_HINT}
@@ -182,6 +186,27 @@ export function ActivitySection({ profile, hidden, saving, next, save }: Section
               update('description', event.currentTarget.value);
             }}
           />
+          <Group justify="flex-end" mt={4}>
+            <Button
+              type="button"
+              variant="subtle"
+              size="compact-sm"
+              leftSection={
+                descriptionExpanded ? (
+                  <IconArrowsMinimize size={16} aria-hidden />
+                ) : (
+                  <IconArrowsMaximize size={16} aria-hidden />
+                )
+              }
+              aria-controls="profile-description"
+              aria-expanded={descriptionExpanded}
+              onClick={() => {
+                setDescriptionExpanded((current) => !current);
+              }}
+            >
+              {descriptionExpanded ? 'Achicar la descripción' : 'Agrandar la descripción'}
+            </Button>
+          </Group>
         </div>
         <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="md">
           <div>

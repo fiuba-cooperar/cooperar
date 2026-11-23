@@ -50,3 +50,74 @@
   margin: 0;
   font-size: 20px;
 }
+
+/* Each address is a fieldset: the main one and every other one. */
+.addressGroup {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+/* Collapsed, the addresses are a compact list separated by a line. */
+.addressGroup {
+  padding-block: var(--mantine-spacing-xs);
+}
+
+.addressGroup + .addressGroup {
+  border-top: 1px solid var(--mantine-color-default-border);
+}
+
+.addressContent {
+  padding-block: var(--mantine-spacing-sm) var(--mantine-spacing-md);
+}
+
+.addressLegend {
+  width: 100%;
+  padding: 0;
+}
+
+/* The whole line opens and closes the address, not only the arrow. */
+.addressToggle {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--mantine-spacing-sm);
+  min-width: 0;
+  min-height: 44px;
+  border-radius: var(--mantine-radius-sm);
+}
+
+.addressHeading {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.addressTitle {
+  font-weight: 700;
+}
+
+.addressSummary {
+  overflow: hidden;
+  color: var(--mantine-color-dimmed);
+  font-size: var(--mantine-font-size-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chevron {
+  flex: none;
+  color: var(--mantine-color-dimmed);
+  transition: transform 150ms ease;
+
+  &[data-expanded] {
+    transform: rotate(180deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chevron {
+    transition: none;
+  }
+}

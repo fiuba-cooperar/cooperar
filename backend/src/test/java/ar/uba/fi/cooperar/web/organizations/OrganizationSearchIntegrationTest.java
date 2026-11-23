@@ -5,9 +5,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import ar.uba.fi.cooperar.IntegrationTest;
 import ar.uba.fi.cooperar.domain.organizations.ActivityType;
 import ar.uba.fi.cooperar.domain.organizations.Address;
+import ar.uba.fi.cooperar.domain.organizations.AddressType;
 import ar.uba.fi.cooperar.domain.organizations.Organization;
 import ar.uba.fi.cooperar.domain.organizations.OrganizationDetails;
 import ar.uba.fi.cooperar.domain.organizations.OrganizationType;
+import ar.uba.fi.cooperar.domain.organizations.OtherAddress;
 import ar.uba.fi.cooperar.domain.organizations.ProfileActivity;
 import ar.uba.fi.cooperar.domain.organizations.ProfileContact;
 import ar.uba.fi.cooperar.domain.organizations.ProfileIdentification;
@@ -156,6 +158,24 @@ class OrganizationSearchIntegrationTest {
 
         assertThat(names(SEARCH + "?q=farmaceutica")).containsExactly("Laboratorio del Sur");
         assertThat(names(SEARCH + "?sector=PHARMACEUTICAL")).containsExactly("Laboratorio del Sur");
+    }
+
+    @Test
+    void findsAnOrganizationByTheProvinceAndThePlaceOfAnotherAddress() {
+        Organization bakery = organizations.findBySlug("panaderia-la-union").orElseThrow();
+        bakery.replaceOtherAddresses(List.of(new OtherAddress(
+                null,
+                AddressType.SECONDARY,
+                "Sucursal",
+                new Address(Province.MENDOZA, "Godoy Cruz", "Villa Hipódromo", "San Martín 1", null),
+                Visibility.PUBLIC,
+                null)));
+        organizations.flush();
+
+        assertThat(names(SEARCH + "?province=MENDOZA")).containsExactly("Panadería La Unión");
+        assertThat(names(SEARCH + "?province=SANTA_FE")).containsExactly("Panadería La Unión");
+        assertThat(names(SEARCH + "?q=godoy cruz")).containsExactly("Panadería La Unión");
+        assertThat(names(SEARCH + "?q=mendoza")).containsExactly("Panadería La Unión");
     }
 
     @Test

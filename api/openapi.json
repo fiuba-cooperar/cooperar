@@ -663,7 +663,7 @@
     },
     "/api/cooperative/organizations/{id}/profile/location" : {
       "put" : {
-        "description" : "Without a `point`, a changed address is located again; if it cannot be found, the profile is saved without a point.",
+        "description" : "Without a `point`, a changed address is located again; if it cannot be found, it is saved without a point. The same goes for each of the other addresses.",
         "operationId" : "updateProfileLocation",
         "parameters" : [ {
           "in" : "path",
@@ -696,7 +696,7 @@
             "description" : "OK"
           }
         },
-        "summary" : "Save the address and the point on the map",
+        "summary" : "Save the main address, the other ones and their points on the map",
         "tags" : [ "cooperative-organization-profile" ]
       }
     },
@@ -1859,6 +1859,10 @@
         },
         "required" : [ "activityType", "count" ]
       },
+      "AddressType" : {
+        "type" : "string",
+        "enum" : [ "SECONDARY" ]
+      },
       "AdminOrganizationResponse" : {
         "type" : "object",
         "properties" : {
@@ -2388,6 +2392,10 @@
             "type" : "string",
             "description" : "Only along with the street"
           },
+          "addressName" : {
+            "type" : "string",
+            "description" : "How the organization calls its main address"
+          },
           "description" : {
             "type" : "string"
           },
@@ -2411,6 +2419,13 @@
           },
           "openingHours" : {
             "type" : "string"
+          },
+          "otherAddresses" : {
+            "type" : "array",
+            "description" : "Besides the main one, in order",
+            "items" : {
+              "$ref" : "#/components/schemas/PublicOtherAddressResponse"
+            }
           },
           "phone" : {
             "type" : "string"
@@ -2459,7 +2474,7 @@
             "format" : "int32"
           }
         },
-        "required" : [ "activityTypes", "district", "locality", "name", "photos", "province", "sectors", "slug", "type" ]
+        "required" : [ "activityTypes", "district", "locality", "name", "otherAddresses", "photos", "province", "sectors", "slug", "type" ]
       },
       "OrganizationSearchResponse" : {
         "type" : "object",
@@ -2578,6 +2593,63 @@
       "OrganizationType" : {
         "type" : "string",
         "enum" : [ "COOPERATIVE", "ERT" ]
+      },
+      "OtherAddressRequest" : {
+        "type" : "object",
+        "properties" : {
+          "address" : {
+            "$ref" : "#/components/schemas/RegistrationAddressRequest"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "The address to update; missing for a new one"
+          },
+          "name" : {
+            "type" : "string",
+            "description" : "How the organization calls it, like «sucursal» or «depósito»",
+            "maxLength" : 50,
+            "minLength" : 0
+          },
+          "point" : {
+            "$ref" : "#/components/schemas/GeoPointRequest",
+            "description" : "Where the organization placed the pin. Without it, a changed address is located again and an unchanged one keeps its point."
+          },
+          "streetVisibility" : {
+            "$ref" : "#/components/schemas/Visibility",
+            "description" : "A private street also hides the additional references and the exact point"
+          },
+          "type" : {
+            "$ref" : "#/components/schemas/AddressType"
+          }
+        },
+        "required" : [ "address", "streetVisibility", "type" ]
+      },
+      "OtherAddressResponse" : {
+        "type" : "object",
+        "properties" : {
+          "address" : {
+            "$ref" : "#/components/schemas/RegistrationAddressResponse"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "point" : {
+            "$ref" : "#/components/schemas/GeoPointResponse",
+            "description" : "Missing when the address could not be located"
+          },
+          "streetVisibility" : {
+            "$ref" : "#/components/schemas/Visibility"
+          },
+          "type" : {
+            "$ref" : "#/components/schemas/AddressType"
+          }
+        },
+        "required" : [ "address", "id", "streetVisibility", "type" ]
       },
       "PhotoOrderRequest" : {
         "type" : "object",
@@ -2958,6 +3030,21 @@
           "address" : {
             "$ref" : "#/components/schemas/RegistrationAddressRequest"
           },
+          "addressName" : {
+            "type" : "string",
+            "description" : "How the organization calls its main address; blank removes it",
+            "maxLength" : 50,
+            "minLength" : 0
+          },
+          "otherAddresses" : {
+            "type" : "array",
+            "description" : "Every address besides the main one, in order: the ones left out are removed. Missing leaves them as they are.",
+            "items" : {
+              "$ref" : "#/components/schemas/OtherAddressRequest"
+            },
+            "maxItems" : 10,
+            "minItems" : 0
+          },
           "point" : {
             "$ref" : "#/components/schemas/GeoPointRequest",
             "description" : "Where the organization placed the pin. Without it, a changed address is located again and an unchanged one keeps its point."
@@ -2975,6 +3062,17 @@
           "address" : {
             "$ref" : "#/components/schemas/RegistrationAddressResponse"
           },
+          "addressName" : {
+            "type" : "string",
+            "description" : "How the organization calls its main address"
+          },
+          "otherAddresses" : {
+            "type" : "array",
+            "description" : "Besides the main one, in order",
+            "items" : {
+              "$ref" : "#/components/schemas/OtherAddressResponse"
+            }
+          },
           "point" : {
             "$ref" : "#/components/schemas/GeoPointResponse",
             "description" : "Missing when the address could not be located"
@@ -2983,7 +3081,7 @@
             "$ref" : "#/components/schemas/Visibility"
           }
         },
-        "required" : [ "address", "streetVisibility" ]
+        "required" : [ "address", "otherAddresses", "streetVisibility" ]
       },
       "ProfilePhotosResponse" : {
         "type" : "object",
@@ -3026,6 +3124,38 @@
           }
         },
         "required" : [ "approximate", "latitude", "longitude" ]
+      },
+      "PublicOtherAddressResponse" : {
+        "type" : "object",
+        "properties" : {
+          "additionalReferences" : {
+            "type" : "string",
+            "description" : "Only along with the street"
+          },
+          "district" : {
+            "type" : "string"
+          },
+          "locality" : {
+            "type" : "string"
+          },
+          "location" : {
+            "$ref" : "#/components/schemas/PublicLocation"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "province" : {
+            "$ref" : "#/components/schemas/Province"
+          },
+          "street" : {
+            "type" : "string",
+            "description" : "Missing when the organization keeps it private"
+          },
+          "type" : {
+            "$ref" : "#/components/schemas/AddressType"
+          }
+        },
+        "required" : [ "district", "locality", "province", "type" ]
       },
       "PublicProductResponse" : {
         "type" : "object",

@@ -9,6 +9,7 @@ import ar.uba.fi.cooperar.domain.organizations.ResponseTime;
 import ar.uba.fi.cooperar.domain.organizations.Sector;
 import ar.uba.fi.cooperar.domain.organizations.Visibility;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.List;
 import java.util.Set;
 import org.locationtech.jts.geom.Point;
 
@@ -27,6 +28,9 @@ public record OrganizationProfileResponse(
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String district,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String locality,
 
+        @Schema(description = "How the organization calls its main address")
+        String addressName,
+
         @Schema(description = "Missing when the organization keeps it private")
         String street,
 
@@ -42,6 +46,10 @@ public record OrganizationProfileResponse(
         String openingHours,
         ResponseTime responseTime,
         PublicLocation location,
+
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Besides the main one, in order")
+        List<PublicOtherAddressResponse> otherAddresses,
+
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) ProfilePhotosResponse photos) {
 
     /** When the street is private, the point is rounded to the area and {@code approximate} is true. */
@@ -73,6 +81,7 @@ public record OrganizationProfileResponse(
                 address.province(),
                 address.district(),
                 address.locality(),
+                organization.getAddressName(),
                 street.reveal(address.street()),
                 street.reveal(address.additionalReferences()),
                 organization.getDescription(),
@@ -86,6 +95,9 @@ public record OrganizationProfileResponse(
                 organization.getOpeningHours(),
                 organization.getResponseTime(),
                 PublicLocation.from(organization.getPublicLocation(), street == Visibility.PRIVATE),
+                organization.getOtherAddresses().stream()
+                        .map(PublicOtherAddressResponse::from)
+                        .toList(),
                 ProfilePhotosResponse.from(organization));
     }
 }

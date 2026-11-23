@@ -43,6 +43,7 @@ function managedProfile({ complete = false } = {}) {
       address: { province: 'SANTA_FE', district: 'Rosario', locality: 'Centro', street: 'Calle 1' },
       streetVisibility: 'PUBLIC',
       point: complete ? { latitude: -32.95, longitude: -60.64 } : null,
+      otherAddresses: [],
     },
     contact: {
       phone: complete ? '341 000-0000' : null,

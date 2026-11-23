@@ -763,8 +763,8 @@ export const getUpdateProfileLocationUrl = (id: string) => {
 };
 
 /**
- * Without a `point`, a changed address is located again; if it cannot be found, the profile is saved without a point.
- * @summary Save the address and the point on the map
+ * Without a `point`, a changed address is located again; if it cannot be found, it is saved without a point. The same goes for each of the other addresses.
+ * @summary Save the main address, the other ones and their points on the map
  */
 export const updateProfileLocation = async (
   id: string,
@@ -844,7 +844,7 @@ export type UpdateProfileLocationMutationError = unknown;
 export type UpdateProfileLocationMutationVariables = { id: string; data: ProfileLocationRequest };
 
 /**
- * @summary Save the address and the point on the map
+ * @summary Save the main address, the other ones and their points on the map
  */
 export const useUpdateProfileLocation = <TError = unknown, TContext = unknown>(
   options?: {

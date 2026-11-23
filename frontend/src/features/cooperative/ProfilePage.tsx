@@ -1,5 +1,21 @@
-import { Alert, Button, Group, Paper, Stack, Text, Title, UnstyledButton } from '@mantine/core';
-import { IconAlertCircle, IconCircleCheck, IconExternalLink } from '@tabler/icons-react';
+import {
+  Alert,
+  Button,
+  Collapse,
+  Group,
+  Paper,
+  Stack,
+  Text,
+  Title,
+  UnstyledButton,
+} from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
+import {
+  IconAlertCircle,
+  IconChevronDown,
+  IconCircleCheck,
+  IconExternalLink,
+} from '@tabler/icons-react';
 import { Link, useSearchParams } from 'react-router';
 import { Visibility, type CooperativeOrganizationProfileResponse } from '@/api/generated/model';
 import { useManagedProfile, useSaveProfileSection } from './api/useManagedProfile';
@@ -82,42 +98,61 @@ function ProfileEditor({ organizationId }: { organizationId: string }) {
   );
 }
 
+/** What the visibility badges mean; collapsed until the person opens it. */
 function VisibilityLegend() {
+  const [opened, { toggle }] = useDisclosure(false);
   return (
-    <Paper withBorder radius="lg" px={20} py={16} component="section" aria-labelledby="legend">
-      <Stack gap={10}>
-        <Text fw={700} id="legend" component="h2" fz="sm" m={0}>
-          Quién ve cada dato
-        </Text>
-        <div className={styles.legendRow}>
-          <span className={styles.legendSample}>
-            <VisibilityBadge visibility={Visibility.PUBLIC} />
-          </span>
-          <Text size="sm" c="dimmed">
-            Visible para visitantes externos.
-          </Text>
-        </div>
-        <div className={styles.legendRow}>
-          <span className={styles.legendSample}>
-            <VisibilityBadge visibility={Visibility.PRIVATE} />
-          </span>
-          <Text size="sm" c="dimmed">
-            Visible únicamente para el observatorio.
-          </Text>
-        </div>
-        <div className={styles.legendRow}>
-          {/* A picture of the toggle, not a control: the text next to it says what it means. */}
-          <span className={styles.legendSample} aria-hidden="true">
-            <span className={styles.toggleSample}>
-              <span className={styles.toggleSampleOn}>Público</span>
-              <span>Privado</span>
+    <Paper withBorder radius="lg" px={20} py={12} component="section" aria-labelledby="legend">
+      <Text component="h2" fz="sm" m={0}>
+        <UnstyledButton
+          id="legend"
+          type="button"
+          className={styles.legendToggle}
+          aria-expanded={opened}
+          aria-controls="legend-content"
+          onClick={toggle}
+        >
+          <span>Quién ve cada dato</span>
+          <IconChevronDown
+            size={18}
+            aria-hidden
+            className={styles.legendChevron}
+            data-expanded={opened || undefined}
+          />
+        </UnstyledButton>
+      </Text>
+      <Collapse expanded={opened} id="legend-content">
+        <Stack gap={10} pt={10}>
+          <div className={styles.legendRow}>
+            <span className={styles.legendSample}>
+              <VisibilityBadge visibility={Visibility.PUBLIC} />
             </span>
-          </span>
-          <Text size="sm" c="dimmed">
-            Lo configurás vos: elegís si el dato es visible o no para visitantes externos.
-          </Text>
-        </div>
-      </Stack>
+            <Text size="sm" c="dimmed">
+              Visible para visitantes externos.
+            </Text>
+          </div>
+          <div className={styles.legendRow}>
+            <span className={styles.legendSample}>
+              <VisibilityBadge visibility={Visibility.PRIVATE} />
+            </span>
+            <Text size="sm" c="dimmed">
+              Visible únicamente para el observatorio.
+            </Text>
+          </div>
+          <div className={styles.legendRow}>
+            {/* A picture of the toggle, not a control: the text next to it says what it means. */}
+            <span className={styles.legendSample} aria-hidden="true">
+              <span className={styles.toggleSample}>
+                <span className={styles.toggleSampleOn}>Público</span>
+                <span>Privado</span>
+              </span>
+            </span>
+            <Text size="sm" c="dimmed">
+              Lo configurás vos: elegís si el dato es visible o no para visitantes externos.
+            </Text>
+          </div>
+        </Stack>
+      </Collapse>
     </Paper>
   );
 }

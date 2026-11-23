@@ -14,7 +14,7 @@ import {
   Title,
 } from '@mantine/core';
 import { IconCheck, IconLink } from '@tabler/icons-react';
-import { lazy, Suspense } from 'react';
+import { Fragment, lazy, Suspense } from 'react';
 import { useParams } from 'react-router';
 import type { OrganizationProfileResponse } from '@/api/generated/model';
 import { PublicProducts } from '@/features/catalog/components/PublicProducts';
@@ -23,6 +23,7 @@ import { initials } from './initials';
 import { useOrganizationProfile } from './api/useOrganizationProfile';
 import {
   ACTIVITY_TYPE_LABELS,
+  otherAddressTitle,
   ORGANIZATION_TYPE_LABELS,
   PROVINCE_LABELS,
   RESPONSE_TIME_LABELS,
@@ -198,7 +199,7 @@ function Profile({ profile }: { profile: OrganizationProfileResponse }) {
                 Datos de contacto
               </Title>
               <dl className={styles.contact}>
-                <dt>Dirección</dt>
+                <dt>{profile.addressName ?? 'Dirección'}</dt>
                 <dd>{address}</dd>
                 {profile.additionalReferences && (
                   <>
@@ -206,6 +207,27 @@ function Profile({ profile }: { profile: OrganizationProfileResponse }) {
                     <dd>{profile.additionalReferences}</dd>
                   </>
                 )}
+                {profile.otherAddresses.map((other, index) => (
+                  // The API sends no id for them, and their order only changes when the organization saves.
+                  <Fragment key={index}>
+                    <dt>{otherAddressTitle(other.name, other.type, other.district)}</dt>
+                    <dd>
+                      {[
+                        other.street,
+                        other.locality,
+                        other.district,
+                        PROVINCE_LABELS[other.province],
+                      ]
+                        .filter(Boolean)
+                        .join(', ')}
+                      {other.additionalReferences && (
+                        <Text size="sm" c="dimmed" component="span" display="block">
+                          {other.additionalReferences}
+                        </Text>
+                      )}
+                    </dd>
+                  </Fragment>
+                ))}
                 {profile.phone && (
                   <>
                     <dt>Teléfono</dt>

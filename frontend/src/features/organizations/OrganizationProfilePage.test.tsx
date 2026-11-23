@@ -163,6 +163,60 @@ describe('OrganizationProfilePage', () => {
     expect(within(contact).getByText('Gascón 1234, Almagro, Comuna 5')).toBeVisible();
   });
 
+  it('shows every located address on a larger map, each pin with its title', async () => {
+    stubProfile('la-cacerola', {
+      ...fullProfile,
+      addresses: [
+        { ...fullProfile.addresses[0], name: 'Planta' },
+        {
+          type: 'SECONDARY',
+          province: 'BUENOS_AIRES',
+          district: 'Quilmes',
+          locality: 'Bernal',
+          street: 'Belgrano 10',
+          additionalReferences: null,
+          location: { latitude: -34.71, longitude: -58.28, approximate: false },
+        },
+        {
+          type: 'SECONDARY',
+          name: 'Depósito',
+          province: 'CORDOBA',
+          district: 'Capital',
+          locality: 'Alberdi',
+          street: null,
+          additionalReferences: null,
+          location: { latitude: -31.4, longitude: -64.2, approximate: true },
+        },
+      ],
+    });
+
+    renderRoute('/organizations/la-cacerola');
+
+    expect(await screen.findByRole('heading', { name: 'Ubicación principal' })).toBeVisible();
+    await userEvent.click(screen.getByRole('button', { name: 'Ver otras ubicaciones' }));
+
+    const dialog = await screen.findByRole('dialog', { name: 'Ubicaciones de La Cacerola' });
+    expect(
+      await within(dialog).findByRole(
+        'region',
+        { name: 'Mapa con todas las ubicaciones de La Cacerola' },
+        { timeout: 5000 },
+      ),
+    ).toBeVisible();
+    expect(within(dialog).getByText('Planta · Principal')).toBeInTheDocument();
+    expect(within(dialog).getByText('Secundaria Quilmes')).toBeInTheDocument();
+    expect(within(dialog).getByText('Depósito · Secundaria')).toBeInTheDocument();
+  });
+
+  it('keeps the plain title and no button when there is only the main address', async () => {
+    stubProfile('la-cacerola', fullProfile);
+
+    renderRoute('/organizations/la-cacerola');
+
+    expect(await screen.findByRole('heading', { name: 'Ubicación' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Ver otras ubicaciones' })).not.toBeInTheDocument();
+  });
+
   it('leaves the photos section out when the gallery is empty', async () => {
     stubProfile('la-cacerola', fullProfile);
 

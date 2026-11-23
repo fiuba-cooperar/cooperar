@@ -5,6 +5,12 @@
   z-index: 0;
 }
 
+/* The same map, taller, for the dialog. */
+.largeMap {
+  composes: map;
+  height: min(70vh, 37.5rem);
+}
+
 .marker {
   color: var(--mantine-color-brand-6);
 }
@@ -12,4 +18,15 @@
 .area {
   color: var(--mantine-color-brand-6);
   fill-opacity: 0.18;
+}
+
+.otherMarker {
+  color: var(--mantine-color-orange-7);
+}
+
+.label {
+  font-family: inherit;
+  font-size: var(--mantine-font-size-xs);
+  max-width: 14rem;
+  white-space: normal;
 }

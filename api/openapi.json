@@ -700,6 +700,45 @@
         "tags" : [ "cooperative-organization-profile" ]
       }
     },
+    "/api/cooperative/organizations/{id}/profile/location/geocode" : {
+      "post" : {
+        "description" : "The `point` is missing when the address cannot be found. If the street is not found, the point is the one of the locality.",
+        "operationId" : "geocodeProfileAddress",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RegistrationAddressRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/GeocodingResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Locate an address on the map without saving it",
+        "tags" : [ "cooperative-organization-profile" ]
+      }
+    },
     "/api/cooperative/organizations/{id}/profile/logo" : {
       "delete" : {
         "operationId" : "removeProfileLogo",
@@ -1598,6 +1637,76 @@
         },
         "summary" : "Application and database health",
         "tags" : [ "health" ]
+      }
+    },
+    "/api/map/organizations" : {
+      "get" : {
+        "description" : "All of them in one answer, so the nearest ones are found in the visitor's browser and the visitor's location is never sent. Organizations not located yet are left out.",
+        "operationId" : "getMapOrganizations",
+        "parameters" : [ {
+          "description" : "Any of these types",
+          "in" : "query",
+          "name" : "type",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "description" : "Any of these types",
+            "items" : {
+              "$ref" : "#/components/schemas/OrganizationType"
+            },
+            "uniqueItems" : true
+          }
+        }, {
+          "description" : "Any of these sectors",
+          "in" : "query",
+          "name" : "sector",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "description" : "Any of these sectors",
+            "items" : {
+              "$ref" : "#/components/schemas/Sector"
+            },
+            "uniqueItems" : true
+          }
+        }, {
+          "description" : "Any of these activity types",
+          "in" : "query",
+          "name" : "activityType",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "description" : "Any of these activity types",
+            "items" : {
+              "$ref" : "#/components/schemas/ActivityType"
+            },
+            "uniqueItems" : true
+          }
+        }, {
+          "in" : "query",
+          "name" : "province",
+          "required" : false,
+          "schema" : {
+            "$ref" : "#/components/schemas/Province"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/OrganizationMapPointResponse"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Every organization with a point on the map, by name, with the directory's filters",
+        "tags" : [ "organizations" ]
       }
     },
     "/api/me" : {
@@ -2502,6 +2611,15 @@
         },
         "required" : [ "latitude", "longitude" ]
       },
+      "GeocodingResponse" : {
+        "type" : "object",
+        "properties" : {
+          "point" : {
+            "$ref" : "#/components/schemas/GeoPointResponse",
+            "description" : "Missing when the address cannot be found"
+          }
+        }
+      },
       "HealthResponse" : {
         "type" : "object",
         "description" : "Application health and the state of its dependencies",
@@ -2569,6 +2687,54 @@
           }
         },
         "required" : [ "items", "page", "size", "total" ]
+      },
+      "OrganizationMapPointResponse" : {
+        "type" : "object",
+        "properties" : {
+          "approximate" : {
+            "type" : "boolean",
+            "description" : "True when the point marks only the area, because the street is private"
+          },
+          "district" : {
+            "type" : "string"
+          },
+          "latitude" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "locality" : {
+            "type" : "string"
+          },
+          "logoUrl" : {
+            "type" : "string",
+            "description" : "Missing until the organization uploads one"
+          },
+          "longitude" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "province" : {
+            "$ref" : "#/components/schemas/Province"
+          },
+          "sectors" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Sector"
+            },
+            "uniqueItems" : true
+          },
+          "slug" : {
+            "type" : "string",
+            "description" : "Path segment of its public profile"
+          },
+          "type" : {
+            "$ref" : "#/components/schemas/OrganizationType"
+          }
+        },
+        "required" : [ "approximate", "district", "latitude", "locality", "longitude", "name", "province", "sectors", "slug", "type" ]
       },
       "OrganizationProfileResponse" : {
         "type" : "object",

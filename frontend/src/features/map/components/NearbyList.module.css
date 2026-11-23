@@ -1,0 +1,20 @@
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: block;
+  width: 100%;
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
+  border-radius: var(--mantine-radius-sm);
+}
+
+.item:hover {
+  background: var(--mantine-color-default-hover);
+}
+
+.item[aria-pressed='true'] {
+  background: light-dark(var(--mantine-color-brand-0), var(--mantine-color-dark-5));
+}

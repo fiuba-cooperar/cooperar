@@ -13,6 +13,7 @@ import { IconAlertCircle, IconMap, IconSearch, IconSearchOff, IconX } from '@tab
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { OrganizationSearchSort, type OrganizationSearchResponse } from '@/api/generated/model';
+import { MAP_PATH, writeFilters } from '@/features/map/mapFilters';
 import { useOrganizationSearch } from './api/useOrganizationSearch';
 import { OrganizationResult } from './components/OrganizationResult';
 import { SearchFilters } from './components/SearchFilters';
@@ -34,6 +35,12 @@ import styles from './OrganizationSearchPage.module.css';
 
 // 1180px of content between 48px gutters, as in the mock and the home page.
 const SECTION = { size: 1276, px: { base: 'md', sm: 48 } } as const;
+
+/** The map with the same types and sectors as the directory. */
+function mapPath({ types, sectors }: OrganizationSearch) {
+  const query = writeFilters({ types, sectors }).toString();
+  return query ? `${MAP_PATH}?${query}` : MAP_PATH;
+}
 
 const SORT_OPTIONS = [
   { value: OrganizationSearchSort.RELEVANCE, label: 'Relevancia' },
@@ -271,7 +278,7 @@ export function OrganizationSearchPage() {
                 />
                 <Button
                   component={Link}
-                  to="/map"
+                  to={mapPath(search)}
                   variant="outline"
                   h={44}
                   px={16}

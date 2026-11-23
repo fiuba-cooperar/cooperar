@@ -25,10 +25,12 @@ import type {
   AddProfilePhotoBody,
   CooperativeOrganizationProfileResponse,
   GalleryOrderRequest,
+  GeocodingResponse,
   ProfileActivityRequest,
   ProfileContactRequest,
   ProfileIdentificationRequest,
   ProfileLocationRequest,
+  RegistrationAddressRequest,
   ReplaceProfileCoverBody,
   ReplaceProfileLogoBody,
 } from '../model';
@@ -864,6 +866,126 @@ export const useUpdateProfileLocation = <TError = unknown, TContext = unknown>(
   TContext
 > => {
   return useMutation(getUpdateProfileLocationMutationOptions(options), queryClient);
+};
+export type geocodeProfileAddressResponse200 = {
+  data: GeocodingResponse;
+  status: 200;
+};
+
+export type geocodeProfileAddressResponseSuccess = geocodeProfileAddressResponse200 & {
+  headers: Headers;
+};
+export type geocodeProfileAddressResponse = geocodeProfileAddressResponseSuccess;
+
+export const getGeocodeProfileAddressUrl = (id: string) => {
+  return `/api/cooperative/organizations/${id}/profile/location/geocode`;
+};
+
+/**
+ * The `point` is missing when the address cannot be found. If the street is not found, the point is the one of the locality.
+ * @summary Locate an address on the map without saving it
+ */
+export const geocodeProfileAddress = async (
+  id: string,
+  registrationAddressRequest: RegistrationAddressRequest,
+  options?: Parameters<typeof apiFetch>[1],
+): Promise<geocodeProfileAddressResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return apiFetch<geocodeProfileAddressResponse>(getGeocodeProfileAddressUrl(id), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(registrationAddressRequest),
+  });
+};
+
+export const getGeocodeProfileAddressMutationKey = () => ['geocodeProfileAddress'] as const;
+
+export const getGeocodeProfileAddressMutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof geocodeProfileAddress>>,
+    TError,
+    GeocodeProfileAddressMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof apiFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof geocodeProfileAddress>>,
+  TError,
+  GeocodeProfileAddressMutationVariables,
+  TContext
+> => {
+  const mutationKey = getGeocodeProfileAddressMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof geocodeProfileAddress>>,
+    GeocodeProfileAddressMutationVariables
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return geocodeProfileAddress(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type GeocodeProfileAddressMutationResult = NonNullable<
+  Awaited<ReturnType<typeof geocodeProfileAddress>>
+>;
+export type GeocodeProfileAddressMutationBody = RegistrationAddressRequest;
+export type GeocodeProfileAddressMutationError = unknown;
+export type GeocodeProfileAddressMutationVariables = {
+  id: string;
+  data: RegistrationAddressRequest;
+};
+
+/**
+ * @summary Locate an address on the map without saving it
+ */
+export const useGeocodeProfileAddress = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof geocodeProfileAddress>>,
+      TError,
+      GeocodeProfileAddressMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof geocodeProfileAddress>>,
+  TError,
+  GeocodeProfileAddressMutationVariables,
+  TContext
+> => {
+  return useMutation(getGeocodeProfileAddressMutationOptions(options), queryClient);
 };
 export type removeProfileLogoResponse200 = {
   data: CooperativeOrganizationProfileResponse;

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  geocodeProfileAddress,
   getGetManagedOrganizationProfileQueryKey,
   getManagedOrganizationProfile,
   updateProfileActivity,
@@ -9,10 +10,12 @@ import {
 } from '@/api/generated/cooperative-organization-profile/cooperative-organization-profile';
 import type {
   CooperativeOrganizationProfileResponse,
+  GeoPointResponse,
   ProfileActivityRequest,
   ProfileContactRequest,
   ProfileIdentificationRequest,
   ProfileLocationRequest,
+  RegistrationAddressRequest,
 } from '@/api/generated/model';
 import { getGetOrganizationProfileQueryKey } from '@/api/generated/organizations/organizations';
 import { useAuth } from '@/features/auth/useAuth';
@@ -89,5 +92,20 @@ export function useSaveProfileSection(id: string) {
       });
       if (change.section === 'identification') await refreshUser();
     },
+  });
+}
+
+async function geocode(id: string, address: RegistrationAddressRequest) {
+  const response = await geocodeProfileAddress(id, address);
+  const httpStatus: number = response.status;
+  if (httpStatus !== 200) throw new Error(`Unexpected status ${String(httpStatus)}`);
+  return response.data.point ?? null;
+}
+
+/** Where an address goes on the map, without saving it: null when it cannot be found. */
+export function useGeocodeAddress(id: string) {
+  return useMutation({
+    mutationFn: (address: RegistrationAddressRequest): Promise<GeoPointResponse | null> =>
+      geocode(id, address),
   });
 }

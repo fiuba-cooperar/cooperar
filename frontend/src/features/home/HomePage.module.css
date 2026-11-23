@@ -104,49 +104,6 @@
   border-color: var(--mantine-color-anchor);
 }
 
-.mapCard {
-  box-shadow: var(--mantine-shadow-lg);
-}
-
-.mapBox {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 340px;
-  overflow: hidden;
-  border-radius: 10px;
-  background: var(--color-map);
-}
-
-.mapLabel {
-  position: absolute;
-  top: 12px;
-  left: 14px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: var(--mantine-color-default);
-  color: light-dark(var(--mantine-color-brand-8), var(--mantine-color-brand-3));
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.mapSoon {
-  position: absolute;
-  top: 12px;
-  right: 14px;
-}
-
-.pin,
-.pinAccent {
-  position: absolute;
-  color: var(--mantine-color-brand-6);
-}
-
-.pinAccent {
-  color: var(--color-accent);
-}
-
 .figures {
   display: flex;
   flex-wrap: wrap;

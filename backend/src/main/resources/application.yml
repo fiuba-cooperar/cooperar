@@ -38,6 +38,10 @@ spring:
 server:
   shutdown: graceful
   forward-headers-strategy: framework
+  # gzip for clients that accept it, whatever proxy sits in front (nginx at the Faculty, Render's rewrite in the demo).
+  # Spring's default MIME types include JSON; responses under 2 KB are sent as they are.
+  compression:
+    enabled: true
 
 cooperar:
   security:

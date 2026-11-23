@@ -1,14 +1,33 @@
-import { Alert, Select, SimpleGrid, Stack, Text, TextInput } from '@mantine/core';
-import { IconMapPinOff } from '@tabler/icons-react';
-import { lazy, Suspense } from 'react';
-import { Province, Visibility } from '@/api/generated/model';
+import {
+  Alert,
+  Button,
+  Group,
+  Modal,
+  Select,
+  SimpleGrid,
+  Stack,
+  Text,
+  TextInput,
+} from '@mantine/core';
+import { useMediaQuery } from '@mantine/hooks';
+import { IconArrowsMaximize, IconMapPinOff, IconMapSearch } from '@tabler/icons-react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { Province, Visibility, type RegistrationAddressRequest } from '@/api/generated/model';
 import {
   DistrictInput,
   LocalityInput,
   StreetInput,
 } from '@/features/geography/components/PlaceFields';
 import { PROVINCE_LABELS } from '@/features/organizations/labels';
-import { ADDRESS_NAME_MAX, type AddressDraft, type AddressForm } from './addressDraft';
+import { useGeocodeAddress } from '../../api/useManagedProfile';
+import {
+  ADDRESS_NAME_MAX,
+  addressRequest,
+  validateAddress,
+  type AddressDraft,
+  type AddressForm,
+} from './addressDraft';
+import { hasErrors } from './sectionProps';
 import { FieldHeader, VisibilityBadge, VisibilityToggle } from './Visibility';
 
 const LocationMap = lazy(() =>
@@ -20,7 +39,16 @@ const PROVINCE_OPTIONS = PROVINCES.map((value) => ({ value, label: PROVINCE_LABE
 
 type AddressField = Exclude<keyof AddressForm, 'streetVisibility'>;
 
+/** How the last «Ubicar en el mapa» went, when it did not place the pin. */
+type LocateProblem = 'notFound' | 'failed';
+
+function sameAddress(a: RegistrationAddressRequest | null, b: RegistrationAddressRequest | null) {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
 interface Props {
+  /** The organization whose profile has the address; locating it needs it. */
+  organizationId: string;
   /** Prefix of the ids of the fields, unique on the page. */
   idPrefix: string;
   draft: AddressDraft;
@@ -35,11 +63,29 @@ interface Props {
  * The fields of one address, its street visibility and its point on the map, with a draggable pin. The main address
  * and each of the other ones use it.
  */
-export function AddressFields({ idPrefix, draft, onChange, mapSubject, namePlaceholder }: Props) {
+export function AddressFields({
+  organizationId,
+  idPrefix,
+  draft,
+  onChange,
+  mapSubject,
+  namePlaceholder,
+}: Props) {
   const { form, errors, point } = draft;
   const id = (field: string) => `${idPrefix}-${field}`;
+  const [mapExpanded, setMapExpanded] = useState(false);
+  // On a phone the dialog takes the whole screen, so the map gets all the room there is.
+  const smallScreen = useMediaQuery('(max-width: 36em)');
+  const geocode = useGeocodeAddress(organizationId);
+  const [locateProblem, setLocateProblem] = useState<LocateProblem | null>(null);
+  // The answer arrives after the person may have kept typing: it applies to the address as it is then.
+  const latestDraft = useRef(draft);
+  useEffect(() => {
+    latestDraft.current = draft;
+  });
 
   function updateAddress(field: AddressField, value: string | null) {
+    setLocateProblem(null);
     onChange({
       ...draft,
       form: { ...form, [field]: value },
@@ -49,6 +95,55 @@ export function AddressFields({ idPrefix, draft, onChange, mapSubject, namePlace
       moved: false,
     });
   }
+
+  function movePin(dropped: { latitude: number; longitude: number }) {
+    onChange({ ...draft, point: dropped, moved: true });
+  }
+
+  function locate() {
+    const formErrors = validateAddress(form);
+    const address = addressRequest(form);
+    if (hasErrors(formErrors) || !address) {
+      onChange({ ...draft, errors: { ...errors, ...formErrors } });
+      return;
+    }
+    setLocateProblem(null);
+    geocode.mutate(address, {
+      onSuccess: (found) => {
+        const current = latestDraft.current;
+        if (!sameAddress(addressRequest(current.form), address)) return;
+        if (found) {
+          // Sent as the pin when saving, so the backend keeps this point instead of locating it again.
+          onChange({ ...current, point: found, moved: true });
+        } else {
+          setLocateProblem('notFound');
+        }
+      },
+      onError: () => {
+        setLocateProblem('failed');
+      },
+    });
+  }
+
+  // A point is only missing or stale while the address changed (or was never found) and the pin was not placed.
+  const canLocate = !draft.moved && (draft.changed || !point);
+  const locateButton = canLocate && (
+    <Button
+      variant="light"
+      size="compact-sm"
+      leftSection={<IconMapSearch size={16} aria-hidden />}
+      loading={geocode.isPending}
+      onClick={locate}
+    >
+      Ubicar en el mapa
+    </Button>
+  );
+  const locateMessage =
+    locateProblem === 'notFound'
+      ? 'No encontramos esa dirección. Revisá que la calle, la localidad y el partido estén bien escritos.'
+      : locateProblem === 'failed'
+        ? 'No pudimos ubicarla ahora. Probá de nuevo en un rato, o guardá y la ubicamos al guardar.'
+        : null;
 
   const streetPublic = form.streetVisibility === Visibility.PUBLIC;
   return (
@@ -194,23 +289,75 @@ export function AddressFields({ idPrefix, draft, onChange, mapSubject, namePlace
                 latitude={point.latitude}
                 longitude={point.longitude}
                 label={`Mapa con el punto de ${mapSubject}. Podés arrastrar el pin para corregirlo.`}
-                onMove={(dropped) => {
-                  onChange({ ...draft, point: dropped, moved: true });
-                }}
+                onMove={movePin}
               />
             </Suspense>
-            <Text size="sm" c="dimmed" aria-live="polite">
-              {draft.changed && !draft.moved
-                ? 'Al guardar, ubicamos la nueva dirección en el mapa.'
-                : 'Lo ubicamos a partir de la dirección. Si no quedó bien, arrastrá el pin.'}
+            <Text size="sm" c={locateProblem ? 'red' : 'dimmed'} aria-live="polite">
+              {locateMessage ??
+                (canLocate
+                  ? 'Cambiaste la dirección: ubicala para revisar el pin, o la ubicamos al guardar.'
+                  : 'Lo ubicamos a partir de la dirección. Si no quedó bien, arrastrá el pin.')}
             </Text>
+            <Group gap="xs">
+              {locateButton}
+              <Button
+                variant="subtle"
+                size="compact-sm"
+                leftSection={<IconArrowsMaximize size={16} aria-hidden />}
+                onClick={() => {
+                  setMapExpanded(true);
+                }}
+              >
+                Ver más grande
+              </Button>
+            </Group>
+            <Modal
+              opened={mapExpanded}
+              onClose={() => {
+                setMapExpanded(false);
+              }}
+              title="Punto en el mapa"
+              size="80rem"
+              fullScreen={smallScreen}
+            >
+              <Stack gap="sm">
+                <Text size="sm" c="dimmed">
+                  Acercá el mapa para ver bien dónde quedó el pin y, si hace falta, arrastralo. El
+                  cambio se guarda con el botón «Guardar cambios».
+                </Text>
+                <Suspense fallback={<Text c="dimmed">Cargando el mapa…</Text>}>
+                  <LocationMap
+                    latitude={point.latitude}
+                    longitude={point.longitude}
+                    label={`Mapa ampliado con el punto de ${mapSubject}. Podés arrastrar el pin para corregirlo.`}
+                    onMove={movePin}
+                    large
+                  />
+                </Suspense>
+                <Group justify="flex-end">
+                  <Button
+                    onClick={() => {
+                      setMapExpanded(false);
+                    }}
+                  >
+                    Listo
+                  </Button>
+                </Group>
+              </Stack>
+            </Modal>
           </Stack>
         ) : (
-          <Alert color="yellow" icon={<IconMapPinOff aria-hidden />}>
-            {draft.changed
-              ? 'Al guardar, ubicamos la dirección en el mapa.'
-              : 'No pudimos ubicar la dirección en el mapa. Revisá que la calle, la localidad y el partido estén bien escritos y guardá de nuevo.'}
-          </Alert>
+          <Stack gap="xs" align="flex-start">
+            <Alert color="yellow" icon={<IconMapPinOff aria-hidden />} w="100%">
+              <span aria-live="polite">
+                {locateMessage ??
+                  (draft.changed
+                    ? 'Ubicá la dirección para ver el pin, o la ubicamos al guardar.'
+                    : 'No pudimos ubicar la dirección en el mapa. Revisá que la calle, la localidad y el partido estén bien escritos y volvé a ubicarla.')}
+              </span>
+            </Alert>
+            {locateButton}
+          </Stack>
         )}
       </div>
     </Stack>

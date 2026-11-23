@@ -1,0 +1,39 @@
+.hero {
+  background: var(--color-hero);
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+.title {
+  letter-spacing: -0.03em;
+}
+
+.lead {
+  color: var(--color-hero-lead);
+}
+
+/* Mobile first: the map, then the list; side by side from the md breakpoint. */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--mantine-spacing-lg);
+}
+
+.map {
+  height: min(60vh, 32rem);
+}
+
+@media (min-width: 62em) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr) 22rem;
+    align-items: start;
+  }
+
+  .map {
+    height: min(75vh, 44rem);
+  }
+
+  .mapColumn {
+    position: sticky;
+    top: var(--mantine-spacing-md);
+  }
+}

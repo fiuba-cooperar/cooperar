@@ -1,0 +1,34 @@
+/* No height here: the map is lazy-loaded, so this file comes after the page's and would override it. */
+.map {
+  border-radius: var(--mantine-radius-md);
+  /* Keeps Leaflet's panes and controls below Mantine overlays. */
+  z-index: 0;
+}
+
+.pin {
+  color: var(--mantine-color-brand-6);
+}
+
+.selected {
+  color: var(--color-accent);
+}
+
+.cluster {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid var(--mantine-color-white);
+  border-radius: 50%;
+  background: var(--mantine-color-brand-6);
+  box-shadow: var(--mantine-shadow-sm);
+  color: var(--mantine-color-white);
+  font-size: var(--mantine-font-size-sm);
+  font-weight: 700;
+}
+
+.visitor {
+  fill: var(--mantine-color-blue-5);
+  fill-opacity: 1;
+  stroke: var(--mantine-color-white);
+  stroke-width: 3;
+}

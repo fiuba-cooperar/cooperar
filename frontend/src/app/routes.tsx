@@ -41,6 +41,8 @@ import { CatalogPage } from '@/features/catalog/CatalogPage';
 import { ProductDetailPage } from '@/features/catalog/ProductDetailPage';
 import { CATALOG_PATH } from '@/features/catalog/productSearch';
 import { HomePage } from '@/features/home/HomePage';
+import { MapPage } from '@/features/map/MapPage';
+import { MAP_PATH } from '@/features/map/mapFilters';
 import { OrganizationProfilePage } from '@/features/organizations/OrganizationProfilePage';
 import { OrganizationSearchPage } from '@/features/organizations/OrganizationSearchPage';
 import { ORGANIZATIONS_PATH } from '@/features/organizations/organizationSearch';
@@ -58,8 +60,9 @@ export const routes: RouteObject[] = [
       { path: ORGANIZATIONS_PATH, element: <OrganizationSearchPage /> },
       { path: CATALOG_PATH, element: <CatalogPage /> },
       { path: `${CATALOG_PATH}/:id`, element: <ProductDetailPage /> },
+      { path: MAP_PATH, element: <MapPage /> },
       ...PUBLIC_SECTIONS.filter(
-        ({ path }) => path !== ORGANIZATIONS_PATH && path !== CATALOG_PATH,
+        ({ path }) => path !== ORGANIZATIONS_PATH && path !== CATALOG_PATH && path !== MAP_PATH,
       ).map(({ path, label }) => ({
         path,
         element: <ComingSoonPage title={label} />,

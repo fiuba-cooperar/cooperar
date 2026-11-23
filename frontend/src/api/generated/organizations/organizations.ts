@@ -19,6 +19,8 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  GetMapOrganizationsParams,
+  OrganizationMapPointResponse,
   OrganizationProfileResponse,
   OrganizationSearchResponse,
   SearchOrganizationsParams,
@@ -42,6 +44,171 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+export type getMapOrganizationsResponse200 = {
+  data: OrganizationMapPointResponse[];
+  status: 200;
+};
+
+export type getMapOrganizationsResponseSuccess = getMapOrganizationsResponse200 & {
+  headers: Headers;
+};
+export type getMapOrganizationsResponse = getMapOrganizationsResponseSuccess;
+
+export const getGetMapOrganizationsUrl = (params?: GetMapOrganizationsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    const explodeParameters = ['type', 'sector', 'activityType'];
+
+    if (Array.isArray(value) && explodeParameters.includes(key)) {
+      value.forEach((v) => {
+        normalizedParams.append(key, v === null ? 'null' : String(v));
+      });
+      return;
+    }
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value));
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/map/organizations?${stringifiedParams}`
+    : `/api/map/organizations`;
+};
+
+/**
+ * All of them in one answer, so the nearest ones are found in the visitor's browser and the visitor's location is never sent. Organizations not located yet are left out.
+ * @summary Every organization with a point on the map, by name, with the directory's filters
+ */
+export const getMapOrganizations = async (
+  params?: GetMapOrganizationsParams,
+  options?: Parameters<typeof apiFetch>[1],
+): Promise<getMapOrganizationsResponse> => {
+  return apiFetch<getMapOrganizationsResponse>(getGetMapOrganizationsUrl(params), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetMapOrganizationsQueryKey = (params?: GetMapOrganizationsParams) => {
+  return [`/api/map/organizations`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetMapOrganizationsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getMapOrganizations>>,
+  TError = unknown,
+>(
+  params?: GetMapOrganizationsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getMapOrganizations>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetMapOrganizationsQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getMapOrganizations>>> = ({ signal }) =>
+    getMapOrganizations(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getMapOrganizations>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetMapOrganizationsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getMapOrganizations>>
+>;
+export type GetMapOrganizationsQueryError = unknown;
+
+export function useGetMapOrganizations<
+  TData = Awaited<ReturnType<typeof getMapOrganizations>>,
+  TError = unknown,
+>(
+  params: undefined | GetMapOrganizationsParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getMapOrganizations>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMapOrganizations>>,
+          TError,
+          Awaited<ReturnType<typeof getMapOrganizations>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetMapOrganizations<
+  TData = Awaited<ReturnType<typeof getMapOrganizations>>,
+  TError = unknown,
+>(
+  params?: GetMapOrganizationsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getMapOrganizations>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMapOrganizations>>,
+          TError,
+          Awaited<ReturnType<typeof getMapOrganizations>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetMapOrganizations<
+  TData = Awaited<ReturnType<typeof getMapOrganizations>>,
+  TError = unknown,
+>(
+  params?: GetMapOrganizationsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getMapOrganizations>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary Every organization with a point on the map, by name, with the directory's filters
+ */
+
+export function useGetMapOrganizations<
+  TData = Awaited<ReturnType<typeof getMapOrganizations>>,
+  TError = unknown,
+>(
+  params?: GetMapOrganizationsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getMapOrganizations>>, TError, TData>
+    >;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetMapOrganizationsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
 
 export type searchOrganizationsResponse200 = {
   data: OrganizationSearchResponse;

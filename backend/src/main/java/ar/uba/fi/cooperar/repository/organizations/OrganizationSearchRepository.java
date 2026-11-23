@@ -4,10 +4,6 @@ import ar.uba.fi.cooperar.domain.organizations.ActivityType;
 import ar.uba.fi.cooperar.domain.organizations.OrganizationType;
 import ar.uba.fi.cooperar.domain.organizations.Province;
 import ar.uba.fi.cooperar.domain.organizations.Sector;
-import java.sql.Array;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -56,19 +52,9 @@ public class OrganizationSearchRepository {
                         row.getObject("id", UUID.class),
                         row.getString("name"),
                         OrganizationType.valueOf(row.getString("type")),
-                        enums(row, "sectors", Sector.class),
-                        enums(row, "activity_types", ActivityType.class),
+                        SqlArrays.enums(row, "sectors", Sector.class),
+                        SqlArrays.enums(row, "activity_types", ActivityType.class),
                         row.getDouble("rank")))
                 .list();
-    }
-
-    private static <E extends Enum<E>> EnumSet<E> enums(ResultSet row, String column, Class<E> type)
-            throws SQLException {
-        EnumSet<E> values = EnumSet.noneOf(type);
-        Array array = row.getArray(column);
-        for (Object name : (Object[]) array.getArray()) {
-            values.add(Enum.valueOf(type, (String) name));
-        }
-        return values;
     }
 }

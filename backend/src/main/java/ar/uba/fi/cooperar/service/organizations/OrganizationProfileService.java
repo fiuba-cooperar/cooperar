@@ -13,6 +13,7 @@ import java.time.Clock;
 import java.time.Year;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -105,6 +106,15 @@ public class OrganizationProfileService {
             return previousPoint;
         }
         return geocoder.locate(address).orElse(null);
+    }
+
+    /**
+     * Where the address would go on the map, without saving anything, so the organization can check the pin before
+     * saving. Empty when it cannot be found. Not transactional: no connection is held while the geocoder answers.
+     */
+    public Optional<Point> locateAddress(UUID organizationId, UUID accountId, Address address) {
+        managed(organizationId, accountId);
+        return geocoder.locate(address);
     }
 
     @Transactional

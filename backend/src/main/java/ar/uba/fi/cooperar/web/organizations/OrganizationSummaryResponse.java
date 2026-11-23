@@ -30,7 +30,7 @@ public record OrganizationSummaryResponse(
         String logoUrl) {
 
     static OrganizationSummaryResponse from(Organization organization) {
-        Address address = organization.getAddress();
+        Address address = organization.getMainAddress().getAddress();
         return new OrganizationSummaryResponse(
                 organization.getSlug(),
                 organization.getName(),

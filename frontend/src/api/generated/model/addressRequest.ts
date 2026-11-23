@@ -10,12 +10,12 @@ import type { GeoPointRequest } from './geoPointRequest';
 import type { RegistrationAddressRequest } from './registrationAddressRequest';
 import type { Visibility } from './visibility';
 
-export interface OtherAddressRequest {
+export interface AddressRequest {
   address: RegistrationAddressRequest;
-  /** The address to update; missing for a new one */
+  /** The address to update; missing for a new one. The main address is always the one the organization has, so its id is not needed. */
   id?: string;
   /**
-   * How the organization calls it, like «sucursal» or «depósito»
+   * How the organization calls it, like «planta» or «sucursal»
    * @minLength 0
    * @maxLength 50
    */

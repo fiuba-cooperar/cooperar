@@ -25,7 +25,9 @@ import com.jayway.jsonpath.JsonPath;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.Year;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -104,10 +106,11 @@ class CooperativeOrganizationProfileIntegrationTest {
                   "identification": {"name": "La Cacerola", "legalName": "La Cacerola Ltda.",
                                      "legalNameVisibility": "PRIVATE"},
                   "activity": {"sectors": ["FOOD"], "activityTypes": ["PRODUCT"], "workerCountVisibility": "PUBLIC"},
-                  "location": {"address": {"province": "CITY_OF_BUENOS_AIRES", "district": "Comuna 5",
-                                           "locality": "Almagro", "street": "Gascón 1234",
-                                           "additionalReferences": "Portón verde"},
-                               "streetVisibility": "PUBLIC", "point": null},
+                  "location": {"addresses": [
+                    {"type": "MAIN", "name": null,
+                     "address": {"province": "CITY_OF_BUENOS_AIRES", "district": "Comuna 5", "locality": "Almagro",
+                                 "street": "Gascón 1234", "additionalReferences": "Portón verde"},
+                     "streetVisibility": "PUBLIC", "point": null}]},
                   "contact": {"phoneVisibility": "PUBLIC", "whatsappVisibility": "PUBLIC", "emailVisibility": "PUBLIC"}
                 }
                 """);
@@ -193,8 +196,9 @@ class CooperativeOrganizationProfileIntegrationTest {
                 .hasStatusOk()
                 .bodyJson()
                 .isLenientlyEqualTo("""
-                        {"location": {"address": {"street": "Mitre 500"}, "streetVisibility": "PUBLIC",
-                                      "point": {"latitude": -34.66, "longitude": -58.37}}}
+                        {"location": {"addresses": [
+                          {"type": "MAIN", "address": {"street": "Mitre 500"}, "streetVisibility": "PUBLIC",
+                           "point": {"latitude": -34.66, "longitude": -58.37}}]}}
                         """);
         verify(geocoder).locate(new Address(Province.BUENOS_AIRES, "Avellaneda", "Sarandí", "Mitre 500", null));
     }
@@ -206,7 +210,7 @@ class CooperativeOrganizationProfileIntegrationTest {
         assertThat(put("/location", token("coop@test.local"), location("Mitre 500", "PUBLIC", null)))
                 .hasStatusOk()
                 .bodyJson()
-                .extractingPath("$.location.point")
+                .extractingPath("$.location.addresses[0].point")
                 .isNull();
     }
 
@@ -221,7 +225,8 @@ class CooperativeOrganizationProfileIntegrationTest {
                 .hasStatusOk()
                 .bodyJson()
                 .isLenientlyEqualTo("""
-                        {"location": {"streetVisibility": "PRIVATE", "point": {"latitude": -34.6, "longitude": -58.4}}}
+                        {"location": {"addresses": [
+                          {"streetVisibility": "PRIVATE", "point": {"latitude": -34.6, "longitude": -58.4}}]}}
                         """);
         verify(geocoder, never()).locate(any());
     }
@@ -234,9 +239,10 @@ class CooperativeOrganizationProfileIntegrationTest {
                 location("Mitre 500", "PRIVATE", "{\"latitude\": -34.617608, \"longitude\": -58.368443}"));
 
         assertThat(mvc.get().uri("/api/organizations/la-cacerola")).bodyJson().isLenientlyEqualTo("""
-                {"province": "BUENOS_AIRES", "district": "Avellaneda", "locality": "Sarandí",
-                 "street": null, "additionalReferences": null,
-                 "location": {"latitude": -34.62, "longitude": -58.37, "approximate": true}}
+                {"addresses": [
+                  {"type": "MAIN", "province": "BUENOS_AIRES", "district": "Avellaneda", "locality": "Sarandí",
+                   "street": null, "additionalReferences": null,
+                   "location": {"latitude": -34.62, "longitude": -58.37, "approximate": true}}]}
                 """);
     }
 
@@ -296,14 +302,16 @@ class CooperativeOrganizationProfileIntegrationTest {
                 withOthers(other(null, "Belgrano 10", "PUBLIC", null), other(null, "Moreno 20", "PRIVATE", null)));
 
         assertThat(saved).hasStatusOk().bodyJson().isLenientlyEqualTo("""
-                {"location": {"otherAddresses": [
+                {"location": {"addresses": [
+                  {"type": "MAIN", "address": {"street": "Mitre 500"}},
                   {"type": "SECONDARY", "name": "Sucursal Bernal",
                    "address": {"street": "Belgrano 10", "locality": "Bernal"},
                    "streetVisibility": "PUBLIC", "point": {"latitude": -34.66, "longitude": -58.37}},
                   {"type": "SECONDARY", "address": {"street": "Moreno 20"}, "streetVisibility": "PRIVATE"}]}}
                 """);
         assertThat(mvc.get().uri("/api/organizations/la-cacerola")).bodyJson().isLenientlyEqualTo("""
-                {"otherAddresses": [
+                {"addresses": [
+                  {"type": "MAIN", "locality": "Sarandí"},
                   {"type": "SECONDARY", "name": "Sucursal Bernal", "province": "BUENOS_AIRES",
                    "district": "Quilmes", "locality": "Bernal",
                    "street": "Belgrano 10", "additionalReferences": "Galpón azul",
@@ -323,7 +331,7 @@ class CooperativeOrganizationProfileIntegrationTest {
                 withOthers(
                         other(null, "Belgrano 10", "PUBLIC", "{\"latitude\": -34.7, \"longitude\": -58.2}"),
                         other(null, "Moreno 20", "PUBLIC", null)));
-        String keptId = JsonPath.read(body(first), "$.location.otherAddresses[0].id");
+        String keptId = JsonPath.read(body(first), "$.location.addresses[1].id");
 
         MvcTestResult second = put(
                 "/location",
@@ -333,16 +341,17 @@ class CooperativeOrganizationProfileIntegrationTest {
                         other(null, "Alsina 30", "PUBLIC", null)));
 
         assertThat(second).bodyJson().isLenientlyEqualTo("""
-                {"location": {"otherAddresses": [
+                {"location": {"addresses": [
+                  {"type": "MAIN"},
                   {"id": "%s", "address": {"street": "Belgrano 10"}, "streetVisibility": "PRIVATE",
                    "point": {"latitude": -34.7, "longitude": -58.2}},
                   {"address": {"street": "Alsina 30"}}]}}
                 """.formatted(keptId));
         assertThat(second)
                 .bodyJson()
-                .extractingPath("$.location.otherAddresses")
+                .extractingPath("$.location.addresses")
                 .asArray()
-                .hasSize(2);
+                .hasSize(3);
         // Moreno 20 and Alsina 30 were located; the pin of Belgrano 10 was kept, and so was the main address's point.
         verify(geocoder, times(1)).locate(argThat(address -> address.street().equals("Moreno 20")));
         verify(geocoder, times(1)).locate(argThat(address -> address.street().equals("Alsina 30")));
@@ -350,38 +359,48 @@ class CooperativeOrganizationProfileIntegrationTest {
     }
 
     @Test
-    void leavesTheOtherAddressesAsTheyAreWhenTheRequestDoesNotListThem() {
+    void keepsTheMainAddressAndItsIdWhenTheOthersAreRemoved() {
         String token = token("coop@test.local");
-        put("/location", token, withOthers(other(null, "Belgrano 10", "PUBLIC", null)));
+        String mainId = JsonPath.read(
+                body(put("/location", token, withOthers(other(null, "Belgrano 10", "PUBLIC", null)))),
+                "$.location.addresses[0].id");
 
-        assertThat(put("/location", token, location("Mitre 500", "PUBLIC", null)))
-                .bodyJson()
-                .extractingPath("$.location.otherAddresses[0].address.street")
-                .isEqualTo("Belgrano 10");
-        assertThat(put("/location", token, withOthers()))
-                .bodyJson()
-                .extractingPath("$.location.otherAddresses")
-                .asArray()
-                .isEmpty();
+        assertThat(put("/location", token, withOthers())).bodyJson().isLenientlyEqualTo("""
+                        {"location": {"addresses": [{"id": "%s", "type": "MAIN", "address": {"street": "Mitre 500"}}]}}
+                        """.formatted(mainId));
+    }
+
+    @Test
+    void needsExactlyOneMainAddress() {
+        String token = token("coop@test.local");
+
+        assertThat(put("/location", token, addresses(other(null, "Belgrano 10", "PUBLIC", null))))
+                .hasStatus(HttpStatus.BAD_REQUEST);
+        assertThat(put(
+                        "/location",
+                        token,
+                        addresses(main("Mitre 500", "PUBLIC", null), main("Alsina 1", "PUBLIC", null))))
+                .hasStatus(HttpStatus.BAD_REQUEST);
+        assertThat(put("/location", token, addresses())).hasStatus(HttpStatus.BAD_REQUEST);
+        assertThat(put("/location", token, "{}")).hasStatus(HttpStatus.BAD_REQUEST);
     }
 
     @Test
     void namesTheMainAddressAndRemovesABlankName() {
         String token = token("coop@test.local");
-        String named = location("Mitre 500", "PUBLIC", null)
-                .replace("{\"address\"", "{\"addressName\": \" Planta \", \"address\"");
+        String named = addresses(main("Mitre 500", "PUBLIC", null).replace("\"name\": null", "\"name\": \" Planta \""));
 
         assertThat(put("/location", token, named))
                 .bodyJson()
-                .extractingPath("$.location.addressName")
+                .extractingPath("$.location.addresses[0].name")
                 .isEqualTo("Planta");
         assertThat(mvc.get().uri("/api/organizations/la-cacerola"))
                 .bodyJson()
-                .extractingPath("$.addressName")
+                .extractingPath("$.addresses[0].name")
                 .isEqualTo("Planta");
         assertThat(put("/location", token, named.replace(" Planta ", "  ")))
                 .bodyJson()
-                .extractingPath("$.location.addressName")
+                .extractingPath("$.location.addresses[0].name")
                 .isNull();
     }
 
@@ -393,8 +412,8 @@ class CooperativeOrganizationProfileIntegrationTest {
         assertThat(put(
                         "/location",
                         token,
-                        location("Mitre 500", "PUBLIC", null)
-                                .replace("{\"address\"", "{\"addressName\": \"" + longName + "\", \"address\"")))
+                        addresses(main("Mitre 500", "PUBLIC", null)
+                                .replace("\"name\": null", "\"name\": \"" + longName + "\""))))
                 .hasStatus(HttpStatus.BAD_REQUEST);
         assertThat(put(
                         "/location",
@@ -418,9 +437,28 @@ class CooperativeOrganizationProfileIntegrationTest {
                 .hasStatus(HttpStatus.BAD_REQUEST);
     }
 
+    /** The main address, Mitre 500, and the given ones after it. */
     private static String withOthers(String... others) {
-        String main = location("Mitre 500", "PUBLIC", null).strip();
-        return main.substring(0, main.length() - 1) + ", \"otherAddresses\": [" + String.join(", ", others) + "]}";
+        List<String> all = new ArrayList<>(List.of(main("Mitre 500", "PUBLIC", null)));
+        all.addAll(List.of(others));
+        return addresses(all.toArray(String[]::new));
+    }
+
+    private static String addresses(String... addresses) {
+        return "{\"addresses\": [" + String.join(", ", addresses) + "]}";
+    }
+
+    private static String location(String street, String streetVisibility, String point) {
+        return addresses(main(street, streetVisibility, point));
+    }
+
+    private static String main(String street, String streetVisibility, String point) {
+        return """
+                {"type": "MAIN", "name": null,
+                 "address": {"province": "BUENOS_AIRES", "district": "Avellaneda", "locality": "Sarandí",
+                             "street": "%s"},
+                 "streetVisibility": "%s", "point": %s}
+                """.formatted(street, streetVisibility, point);
     }
 
     private static String other(String id, String street, String streetVisibility, String point) {
@@ -430,14 +468,6 @@ class CooperativeOrganizationProfileIntegrationTest {
                              "additionalReferences": "Galpón azul"},
                  "streetVisibility": "%s", "point": %s}
                 """.formatted(id, street, streetVisibility, point);
-    }
-
-    private static String location(String street, String streetVisibility, String point) {
-        return """
-                {"address": {"province": "BUENOS_AIRES", "district": "Avellaneda", "locality": "Sarandí",
-                             "street": "%s"},
-                 "streetVisibility": "%s", "point": %s}
-                """.formatted(street, streetVisibility, point);
     }
 
     private String profile() {

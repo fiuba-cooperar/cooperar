@@ -9,8 +9,9 @@ import {
   Sector,
 } from '@/api/generated/model';
 
-/** What an address other than the main one is. */
+/** What an address is: the main one, or another kind. */
 export const ADDRESS_TYPE_LABELS: Record<AddressType, string> = {
+  [AddressType.MAIN]: 'Principal',
   [AddressType.SECONDARY]: 'Secundaria',
 };
 

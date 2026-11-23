@@ -8,38 +8,26 @@
 import type { ActivityType } from './activityType';
 import type { OrganizationType } from './organizationType';
 import type { ProfilePhotosResponse } from './profilePhotosResponse';
-import type { Province } from './province';
-import type { PublicLocation } from './publicLocation';
-import type { PublicOtherAddressResponse } from './publicOtherAddressResponse';
+import type { PublicAddressResponse } from './publicAddressResponse';
 import type { ResponseTime } from './responseTime';
 import type { Sector } from './sector';
 
 export interface OrganizationProfileResponse {
   activityTypes: ActivityType[];
-  /** Only along with the street */
-  additionalReferences?: string;
-  /** How the organization calls its main address */
-  addressName?: string;
+  /** The main one first, then the others */
+  addresses: PublicAddressResponse[];
   description?: string;
-  district: string;
   email?: string;
   legalName?: string;
-  locality: string;
-  location?: PublicLocation;
   name: string;
   openingHours?: string;
-  /** Besides the main one, in order */
-  otherAddresses: PublicOtherAddressResponse[];
   phone?: string;
   photos: ProfilePhotosResponse;
-  province: Province;
   responseTime?: ResponseTime;
   sectors: Sector[];
   slug: string;
   socialMedia?: string;
   startYear?: number;
-  /** Missing when the organization keeps it private */
-  street?: string;
   type: OrganizationType;
   website?: string;
   whatsapp?: string;

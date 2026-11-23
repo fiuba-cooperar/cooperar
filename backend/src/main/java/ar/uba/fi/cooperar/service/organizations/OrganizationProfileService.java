@@ -1,13 +1,13 @@
 package ar.uba.fi.cooperar.service.organizations;
 
 import ar.uba.fi.cooperar.domain.organizations.Address;
+import ar.uba.fi.cooperar.domain.organizations.AddressDetails;
+import ar.uba.fi.cooperar.domain.organizations.AddressType;
 import ar.uba.fi.cooperar.domain.organizations.Organization;
 import ar.uba.fi.cooperar.domain.organizations.OrganizationAddress;
-import ar.uba.fi.cooperar.domain.organizations.OtherAddress;
 import ar.uba.fi.cooperar.domain.organizations.ProfileActivity;
 import ar.uba.fi.cooperar.domain.organizations.ProfileContact;
 import ar.uba.fi.cooperar.domain.organizations.ProfileIdentification;
-import ar.uba.fi.cooperar.domain.organizations.Visibility;
 import ar.uba.fi.cooperar.repository.organizations.OrganizationRepository;
 import java.time.Clock;
 import java.time.Year;
@@ -65,40 +65,32 @@ public class OrganizationProfileService {
     }
 
     /**
-     * Saves the main address and the other ones; each {@code point} (also each other address's location) is where the
-     * organization placed the pin. Without it, a new address (or one never located) is geocoded, and an unchanged one
-     * keeps its point. Null {@code otherAddresses} leaves them as they are.
+     * Saves every address, the main one included; each {@code location} is where the organization placed the pin.
+     * Without it, a new address (or one never located) is geocoded, and an unchanged one keeps its point. The main
+     * address is compared with the main one the organization has, and the others with the one their id names.
      */
     @Transactional
-    public Organization updateLocation(
-            UUID organizationId,
-            UUID accountId,
-            String addressName,
-            Address address,
-            Visibility streetVisibility,
-            Point point,
-            List<OtherAddress> otherAddresses) {
+    public Organization updateLocation(UUID organizationId, UUID accountId, List<AddressDetails> addresses) {
         Organization organization = managed(organizationId, accountId);
-        organization.nameAddress(addressName);
-        organization.updateLocation(
-                address,
-                streetVisibility,
-                locate(address, point, organization.getAddress(), organization.getLocation()));
-        if (otherAddresses == null) {
-            return organization;
-        }
-        Map<UUID, OrganizationAddress> current = organization.getOtherAddresses().stream()
+        Map<UUID, OrganizationAddress> others = organization.getOtherAddresses().stream()
                 .collect(Collectors.toMap(OrganizationAddress::getId, Function.identity()));
-        organization.replaceOtherAddresses(otherAddresses.stream()
-                .map(other -> {
-                    OrganizationAddress existing = other.id() == null ? null : current.get(other.id());
+        organization.replaceAddresses(addresses.stream()
+                .map(details -> {
+                    OrganizationAddress previous = details.type() == AddressType.MAIN
+                            ? organization.getMainAddress()
+                            : details.id() == null ? null : others.get(details.id());
                     Point located = locate(
-                            other.address(),
-                            other.location(),
-                            existing == null ? null : existing.getAddress(),
-                            existing == null ? null : existing.getLocation());
-                    return new OtherAddress(
-                            other.id(), other.type(), other.name(), other.address(), other.streetVisibility(), located);
+                            details.address(),
+                            details.location(),
+                            previous == null ? null : previous.getAddress(),
+                            previous == null ? null : previous.getLocation());
+                    return new AddressDetails(
+                            details.id(),
+                            details.type(),
+                            details.name(),
+                            details.address(),
+                            details.streetVisibility(),
+                            located);
                 })
                 .toList());
         return organization;

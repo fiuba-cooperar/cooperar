@@ -5,11 +5,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import ar.uba.fi.cooperar.IntegrationTest;
 import ar.uba.fi.cooperar.domain.organizations.ActivityType;
 import ar.uba.fi.cooperar.domain.organizations.Address;
+import ar.uba.fi.cooperar.domain.organizations.AddressDetails;
 import ar.uba.fi.cooperar.domain.organizations.AddressType;
 import ar.uba.fi.cooperar.domain.organizations.Organization;
 import ar.uba.fi.cooperar.domain.organizations.OrganizationDetails;
 import ar.uba.fi.cooperar.domain.organizations.OrganizationType;
-import ar.uba.fi.cooperar.domain.organizations.OtherAddress;
 import ar.uba.fi.cooperar.domain.organizations.ProfileActivity;
 import ar.uba.fi.cooperar.domain.organizations.ProfileContact;
 import ar.uba.fi.cooperar.domain.organizations.ProfileIdentification;
@@ -163,13 +163,15 @@ class OrganizationSearchIntegrationTest {
     @Test
     void findsAnOrganizationByTheProvinceAndThePlaceOfAnotherAddress() {
         Organization bakery = organizations.findBySlug("panaderia-la-union").orElseThrow();
-        bakery.replaceOtherAddresses(List.of(new OtherAddress(
-                null,
-                AddressType.SECONDARY,
-                "Sucursal",
-                new Address(Province.MENDOZA, "Godoy Cruz", "Villa Hipódromo", "San Martín 1", null),
-                Visibility.PUBLIC,
-                null)));
+        bakery.replaceAddresses(List.of(
+                main(bakery.getMainAddress().getAddress()),
+                new AddressDetails(
+                        null,
+                        AddressType.SECONDARY,
+                        "Sucursal",
+                        new Address(Province.MENDOZA, "Godoy Cruz", "Villa Hipódromo", "San Martín 1", null),
+                        Visibility.PUBLIC,
+                        null)));
         organizations.flush();
 
         assertThat(names(SEARCH + "?province=MENDOZA")).containsExactly("Panadería La Unión");
@@ -278,12 +280,16 @@ class OrganizationSearchIntegrationTest {
                 new ProfileActivity(
                         Set.of(Sector.METALWORKING), Set.of(ActivityType.WORK), null, null, null, Visibility.PUBLIC),
                 2026);
-        printer.updateLocation(
-                new Address(Province.MENDOZA, "Godoy Cruz", "Centro", "San Martín 1", null), Visibility.PUBLIC, null);
+        printer.replaceAddresses(
+                List.of(main(new Address(Province.MENDOZA, "Godoy Cruz", "Centro", "San Martín 1", null))));
         organizations.flush();
 
         assertThat(names(SEARCH + "?q=metalurgica mendoza")).containsExactly("Gráfica Norte");
         assertThat(names(SEARCH + "?q=cordoba")).isEmpty();
+    }
+
+    private static AddressDetails main(Address address) {
+        return new AddressDetails(null, AddressType.MAIN, null, address, Visibility.PUBLIC, null);
     }
 
     private List<String> names(String uri) {

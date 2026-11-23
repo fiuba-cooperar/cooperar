@@ -71,7 +71,12 @@ class RegistrationRequestTest {
         assertThat(organization.getCuit()).isEqualTo(new Cuit("30123456781"));
         assertThat(organization.getSectors()).containsExactly(Sector.FOOD);
         assertThat(organization.getActivityTypes()).containsExactly(ActivityType.PRODUCT);
-        assertThat(organization.getAddress()).isEqualTo(address());
+        assertThat(organization.getAddresses()).singleElement().satisfies(main -> {
+            assertThat(main.getType()).isEqualTo(AddressType.MAIN);
+            assertThat(main.getAddress()).isEqualTo(address());
+            assertThat(main.getStreetVisibility()).isEqualTo(Visibility.PUBLIC);
+            assertThat(main.getLocation()).isNull();
+        });
         assertThat(organization.getRegistrantRole()).isEqualTo("Presidenta");
         assertThat(organization.getRegisteredBy()).isSameAs(account);
         assertThat(organization.getCreatedAt()).isEqualTo(LATER);

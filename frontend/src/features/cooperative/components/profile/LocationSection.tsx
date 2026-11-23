@@ -4,9 +4,10 @@ import type { ReactNode } from 'react';
 import { useState } from 'react';
 import {
   AddressType,
+  type AddressRequest,
   type CooperativeOrganizationProfileResponse,
-  type OtherAddressRequest,
 } from '@/api/generated/model';
+import { mainAddress, otherAddresses } from '@/features/organizations/addresses';
 import {
   ADDRESS_TYPE_LABELS,
   otherAddressTitle,
@@ -14,11 +15,9 @@ import {
 } from '@/features/organizations/labels';
 import { AddressFields } from './AddressFields';
 import {
-  addressRequest,
+  addressEntry,
   draftFrom,
   emptyDraft,
-  otherAddressRequest,
-  pinOf,
   validateAddress,
   type AddressDraft,
   type AddressForm,
@@ -30,17 +29,18 @@ import styles from './ProfileSections.module.css';
 /** Addresses besides the main one, as the backend allows. */
 export const MAX_OTHER_ADDRESSES = 10;
 
-const TYPE_OPTIONS = Object.values(AddressType).map((value) => ({
-  value,
-  label: ADDRESS_TYPE_LABELS[value],
-}));
+// An organization has a single main address, so it is not offered for the other ones.
+const OTHER_TYPES = Object.values(AddressType).filter((type) => type !== AddressType.MAIN);
+const TYPE_OPTIONS = OTHER_TYPES.map((value) => ({ value, label: ADDRESS_TYPE_LABELS[value] }));
 
 const MAIN_KEY = 'main';
 
-function mainFrom({ location }: CooperativeOrganizationProfileResponse) {
+function mainFrom({ location }: CooperativeOrganizationProfileResponse): AddressDraft {
+  const main = mainAddress(location.addresses);
   // A fixed key, so the main address stays open or closed across saves.
+  if (!main) return { ...emptyDraft(), type: AddressType.MAIN, key: MAIN_KEY };
   return {
-    ...draftFrom(location.addressName, location.address, location.streetVisibility, location.point),
+    ...draftFrom(main.name, main.address, main.streetVisibility, main.point, main),
     key: MAIN_KEY,
   };
 }
@@ -106,7 +106,7 @@ function AddressBlock({ draft, title, open, onToggle, actions, children }: Addre
 }
 
 function othersFrom({ location }: CooperativeOrganizationProfileResponse) {
-  return location.otherAddresses.map((other) =>
+  return otherAddresses(location.addresses).map((other) =>
     draftFrom(other.name, other.address, other.streetVisibility, other.point, other),
   );
 }
@@ -143,29 +143,13 @@ export function LocationSection({ profile, hidden, saving, next, save }: Section
       .filter((draft) => hasErrors(draft.errors))
       .map(({ key }) => key);
     if (withErrors.length > 0) setOpen((current) => new Set([...current, ...withErrors]));
-    const address = addressRequest(checkedMain.form);
-    const otherAddresses = checkedOthers.map(otherAddressRequest);
-    if (
-      hasErrors(checkedMain.errors) ||
-      checkedOthers.some((draft) => hasErrors(draft.errors)) ||
-      !address ||
-      otherAddresses.some((other) => other === null)
-    ) {
+    const entries = [checkedMain, ...checkedOthers].map(addressEntry);
+    if (withErrors.length > 0 || entries.some((entry) => entry === null)) {
       return false;
     }
-    const pin = pinOf(checkedMain);
-    const addressName = checkedMain.form.name.trim();
     const saved = await save({
       section: 'location',
-      data: {
-        ...(addressName && { addressName }),
-        address,
-        streetVisibility: checkedMain.form.streetVisibility,
-        ...(pin && { point: pin }),
-        otherAddresses: otherAddresses.filter(
-          (other): other is OtherAddressRequest => other !== null,
-        ),
-      },
+      data: { addresses: entries.filter((entry): entry is AddressRequest => entry !== null) },
     });
     setMain(mainFrom(saved));
     const savedOthers = othersFrom(saved);
@@ -243,7 +227,7 @@ export function LocationSection({ profile, hidden, saving, next, save }: Section
                   allowDeselect={false}
                   w={{ base: '100%', xs: 240 }}
                   onChange={(value) => {
-                    const type = Object.values(AddressType).find((option) => option === value);
+                    const type = OTHER_TYPES.find((option) => option === value);
                     if (type) updateOther(draft.key, (current) => ({ ...current, type }));
                   }}
                 />

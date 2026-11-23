@@ -32,8 +32,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Point;
 
 /**
  * A cooperative or ERT. It is created when the observatory approves its {@link RegistrationRequest}, so every
@@ -86,20 +84,6 @@ public class Organization {
     @Enumerated(EnumType.STRING)
     @Column(name = "activity_type")
     private Set<ActivityType> activityTypes = new HashSet<>();
-
-    @Embedded
-    private Address address;
-
-    /** How the organization calls its main address ("planta", "local"); optional and always public. */
-    @Column(name = "address_name")
-    private String addressName;
-
-    /** Also hides the additional references and makes the public map show only the area. */
-    @Enumerated(EnumType.STRING)
-    @Column(name = "street_visibility", nullable = false)
-    private Visibility streetVisibility = Visibility.PUBLIC;
-
-    private Point location;
 
     private String description;
 
@@ -158,10 +142,11 @@ public class Organization {
     @Fetch(FetchMode.SUBSELECT)
     private List<OrganizationPhoto> photos = new ArrayList<>();
 
+    /** Every address, the main one first (position 0) and then the others in the order the organization chose. */
     @OneToMany(mappedBy = "organization", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @OrderBy("position")
     @Fetch(FetchMode.SUBSELECT)
-    private List<OrganizationAddress> otherAddresses = new ArrayList<>();
+    private List<OrganizationAddress> addresses = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "registered_by")
@@ -174,7 +159,7 @@ public class Organization {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    /** Derived from the type, sectors, activity types and province; see {@link SearchKeywords}. */
+    /** Derived from the type, sectors, activity types and where its addresses are; see {@link SearchKeywords}. */
     @Column(name = "search_keywords", nullable = false)
     private String searchKeywords;
 
@@ -194,7 +179,9 @@ public class Organization {
         this.type = details.type();
         this.cuit = Cuit.parse(details.cuit()).digits();
         replaceSectorsAndActivityTypes(details.sectors(), details.activityTypes());
-        this.address = details.address();
+        // The street starts public, as in the registration form, and the point comes when the profile is edited.
+        this.addresses.add(new OrganizationAddress(
+                this, new AddressDetails(null, AddressType.MAIN, null, details.address(), Visibility.PUBLIC, null), 0));
         this.registrantRole = trimmed(details.registrantRole());
         refreshSearchKeywords();
     }
@@ -204,8 +191,7 @@ public class Organization {
                 type,
                 sectors,
                 activityTypes,
-                address.province(),
-                otherAddresses.stream().map(OrganizationAddress::getAddress).toList());
+                addresses.stream().map(OrganizationAddress::getAddress).toList());
     }
 
     private void replaceSectorsAndActivityTypes(Set<Sector> sectors, Set<ActivityType> activityTypes) {
@@ -250,43 +236,42 @@ public class Organization {
         refreshSearchKeywords();
     }
 
-    /** {@code location} is the point on the map, or null when the address could not be located. */
-    public void updateLocation(Address address, Visibility streetVisibility, Point location) {
-        this.address = address;
-        this.streetVisibility = streetVisibility;
-        this.location = location;
-        refreshSearchKeywords();
-    }
-
-    /** Names the main address; a blank name removes it. */
-    public void nameAddress(String name) {
-        this.addressName = optional(name);
-    }
-
     /**
-     * Leaves exactly the given addresses besides the main one, in that order: the ones naming an address the
-     * organization has are updated, the rest are added, and the ones not listed are removed. An id the organization
-     * does not have counts as a new address.
+     * Leaves exactly the given addresses: one main address, which is always the one the organization has, and up to
+     * {@link #MAX_OTHER_ADDRESSES} others in the given order. The others naming one the organization has are updated,
+     * the rest are added, and the ones not listed are removed. An id the organization does not have counts as a new
+     * address.
      */
-    public void replaceOtherAddresses(List<OtherAddress> desired) {
-        if (desired.size() > MAX_OTHER_ADDRESSES) {
+    public void replaceAddresses(List<AddressDetails> desired) {
+        List<AddressDetails> main = desired.stream()
+                .filter(details -> details.type() == AddressType.MAIN)
+                .toList();
+        if (main.size() != 1) {
+            throw new MainAddressRequiredException();
+        }
+        List<AddressDetails> others = desired.stream()
+                .filter(details -> details.type() != AddressType.MAIN)
+                .toList();
+        if (others.size() > MAX_OTHER_ADDRESSES) {
             throw new TooManyAddressesException(MAX_OTHER_ADDRESSES);
         }
+        OrganizationAddress currentMain = getMainAddress();
+        currentMain.update(main.getFirst(), 0);
         Map<UUID, OrganizationAddress> current =
-                otherAddresses.stream().collect(Collectors.toMap(OrganizationAddress::getId, Function.identity()));
-        List<OrganizationAddress> kept = new ArrayList<>();
-        for (int position = 0; position < desired.size(); position++) {
-            OtherAddress details = desired.get(position);
+                getOtherAddresses().stream().collect(Collectors.toMap(OrganizationAddress::getId, Function.identity()));
+        List<OrganizationAddress> kept = new ArrayList<>(List.of(currentMain));
+        for (int index = 0; index < others.size(); index++) {
+            AddressDetails details = others.get(index);
             OrganizationAddress existing = details.id() == null ? null : current.remove(details.id());
             if (existing == null) {
-                kept.add(new OrganizationAddress(this, details, position));
+                kept.add(new OrganizationAddress(this, details, index + 1));
             } else {
-                existing.update(details, position);
+                existing.update(details, index + 1);
                 kept.add(existing);
             }
         }
-        otherAddresses.clear();
-        otherAddresses.addAll(kept);
+        addresses.clear();
+        addresses.addAll(kept);
         refreshSearchKeywords();
     }
 
@@ -383,15 +368,6 @@ public class Organization {
         return ordered(activityTypes, ActivityType.class);
     }
 
-    public Address getAddress() {
-        return address;
-    }
-
-    /** Missing until the organization names its main address. */
-    public String getAddressName() {
-        return addressName;
-    }
-
     public String getDescription() {
         return description;
     }
@@ -404,39 +380,8 @@ public class Organization {
         return email;
     }
 
-    public Point getLocation() {
-        return location;
-    }
-
-    /**
-     * The point anyone may see: the exact one if the street is public, otherwise rounded to about a kilometer, so the
-     * public map shows the area without giving the address away.
-     */
-    public Point getPublicLocation() {
-        return publicPoint(location, streetVisibility);
-    }
-
-    /** {@code point} as anyone may see it: exact if the street is public, otherwise rounded to its area. */
-    static Point publicPoint(Point point, Visibility streetVisibility) {
-        if (point == null || streetVisibility == Visibility.PUBLIC) {
-            return point;
-        }
-        Point area =
-                point.getFactory().createPoint(new Coordinate(roundToArea(point.getX()), roundToArea(point.getY())));
-        area.setSRID(point.getSRID());
-        return area;
-    }
-
-    private static double roundToArea(double degrees) {
-        return Math.round(degrees * 100) / 100.0;
-    }
-
     public Visibility getLegalNameVisibility() {
         return legalNameVisibility;
-    }
-
-    public Visibility getStreetVisibility() {
-        return streetVisibility;
     }
 
     public Integer getStartYear() {
@@ -493,9 +438,24 @@ public class Organization {
         return cover;
     }
 
+    /** Every address, the main one first. */
+    public List<OrganizationAddress> getAddresses() {
+        return List.copyOf(addresses);
+    }
+
+    /** The one from the registration, which the organization may edit but never remove. */
+    public OrganizationAddress getMainAddress() {
+        return addresses.stream()
+                .filter(address -> address.getType() == AddressType.MAIN)
+                .findFirst()
+                .orElseThrow();
+    }
+
     /** The addresses besides the main one, in the order the organization chose. */
     public List<OrganizationAddress> getOtherAddresses() {
-        return List.copyOf(otherAddresses);
+        return addresses.stream()
+                .filter(address -> address.getType() != AddressType.MAIN)
+                .toList();
     }
 
     /** The gallery, in the order the organization chose. */

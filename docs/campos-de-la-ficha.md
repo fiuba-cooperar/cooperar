@@ -15,12 +15,12 @@ Niveles: **público** (cualquier visitante y la API pública), **privado** (solo
 | | Descripción | `description` | Texto, hasta 1.500 | No | Público |
 | | Año de inicio | `startYear` | Entre 1800 y el año actual (en una ERT, el de la recuperación) | No | Público |
 | | Cantidad de trabajadores | `workerCount` | Entero mayor que cero | No | Configurable (público) |
-| Ubicación | Nombre de la dirección principal | `addressName` | Texto, hasta 50 («planta», «local») | No | Público |
-| | Provincia, partido y localidad | `address.province`, `district`, `locality` | Lista cerrada y texto | Sí | Público |
-| | Calle y número | `address.street` | Texto, hasta 200 | Sí | Configurable (público) |
-| | Referencias para llegar | `address.additionalReferences` | Texto, hasta 300 | No | Sigue a la calle: se muestran solo si la calle es pública |
-| | Punto en el mapa | `location` | Punto WGS84; se geocodifica desde la dirección o lo mueve la cooperativa | No | Exacto si la calle es pública; si no, redondeado a la zona (unos 1 km) |
-| | Otras direcciones | `otherAddresses` | Hasta 10, cada una con su tipo (por ahora solo «Secundaria»), un nombre opcional de hasta 50 caracteres («sucursal», «depósito») y los mismos campos que la principal: provincia, partido, localidad, calle, referencias y punto en el mapa | No | Las mismas reglas que la principal, cada una con su propia visibilidad de la calle |
+| Ubicación | Nombre de la dirección principal | `addresses[].name` (la de tipo `MAIN`) | Texto, hasta 50 («planta», «local») | No | Público |
+| | Provincia, partido y localidad | `addresses[].address.province`, `district`, `locality` | Lista cerrada y texto | Sí | Público |
+| | Calle y número | `addresses[].address.street` | Texto, hasta 200 | Sí | Configurable (público) |
+| | Referencias para llegar | `addresses[].address.additionalReferences` | Texto, hasta 300 | No | Sigue a la calle: se muestran solo si la calle es pública |
+| | Punto en el mapa | `addresses[].point` | Punto WGS84; se geocodifica desde la dirección o lo mueve la cooperativa | No | Exacto si la calle es pública; si no, redondeado a la zona (unos 1 km) |
+| | Otras direcciones | `addresses[]` (las que no son `MAIN`) | Hasta 10, cada una con su tipo (por ahora solo «Secundaria»), un nombre opcional de hasta 50 caracteres («sucursal», «depósito») y los mismos campos que la principal: provincia, partido, localidad, calle, referencias y punto en el mapa | No | Las mismas reglas que la principal, cada una con su propia visibilidad de la calle |
 | Contacto | Teléfono | `phone` | Texto, hasta 50 | No | Configurable (público) |
 | | WhatsApp | `whatsapp` | Texto, hasta 50 | No | Configurable (público) |
 | | Email de contacto | `email` | Email, hasta 200 | No | Configurable (público) |

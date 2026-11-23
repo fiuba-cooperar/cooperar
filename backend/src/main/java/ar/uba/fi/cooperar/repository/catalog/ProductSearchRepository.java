@@ -42,6 +42,7 @@ public class ProductSearchRepository {
                                         ELSE ts_rank(doc.vector, q.query) END AS rank
                             FROM products p
                                 JOIN organizations o ON o.id = p.organization_id
+                                JOIN organization_addresses main ON main.organization_id = o.id AND main.type = 'MAIN'
                                 JOIN product_categories c ON c.id = p.category_id
                                 CROSS JOIN q
                                 CROSS JOIN LATERAL (SELECT
@@ -49,12 +50,12 @@ public class ProductSearchRepository {
                                     || setweight(to_tsvector('spanish_unaccent',
                                            c.name || ' ' || o.name || ' ' || o.search_keywords), 'B')
                                     || setweight(to_tsvector('spanish_unaccent',
-                                           o.locality || ' ' || o.district || ' ' || coalesce(p.description, '')), 'C')
+                                           main.locality || ' ' || main.district || ' ' || coalesce(p.description, '')), 'C')
                                     AS vector) doc
                             WHERE p.status = 'PUBLISHED'
                               AND (numnode(q.query) = 0 OR doc.vector @@ q.query)
                               AND (cast(:category AS uuid) IS NULL OR p.category_id = :category)
-                              AND (cast(:province AS text) IS NULL OR o.province = :province)
+                              AND (cast(:province AS text) IS NULL OR main.province = :province)
                               AND (cast(:organization AS text) IS NULL OR o.slug = :organization))
                         SELECT m.id,
                                array(SELECT s.sale_mode FROM product_sale_modes s WHERE s.product_id = m.id)

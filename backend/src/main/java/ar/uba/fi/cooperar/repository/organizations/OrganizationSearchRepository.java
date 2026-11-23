@@ -38,7 +38,7 @@ public class OrganizationSearchRepository {
                                         ELSE ts_rank(o.search_vector, q.query) END AS rank
                             FROM organizations o, q
                             WHERE (numnode(q.query) = 0 OR o.search_vector @@ q.query)
-                              AND (cast(:province AS text) IS NULL OR o.province = :province
+                              AND (cast(:province AS text) IS NULL
                                    OR EXISTS (SELECT 1 FROM organization_addresses a
                                               WHERE a.organization_id = o.id AND a.province = :province)))
                         SELECT m.id, m.name, m.type, m.rank,

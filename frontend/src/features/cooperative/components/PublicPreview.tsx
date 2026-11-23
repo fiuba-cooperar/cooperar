@@ -2,13 +2,15 @@ import { Badge, Button, Group, Paper, Stack, Text, Title } from '@mantine/core';
 import { IconExternalLink } from '@tabler/icons-react';
 import { Link } from 'react-router';
 import type { OrganizationSummary } from '@/api/generated/model';
+import { mainAddress } from '@/features/organizations/addresses';
 import { useOrganizationProfile } from '@/features/organizations/api/useOrganizationProfile';
 import { PROVINCE_LABELS, SECTOR_LABELS } from '@/features/organizations/labels';
 import styles from './PublicPreview.module.css';
 
 function PublicDetails({ slug }: { slug: string }) {
   const { data: profile } = useOrganizationProfile(slug);
-  if (!profile) return null;
+  const main = profile && mainAddress(profile.addresses);
+  if (!profile || !main) return null;
 
   return (
     <Group gap={8} className={styles.details}>
@@ -18,7 +20,7 @@ function PublicDetails({ slug }: { slug: string }) {
         </Badge>
       ))}
       <Text size="sm" c="dimmed">
-        {profile.locality}, {PROVINCE_LABELS[profile.province]}
+        {main.locality}, {PROVINCE_LABELS[main.province]}
       </Text>
     </Group>
   );

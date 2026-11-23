@@ -9,12 +9,15 @@ import ar.uba.fi.cooperar.web.organizations.OrganizationProfileResponse.PublicLo
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
- * An address besides the main one, as anyone sees it: with the same rules as the main address, a private street comes
- * as null, the references only come along with the street, and the point is rounded to the area.
+ * An address as anyone sees it: a private street comes as null, the references only come along with the street, and
+ * the point is rounded to the area.
  */
-public record PublicOtherAddressResponse(
+public record PublicAddressResponse(
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) AddressType type,
+
+        @Schema(description = "How the organization calls it, like «planta» or «sucursal»")
         String name,
+
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Province province,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String district,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String locality,
@@ -23,19 +26,21 @@ public record PublicOtherAddressResponse(
         String street,
 
         @Schema(description = "Only along with the street") String additionalReferences,
+
+        @Schema(description = "Missing when the address could not be located")
         PublicLocation location) {
 
-    static PublicOtherAddressResponse from(OrganizationAddress other) {
-        Address address = other.getAddress();
-        Visibility street = other.getStreetVisibility();
-        return new PublicOtherAddressResponse(
-                other.getType(),
-                other.getName(),
+    static PublicAddressResponse from(OrganizationAddress organizationAddress) {
+        Address address = organizationAddress.getAddress();
+        Visibility street = organizationAddress.getStreetVisibility();
+        return new PublicAddressResponse(
+                organizationAddress.getType(),
+                organizationAddress.getName(),
                 address.province(),
                 address.district(),
                 address.locality(),
                 street.reveal(address.street()),
                 street.reveal(address.additionalReferences()),
-                PublicLocation.from(other.getPublicLocation(), street == Visibility.PRIVATE));
+                PublicLocation.from(organizationAddress.getPublicLocation(), street == Visibility.PRIVATE));
     }
 }

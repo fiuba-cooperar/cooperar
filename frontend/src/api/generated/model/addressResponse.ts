@@ -10,9 +10,10 @@ import type { GeoPointResponse } from './geoPointResponse';
 import type { RegistrationAddressResponse } from './registrationAddressResponse';
 import type { Visibility } from './visibility';
 
-export interface OtherAddressResponse {
+export interface AddressResponse {
   address: RegistrationAddressResponse;
   id: string;
+  /** How the organization calls it, like «planta» or «sucursal» */
   name?: string;
   /** Missing when the address could not be located */
   point?: GeoPointResponse;

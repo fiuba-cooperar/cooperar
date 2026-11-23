@@ -5,6 +5,7 @@ import ar.uba.fi.cooperar.domain.organizations.ChangesNotRequestedException;
 import ar.uba.fi.cooperar.domain.organizations.GalleryFullException;
 import ar.uba.fi.cooperar.domain.organizations.InvalidCuitException;
 import ar.uba.fi.cooperar.domain.organizations.InvalidStartYearException;
+import ar.uba.fi.cooperar.domain.organizations.MainAddressRequiredException;
 import ar.uba.fi.cooperar.domain.organizations.RegistrationNotAwaitingReviewException;
 import ar.uba.fi.cooperar.domain.organizations.TooManyAddressesException;
 import ar.uba.fi.cooperar.service.catalog.InvalidPhotoOrderException;
@@ -59,6 +60,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         InvalidCuitException.class,
         InvalidStartYearException.class,
         TooManyAddressesException.class,
+        MainAddressRequiredException.class,
         InvalidProductCategoryException.class,
         InvalidImageException.class,
         InvalidPhotoOrderException.class,

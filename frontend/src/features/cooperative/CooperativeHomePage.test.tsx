@@ -40,10 +40,20 @@ function managedProfile({ complete = false } = {}) {
       workerCountVisibility: 'PUBLIC',
     },
     location: {
-      address: { province: 'SANTA_FE', district: 'Rosario', locality: 'Centro', street: 'Calle 1' },
-      streetVisibility: 'PUBLIC',
-      point: complete ? { latitude: -32.95, longitude: -60.64 } : null,
-      otherAddresses: [],
+      addresses: [
+        {
+          id: 'm1',
+          type: 'MAIN',
+          address: {
+            province: 'SANTA_FE',
+            district: 'Rosario',
+            locality: 'Centro',
+            street: 'Calle 1',
+          },
+          streetVisibility: 'PUBLIC',
+          point: complete ? { latitude: -32.95, longitude: -60.64 } : null,
+        },
+      ],
     },
     contact: {
       phone: complete ? '341 000-0000' : null,
@@ -94,10 +104,15 @@ describe('cooperative panel', () => {
           name: 'La Litoraleña',
           slug: 'la-litoralena',
           sectors: ['TEXTILE'],
-          district: 'Avellaneda',
-          locality: 'Avellaneda',
-          province: 'BUENOS_AIRES',
-          street: 'Calle 1',
+          addresses: [
+            {
+              type: 'MAIN',
+              district: 'Avellaneda',
+              locality: 'Avellaneda',
+              province: 'BUENOS_AIRES',
+              street: 'Calle 1',
+            },
+          ],
         },
       },
     });

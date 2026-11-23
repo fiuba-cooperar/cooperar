@@ -9,5 +9,6 @@
 export type AddressType = (typeof AddressType)[keyof typeof AddressType];
 
 export const AddressType = {
+  MAIN: 'MAIN',
   SECONDARY: 'SECONDARY',
 } as const;

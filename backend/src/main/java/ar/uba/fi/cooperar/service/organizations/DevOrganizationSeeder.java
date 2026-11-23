@@ -2,6 +2,8 @@ package ar.uba.fi.cooperar.service.organizations;
 
 import ar.uba.fi.cooperar.domain.organizations.ActivityType;
 import ar.uba.fi.cooperar.domain.organizations.Address;
+import ar.uba.fi.cooperar.domain.organizations.AddressDetails;
+import ar.uba.fi.cooperar.domain.organizations.AddressType;
 import ar.uba.fi.cooperar.domain.organizations.Organization;
 import ar.uba.fi.cooperar.domain.organizations.OrganizationDetails;
 import ar.uba.fi.cooperar.domain.organizations.OrganizationType;
@@ -147,8 +149,13 @@ public class DevOrganizationSeeder implements ApplicationRunner {
                             null,
                             Visibility.PUBLIC),
                     Year.now(clock).getValue());
-            organization.updateLocation(
-                    sample.address(), Visibility.PUBLIC, point(sample.latitude(), sample.longitude()));
+            organization.replaceAddresses(List.of(new AddressDetails(
+                    null,
+                    AddressType.MAIN,
+                    null,
+                    sample.address(),
+                    Visibility.PUBLIC,
+                    point(sample.latitude(), sample.longitude()))));
             organization.updateContact(new ProfileContact(
                     sample.phone(),
                     Visibility.PUBLIC,

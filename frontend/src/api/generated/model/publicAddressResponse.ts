@@ -9,12 +9,14 @@ import type { AddressType } from './addressType';
 import type { Province } from './province';
 import type { PublicLocation } from './publicLocation';
 
-export interface PublicOtherAddressResponse {
+export interface PublicAddressResponse {
   /** Only along with the street */
   additionalReferences?: string;
   district: string;
   locality: string;
+  /** Missing when the address could not be located */
   location?: PublicLocation;
+  /** How the organization calls it, like «planta» or «sucursal» */
   name?: string;
   province: Province;
   /** Missing when the organization keeps it private */

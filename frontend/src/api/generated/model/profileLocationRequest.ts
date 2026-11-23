@@ -5,27 +5,13 @@
  * Open observatory of worker-recovered companies and worker cooperatives
  * OpenAPI spec version: v1
  */
-import type { GeoPointRequest } from './geoPointRequest';
-import type { OtherAddressRequest } from './otherAddressRequest';
-import type { RegistrationAddressRequest } from './registrationAddressRequest';
-import type { Visibility } from './visibility';
+import type { AddressRequest } from './addressRequest';
 
 export interface ProfileLocationRequest {
-  address: RegistrationAddressRequest;
   /**
-   * How the organization calls its main address; blank removes it
-   * @minLength 0
-   * @maxLength 50
-   */
-  addressName?: string;
-  /**
-   * Every address besides the main one, in order: the ones left out are removed. Missing leaves them as they are.
+   * Every address of the organization: exactly one MAIN and the others in order. The ones left out are removed.
    * @minItems 0
-   * @maxItems 10
+   * @maxItems 11
    */
-  otherAddresses?: OtherAddressRequest[];
-  /** Where the organization placed the pin. Without it, a changed address is located again and an unchanged one keeps its point. */
-  point?: GeoPointRequest;
-  /** A private street also hides the additional references and the exact point */
-  streetVisibility: Visibility;
+  addresses: AddressRequest[];
 }

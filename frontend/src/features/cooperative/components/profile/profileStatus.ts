@@ -1,4 +1,5 @@
 import type { CooperativeOrganizationProfileResponse } from '@/api/generated/model';
+import { mainAddress } from '@/features/organizations/addresses';
 
 export type ProfileSectionKey = 'identification' | 'activity' | 'photos' | 'location' | 'contact';
 
@@ -47,7 +48,9 @@ export function sectionStatus(
       return COMPLETE;
     }
     case 'location':
-      return profile.location.point ? COMPLETE : missing('Falta el punto en el mapa');
+      return mainAddress(profile.location.addresses)?.point
+        ? COMPLETE
+        : missing('Falta el punto en el mapa');
     case 'contact': {
       const { phone, whatsapp, email, openingHours } = profile.contact;
       if (!phone && !whatsapp && !email) return missing('Falta un medio de contacto');

@@ -29,7 +29,7 @@ public record CatalogOrganizationResponse(
         String logoUrl) {
 
     static CatalogOrganizationResponse from(Organization organization) {
-        Address address = organization.getAddress();
+        Address address = organization.getMainAddress().getAddress();
         return new CatalogOrganizationResponse(
                 organization.getSlug(),
                 organization.getName(),

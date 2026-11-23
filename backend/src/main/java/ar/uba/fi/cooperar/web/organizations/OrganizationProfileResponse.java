@@ -1,13 +1,10 @@
 package ar.uba.fi.cooperar.web.organizations;
 
 import ar.uba.fi.cooperar.domain.organizations.ActivityType;
-import ar.uba.fi.cooperar.domain.organizations.Address;
 import ar.uba.fi.cooperar.domain.organizations.Organization;
 import ar.uba.fi.cooperar.domain.organizations.OrganizationType;
-import ar.uba.fi.cooperar.domain.organizations.Province;
 import ar.uba.fi.cooperar.domain.organizations.ResponseTime;
 import ar.uba.fi.cooperar.domain.organizations.Sector;
-import ar.uba.fi.cooperar.domain.organizations.Visibility;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 import java.util.Set;
@@ -24,17 +21,6 @@ public record OrganizationProfileResponse(
         String legalName,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Set<Sector> sectors,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Set<ActivityType> activityTypes,
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Province province,
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String district,
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String locality,
-
-        @Schema(description = "How the organization calls its main address")
-        String addressName,
-
-        @Schema(description = "Missing when the organization keeps it private")
-        String street,
-
-        @Schema(description = "Only along with the street") String additionalReferences,
         String description,
         Integer startYear,
         Integer workerCount,
@@ -45,10 +31,9 @@ public record OrganizationProfileResponse(
         String socialMedia,
         String openingHours,
         ResponseTime responseTime,
-        PublicLocation location,
 
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Besides the main one, in order")
-        List<PublicOtherAddressResponse> otherAddresses,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "The main one first, then the others")
+        List<PublicAddressResponse> addresses,
 
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) ProfilePhotosResponse photos) {
 
@@ -69,8 +54,6 @@ public record OrganizationProfileResponse(
     }
 
     static OrganizationProfileResponse from(Organization organization) {
-        Address address = organization.getAddress();
-        Visibility street = organization.getStreetVisibility();
         return new OrganizationProfileResponse(
                 organization.getSlug(),
                 organization.getName(),
@@ -78,12 +61,6 @@ public record OrganizationProfileResponse(
                 organization.getLegalNameVisibility().reveal(organization.getLegalName()),
                 organization.getSectors(),
                 organization.getActivityTypes(),
-                address.province(),
-                address.district(),
-                address.locality(),
-                organization.getAddressName(),
-                street.reveal(address.street()),
-                street.reveal(address.additionalReferences()),
                 organization.getDescription(),
                 organization.getStartYear(),
                 organization.getWorkerCountVisibility().reveal(organization.getWorkerCount()),
@@ -94,9 +71,8 @@ public record OrganizationProfileResponse(
                 organization.getSocialMedia(),
                 organization.getOpeningHours(),
                 organization.getResponseTime(),
-                PublicLocation.from(organization.getPublicLocation(), street == Visibility.PRIVATE),
-                organization.getOtherAddresses().stream()
-                        .map(PublicOtherAddressResponse::from)
+                organization.getAddresses().stream()
+                        .map(PublicAddressResponse::from)
                         .toList(),
                 ProfilePhotosResponse.from(organization));
     }

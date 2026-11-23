@@ -6,9 +6,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * The Spanish words a visitor types for what an organization stores as codes, so that searching "textil" or "Córdoba"
- * finds it. They feed the full-text index along with the name, the place and the description. Migration V10 fills in
- * the existing organizations with these same words.
+ * The Spanish words a visitor types for what an organization stores as codes, and the places of its addresses, so that
+ * searching "textil", "Córdoba" or "Bernal" finds it. They feed the full-text index along with the name and the
+ * description. Migrations V10 and V17 fill in the existing organizations with these same words.
  */
 public final class SearchKeywords {
 
@@ -58,24 +58,19 @@ public final class SearchKeywords {
 
     private SearchKeywords() {}
 
-    /**
-     * {@code otherAddresses} are the addresses besides the main one: their place (locality, district and province) is
-     * searched too, while the main one's locality and district are already in the index.
-     */
+    /** {@code addresses} are all of them, the main one included: the place of each one is searched. */
     static String of(
             OrganizationType type,
             Collection<Sector> sectors,
             Collection<ActivityType> activityTypes,
-            Province province,
-            Collection<Address> otherAddresses) {
+            Collection<Address> addresses) {
         return Stream.of(
                         Stream.of(TYPES.get(type)),
                         sectors.stream().map(SECTORS::get),
                         activityTypes.stream().map(ACTIVITY_TYPES::get),
-                        Stream.of(PROVINCES.get(province)),
-                        otherAddresses.stream()
-                                .flatMap(other ->
-                                        Stream.of(other.locality(), other.district(), PROVINCES.get(other.province()))))
+                        addresses.stream()
+                                .flatMap(address -> Stream.of(
+                                        address.locality(), address.district(), PROVINCES.get(address.province()))))
                 .flatMap(words -> words)
                 .filter(words -> !words.isEmpty())
                 .collect(Collectors.joining(" "));

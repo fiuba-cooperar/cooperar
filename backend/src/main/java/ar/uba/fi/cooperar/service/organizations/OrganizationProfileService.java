@@ -2,6 +2,8 @@ package ar.uba.fi.cooperar.service.organizations;
 
 import ar.uba.fi.cooperar.domain.organizations.Address;
 import ar.uba.fi.cooperar.domain.organizations.Organization;
+import ar.uba.fi.cooperar.domain.organizations.OrganizationAddress;
+import ar.uba.fi.cooperar.domain.organizations.OtherAddress;
 import ar.uba.fi.cooperar.domain.organizations.ProfileActivity;
 import ar.uba.fi.cooperar.domain.organizations.ProfileContact;
 import ar.uba.fi.cooperar.domain.organizations.ProfileIdentification;
@@ -9,7 +11,11 @@ import ar.uba.fi.cooperar.domain.organizations.Visibility;
 import ar.uba.fi.cooperar.repository.organizations.OrganizationRepository;
 import java.time.Clock;
 import java.time.Year;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.locationtech.jts.geom.Point;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,22 +65,54 @@ public class OrganizationProfileService {
     }
 
     /**
-     * {@code point} is where the organization placed the pin. Without it, a new address (or one never located) is
-     * geocoded, and an unchanged one keeps its point.
+     * Saves the main address and the other ones; each {@code point} (also each other address's location) is where the
+     * organization placed the pin. Without it, a new address (or one never located) is geocoded, and an unchanged one
+     * keeps its point. Null {@code otherAddresses} leaves them as they are.
      */
     @Transactional
     public Organization updateLocation(
-            UUID organizationId, UUID accountId, Address address, Visibility streetVisibility, Point point) {
+            UUID organizationId,
+            UUID accountId,
+            String addressName,
+            Address address,
+            Visibility streetVisibility,
+            Point point,
+            List<OtherAddress> otherAddresses) {
         Organization organization = managed(organizationId, accountId);
-        Point location = point;
-        if (location == null) {
-            boolean unchanged = address.equals(organization.getAddress()) && organization.getLocation() != null;
-            location = unchanged
-                    ? organization.getLocation()
-                    : geocoder.locate(address).orElse(null);
+        organization.nameAddress(addressName);
+        organization.updateLocation(
+                address,
+                streetVisibility,
+                locate(address, point, organization.getAddress(), organization.getLocation()));
+        if (otherAddresses == null) {
+            return organization;
         }
-        organization.updateLocation(address, streetVisibility, location);
+        Map<UUID, OrganizationAddress> current = organization.getOtherAddresses().stream()
+                .collect(Collectors.toMap(OrganizationAddress::getId, Function.identity()));
+        organization.replaceOtherAddresses(otherAddresses.stream()
+                .map(other -> {
+                    OrganizationAddress existing = other.id() == null ? null : current.get(other.id());
+                    Point located = locate(
+                            other.address(),
+                            other.location(),
+                            existing == null ? null : existing.getAddress(),
+                            existing == null ? null : existing.getLocation());
+                    return new OtherAddress(
+                            other.id(), other.type(), other.name(), other.address(), other.streetVisibility(), located);
+                })
+                .toList());
         return organization;
+    }
+
+    /** The pin the organization placed; else the point it had, if the address did not change; else geocoded. */
+    private Point locate(Address address, Point pin, Address previousAddress, Point previousPoint) {
+        if (pin != null) {
+            return pin;
+        }
+        if (address.equals(previousAddress) && previousPoint != null) {
+            return previousPoint;
+        }
+        return geocoder.locate(address).orElse(null);
     }
 
     @Transactional

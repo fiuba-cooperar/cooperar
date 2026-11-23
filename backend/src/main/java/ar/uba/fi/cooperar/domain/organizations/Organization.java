@@ -24,9 +24,11 @@ import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
@@ -44,6 +46,9 @@ public class Organization {
 
     /** Photos in the gallery, besides the logo and the cover. */
     public static final int MAX_PHOTOS = 10;
+
+    /** Addresses besides the main one. */
+    public static final int MAX_OTHER_ADDRESSES = 10;
 
     @Id
     private UUID id;
@@ -84,6 +89,10 @@ public class Organization {
 
     @Embedded
     private Address address;
+
+    /** How the organization calls its main address ("planta", "local"); optional and always public. */
+    @Column(name = "address_name")
+    private String addressName;
 
     /** Also hides the additional references and makes the public map show only the area. */
     @Enumerated(EnumType.STRING)
@@ -149,6 +158,11 @@ public class Organization {
     @Fetch(FetchMode.SUBSELECT)
     private List<OrganizationPhoto> photos = new ArrayList<>();
 
+    @OneToMany(mappedBy = "organization", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OrderBy("position")
+    @Fetch(FetchMode.SUBSELECT)
+    private List<OrganizationAddress> otherAddresses = new ArrayList<>();
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "registered_by")
     private UserAccount registeredBy;
@@ -186,7 +200,12 @@ public class Organization {
     }
 
     private void refreshSearchKeywords() {
-        this.searchKeywords = SearchKeywords.of(type, sectors, activityTypes, address.province());
+        this.searchKeywords = SearchKeywords.of(
+                type,
+                sectors,
+                activityTypes,
+                address.province(),
+                otherAddresses.stream().map(OrganizationAddress::getAddress).toList());
     }
 
     private void replaceSectorsAndActivityTypes(Set<Sector> sectors, Set<ActivityType> activityTypes) {
@@ -236,6 +255,38 @@ public class Organization {
         this.address = address;
         this.streetVisibility = streetVisibility;
         this.location = location;
+        refreshSearchKeywords();
+    }
+
+    /** Names the main address; a blank name removes it. */
+    public void nameAddress(String name) {
+        this.addressName = optional(name);
+    }
+
+    /**
+     * Leaves exactly the given addresses besides the main one, in that order: the ones naming an address the
+     * organization has are updated, the rest are added, and the ones not listed are removed. An id the organization
+     * does not have counts as a new address.
+     */
+    public void replaceOtherAddresses(List<OtherAddress> desired) {
+        if (desired.size() > MAX_OTHER_ADDRESSES) {
+            throw new TooManyAddressesException(MAX_OTHER_ADDRESSES);
+        }
+        Map<UUID, OrganizationAddress> current =
+                otherAddresses.stream().collect(Collectors.toMap(OrganizationAddress::getId, Function.identity()));
+        List<OrganizationAddress> kept = new ArrayList<>();
+        for (int position = 0; position < desired.size(); position++) {
+            OtherAddress details = desired.get(position);
+            OrganizationAddress existing = details.id() == null ? null : current.remove(details.id());
+            if (existing == null) {
+                kept.add(new OrganizationAddress(this, details, position));
+            } else {
+                existing.update(details, position);
+                kept.add(existing);
+            }
+        }
+        otherAddresses.clear();
+        otherAddresses.addAll(kept);
         refreshSearchKeywords();
     }
 
@@ -336,6 +387,11 @@ public class Organization {
         return address;
     }
 
+    /** Missing until the organization names its main address. */
+    public String getAddressName() {
+        return addressName;
+    }
+
     public String getDescription() {
         return description;
     }
@@ -357,12 +413,17 @@ public class Organization {
      * public map shows the area without giving the address away.
      */
     public Point getPublicLocation() {
-        if (location == null || streetVisibility == Visibility.PUBLIC) {
-            return location;
+        return publicPoint(location, streetVisibility);
+    }
+
+    /** {@code point} as anyone may see it: exact if the street is public, otherwise rounded to its area. */
+    static Point publicPoint(Point point, Visibility streetVisibility) {
+        if (point == null || streetVisibility == Visibility.PUBLIC) {
+            return point;
         }
-        Point area = location.getFactory()
-                .createPoint(new Coordinate(roundToArea(location.getX()), roundToArea(location.getY())));
-        area.setSRID(location.getSRID());
+        Point area =
+                point.getFactory().createPoint(new Coordinate(roundToArea(point.getX()), roundToArea(point.getY())));
+        area.setSRID(point.getSRID());
         return area;
     }
 
@@ -430,6 +491,11 @@ public class Organization {
     /** Missing until the organization uploads one. */
     public ProfileImage getCover() {
         return cover;
+    }
+
+    /** The addresses besides the main one, in the order the organization chose. */
+    public List<OrganizationAddress> getOtherAddresses() {
+        return List.copyOf(otherAddresses);
     }
 
     /** The gallery, in the order the organization chose. */

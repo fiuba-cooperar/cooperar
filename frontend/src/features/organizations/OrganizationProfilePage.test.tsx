@@ -28,6 +28,7 @@ const fullProfile = {
   openingHours: 'Lunes a viernes de 8 a 17',
   responseTime: 'TWO_DAYS',
   location: { latitude: -34.6, longitude: -58.42, approximate: false },
+  otherAddresses: [],
   photos: { logoUrl: null, coverUrl: null, gallery: [] },
 };
 
@@ -54,6 +55,7 @@ const minimalProfile = {
   openingHours: null,
   responseTime: null,
   location: null,
+  otherAddresses: [],
   photos: { logoUrl: null, coverUrl: null, gallery: [] },
 };
 
@@ -100,6 +102,42 @@ describe('OrganizationProfilePage', () => {
       'https://img.example/2.png',
     );
     expect(document.querySelector('img[src="https://img.example/cover.png"]')).not.toBeNull();
+  });
+
+  it('lists the other addresses, without the street the organization keeps private', async () => {
+    stubProfile('la-cacerola', {
+      ...fullProfile,
+      otherAddresses: [
+        {
+          type: 'SECONDARY',
+          province: 'BUENOS_AIRES',
+          district: 'Quilmes',
+          locality: 'Bernal',
+          street: 'Belgrano 10',
+          additionalReferences: 'Galpón azul',
+          location: null,
+        },
+        {
+          type: 'SECONDARY',
+          name: 'Depósito',
+          province: 'CORDOBA',
+          district: 'Capital',
+          locality: 'Alberdi',
+          street: null,
+          additionalReferences: null,
+          location: null,
+        },
+      ],
+    });
+
+    renderRoute('/organizations/la-cacerola');
+
+    const contact = await screen.findByRole('region', { name: 'Datos de contacto' });
+    expect(within(contact).getByText('Secundaria Quilmes')).toBeVisible();
+    expect(within(contact).getByText('Depósito · Secundaria')).toBeVisible();
+    expect(within(contact).getByText(/Belgrano 10, Bernal, Quilmes, Buenos Aires/)).toBeVisible();
+    expect(within(contact).getByText('Galpón azul')).toBeVisible();
+    expect(within(contact).getByText('Alberdi, Capital, Córdoba')).toBeVisible();
   });
 
   it('leaves the photos section out when the gallery is empty', async () => {

@@ -94,6 +94,7 @@ class OrganizationProfileIntegrationTest {
                           "province": "CITY_OF_BUENOS_AIRES",
                           "district": "Comuna 5",
                           "locality": "Almagro",
+                          "addressName": null,
                           "street": "Gascón 1234",
                           "additionalReferences": "Portón verde",
                           "description": "Panificados",
@@ -107,6 +108,7 @@ class OrganizationProfileIntegrationTest {
                           "openingHours": "Lunes a viernes de 8 a 17",
                           "responseTime": "ONE_DAY",
                           "location": {"latitude": -34.6, "longitude": -58.42, "approximate": false},
+                          "otherAddresses": [],
                           "photos": {"logoUrl": null, "coverUrl": null, "gallery": []}
                         }
                         """);
@@ -174,6 +176,7 @@ class OrganizationProfileIntegrationTest {
                         "province",
                         "district",
                         "locality",
+                        "addressName",
                         "street",
                         "additionalReferences",
                         "description",
@@ -187,6 +190,7 @@ class OrganizationProfileIntegrationTest {
                         "openingHours",
                         "responseTime",
                         "location",
+                        "otherAddresses",
                         "photos");
     }
 

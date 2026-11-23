@@ -47,6 +47,7 @@ const PROFILE = {
     },
     streetVisibility: 'PUBLIC',
     point: null,
+    otherAddresses: [],
   },
   contact: {
     phone: '341 000-0000',
@@ -339,6 +340,138 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
     expect(sentBody(fetchMock, 'PUT', `${PROFILE_URL}/activity`)).toBeUndefined();
   });
 
+  it('adds a secondary address and saves it with the main one', async () => {
+    const saved = {
+      id: 'a1',
+      type: 'SECONDARY',
+      address: {
+        province: 'BUENOS_AIRES',
+        district: 'Quilmes',
+        locality: 'Bernal',
+        street: 'Belgrano 10',
+        additionalReferences: null,
+      },
+      streetVisibility: 'PUBLIC',
+      point: { latitude: -34.71, longitude: -58.28 },
+    };
+    const fetchMock = signedIn({
+      [`PUT ${PROFILE_URL}/location`]: {
+        body: { ...PROFILE, location: { ...PROFILE.location, otherAddresses: [saved] } },
+      },
+    });
+
+    renderRoute('/cooperative/profile?section=location');
+    await userEvent.click(await screen.findByRole('button', { name: 'Agregar otra dirección' }));
+    const other = screen.getByRole('group', { name: /Secundaria/ });
+    expect(within(other).getByRole('combobox', { name: 'Tipo de dirección' })).toHaveValue(
+      'Secundaria',
+    );
+    await userEvent.click(within(other).getByRole('combobox', { name: 'Provincia' }));
+    await userEvent.click(await screen.findByRole('option', { name: 'Buenos Aires' }));
+    await userEvent.type(
+      within(other).getByRole('textbox', { name: 'Departamento/Partido/Comuna' }),
+      'Quilmes',
+    );
+    await userEvent.type(
+      within(other).getByRole('textbox', { name: 'Localidad/Barrio' }),
+      'Bernal',
+    );
+    await userEvent.type(
+      within(other).getByRole('textbox', { name: 'Nombre de la dirección (opcional)' }),
+      'Depósito',
+    );
+    await userEvent.type(
+      within(other).getByRole('textbox', { name: 'Calle y número' }),
+      'Belgrano 10',
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
+
+    expect(
+      await screen.findByRole(
+        'region',
+        { name: /Mapa con el punto de la dirección Secundaria Quilmes/ },
+        { timeout: 5000 },
+      ),
+    ).toBeVisible();
+    expect(sentBody(fetchMock, 'PUT', `${PROFILE_URL}/location`)).toMatchObject({
+      otherAddresses: [
+        {
+          type: 'SECONDARY',
+          name: 'Depósito',
+          address: {
+            province: 'BUENOS_AIRES',
+            district: 'Quilmes',
+            locality: 'Bernal',
+            street: 'Belgrano 10',
+          },
+          streetVisibility: 'PUBLIC',
+        },
+      ],
+    });
+  }, 15000);
+
+  it('shows each address collapsed to a line until it is opened', async () => {
+    const other = {
+      id: 'a1',
+      type: 'SECONDARY',
+      name: 'Sucursal',
+      address: {
+        province: 'BUENOS_AIRES',
+        district: 'Quilmes',
+        locality: 'Bernal',
+        street: 'Belgrano 10',
+        additionalReferences: null,
+      },
+      streetVisibility: 'PUBLIC',
+      point: null,
+    };
+    signedIn({
+      [`GET ${PROFILE_URL}`]: {
+        body: { ...PROFILE, location: { ...PROFILE.location, otherAddresses: [other] } },
+      },
+    });
+
+    renderRoute('/cooperative/profile?section=location');
+
+    const main = await screen.findByRole('button', { name: /Dirección principal/ });
+    expect(main).toHaveAttribute('aria-expanded', 'false');
+    expect(main).toHaveTextContent('Rivadavia 100, Centro, Rosario, Santa Fe');
+    const secondary = screen.getByRole('button', {
+      name: /^Sucursal · Secundaria/,
+    });
+    expect(secondary).toHaveTextContent('Belgrano 10, Bernal, Quilmes, Buenos Aires');
+    expect(screen.queryByRole('textbox', { name: 'Calle y número' })).not.toBeInTheDocument();
+
+    await userEvent.click(secondary);
+
+    expect(secondary).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('textbox', { name: 'Calle y número' })).toHaveValue('Belgrano 10');
+    expect(screen.getByRole('textbox', { name: 'Nombre de la dirección (opcional)' })).toHaveValue(
+      'Sucursal',
+    );
+  });
+
+  it('asks for the fields of an added address and lets it be removed', async () => {
+    const fetchMock = signedIn({ [`PUT ${PROFILE_URL}/location`]: { body: PROFILE } });
+
+    renderRoute('/cooperative/profile?section=location');
+    await userEvent.click(await screen.findByRole('button', { name: 'Agregar otra dirección' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
+
+    const other = screen.getByRole('group', { name: /Secundaria/ });
+    expect(await within(other).findByText('Ingresá la calle y el número.')).toBeVisible();
+    expect(sentBody(fetchMock, 'PUT', `${PROFILE_URL}/location`)).toBeUndefined();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Quitar la dirección Secundaria' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
+
+    await waitFor(() => {
+      expect(sentBody(fetchMock, 'PUT', `${PROFILE_URL}/location`)).toMatchObject({
+        otherAddresses: [],
+      });
+    });
+  });
+
   it('saves the address so the backend locates it, and shows the point it found', async () => {
     const fetchMock = signedIn({
       [`PUT ${PROFILE_URL}/location`]: {
@@ -355,6 +488,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
     });
 
     renderRoute('/cooperative/profile?section=location');
+    await userEvent.click(await screen.findByRole('button', { name: /Dirección principal/ }));
     expect(await screen.findByText(/No pudimos ubicar la dirección/)).toBeVisible();
     const street = screen.getByRole('textbox', { name: 'Calle y número' });
     await userEvent.clear(street);
@@ -381,6 +515,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
         street: 'Mitre 500',
       },
       streetVisibility: 'PRIVATE',
+      otherAddresses: [],
     });
     expect(within(sectionNav()).getByRole('button', { name: /Ubicación/ })).toHaveTextContent(
       'Completo',
@@ -447,5 +582,48 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
     await screen.findByRole('textbox', { name: 'Email de contacto' });
 
     await expectNoA11yViolations(container);
+  });
+
+  // Every section is in the page at once, hidden or not, so a repeated id would point a label at another field.
+  it('makes the description taller and back', async () => {
+    signedIn();
+
+    renderRoute('/cooperative/profile?section=activity');
+    const description = await screen.findByRole('textbox', { name: 'Descripción' });
+    expect(description).toHaveAttribute('rows', '5');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Agrandar la descripción' }));
+    expect(description).toHaveAttribute('rows', '15');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Achicar la descripción' }));
+    expect(description).toHaveAttribute('rows', '5');
+  });
+
+  it('gives every field of every section its own id', async () => {
+    signedIn({
+      [`GET ${PROFILE_URL}`]: {
+        body: {
+          ...PROFILE,
+          location: {
+            ...PROFILE.location,
+            otherAddresses: [
+              {
+                id: 'a1',
+                type: 'SECONDARY',
+                address: PROFILE.location.address,
+                streetVisibility: 'PUBLIC',
+              },
+            ],
+          },
+        },
+      },
+    });
+
+    const { container } = renderRoute('/cooperative/profile?section=location');
+    await userEvent.click(await screen.findByRole('button', { name: /Dirección principal/ }));
+    await userEvent.click(screen.getByRole('button', { name: /^Secundaria Rosario/ }));
+
+    const ids = Array.from(container.querySelectorAll('[id]'), (element) => element.id);
+    expect(ids.filter((id, index) => ids.indexOf(id) !== index)).toEqual([]);
   });
 });

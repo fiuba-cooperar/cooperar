@@ -7,6 +7,7 @@ import ar.uba.fi.cooperar.domain.organizations.ResponseTime;
 import ar.uba.fi.cooperar.domain.organizations.Sector;
 import ar.uba.fi.cooperar.domain.organizations.Visibility;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -59,6 +60,9 @@ public record CooperativeOrganizationProfileResponse(
             Visibility workerCountVisibility) {}
 
     public record ProfileLocationResponse(
+            @Schema(description = "How the organization calls its main address")
+            String addressName,
+
             @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
             RegistrationAddressResponse address,
 
@@ -66,7 +70,10 @@ public record CooperativeOrganizationProfileResponse(
             Visibility streetVisibility,
 
             @Schema(description = "Missing when the address could not be located")
-            GeoPointResponse point) {}
+            GeoPointResponse point,
+
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Besides the main one, in order")
+            List<OtherAddressResponse> otherAddresses) {}
 
     public record ProfileContactResponse(
             String phone,
@@ -105,9 +112,13 @@ public record CooperativeOrganizationProfileResponse(
                         organization.getWorkerCount(),
                         organization.getWorkerCountVisibility()),
                 new ProfileLocationResponse(
+                        organization.getAddressName(),
                         RegistrationAddressResponse.from(organization.getAddress()),
                         organization.getStreetVisibility(),
-                        GeoPointResponse.from(organization.getLocation())),
+                        GeoPointResponse.from(organization.getLocation()),
+                        organization.getOtherAddresses().stream()
+                                .map(OtherAddressResponse::from)
+                                .toList()),
                 new ProfileContactResponse(
                         organization.getPhone(),
                         organization.getPhoneVisibility(),

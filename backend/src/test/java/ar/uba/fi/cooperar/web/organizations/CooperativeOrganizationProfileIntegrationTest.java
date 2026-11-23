@@ -2,8 +2,10 @@ package ar.uba.fi.cooperar.web.organizations;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import ar.uba.fi.cooperar.IntegrationTest;
@@ -23,6 +25,7 @@ import com.jayway.jsonpath.JsonPath;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.Year;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -281,6 +284,152 @@ class CooperativeOrganizationProfileIntegrationTest {
         assertThat(put("/contact", token("coop@test.local"), """
                         {"phoneVisibility": "PUBLIC", "whatsappVisibility": "PUBLIC"}
                         """)).hasStatus(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void addsOtherAddressesLocatedAndInOrder() {
+        given(geocoder.locate(any())).willReturn(Optional.of(WGS84.createPoint(new Coordinate(-58.37, -34.66))));
+
+        MvcTestResult saved = put(
+                "/location",
+                token("coop@test.local"),
+                withOthers(other(null, "Belgrano 10", "PUBLIC", null), other(null, "Moreno 20", "PRIVATE", null)));
+
+        assertThat(saved).hasStatusOk().bodyJson().isLenientlyEqualTo("""
+                {"location": {"otherAddresses": [
+                  {"type": "SECONDARY", "name": "Sucursal Bernal",
+                   "address": {"street": "Belgrano 10", "locality": "Bernal"},
+                   "streetVisibility": "PUBLIC", "point": {"latitude": -34.66, "longitude": -58.37}},
+                  {"type": "SECONDARY", "address": {"street": "Moreno 20"}, "streetVisibility": "PRIVATE"}]}}
+                """);
+        assertThat(mvc.get().uri("/api/organizations/la-cacerola")).bodyJson().isLenientlyEqualTo("""
+                {"otherAddresses": [
+                  {"type": "SECONDARY", "name": "Sucursal Bernal", "province": "BUENOS_AIRES",
+                   "district": "Quilmes", "locality": "Bernal",
+                   "street": "Belgrano 10", "additionalReferences": "Galpón azul",
+                   "location": {"latitude": -34.66, "longitude": -58.37, "approximate": false}},
+                  {"type": "SECONDARY", "street": null, "additionalReferences": null,
+                   "location": {"latitude": -34.66, "longitude": -58.37, "approximate": true}}]}
+                """);
+    }
+
+    @Test
+    void updatesKeepsTheUnchangedPointAndRemovesTheAddressesLeftOut() {
+        given(geocoder.locate(any())).willReturn(Optional.of(WGS84.createPoint(new Coordinate(-58.37, -34.66))));
+        String token = token("coop@test.local");
+        MvcTestResult first = put(
+                "/location",
+                token,
+                withOthers(
+                        other(null, "Belgrano 10", "PUBLIC", "{\"latitude\": -34.7, \"longitude\": -58.2}"),
+                        other(null, "Moreno 20", "PUBLIC", null)));
+        String keptId = JsonPath.read(body(first), "$.location.otherAddresses[0].id");
+
+        MvcTestResult second = put(
+                "/location",
+                token,
+                withOthers(
+                        other("\"" + keptId + "\"", "Belgrano 10", "PRIVATE", null),
+                        other(null, "Alsina 30", "PUBLIC", null)));
+
+        assertThat(second).bodyJson().isLenientlyEqualTo("""
+                {"location": {"otherAddresses": [
+                  {"id": "%s", "address": {"street": "Belgrano 10"}, "streetVisibility": "PRIVATE",
+                   "point": {"latitude": -34.7, "longitude": -58.2}},
+                  {"address": {"street": "Alsina 30"}}]}}
+                """.formatted(keptId));
+        assertThat(second)
+                .bodyJson()
+                .extractingPath("$.location.otherAddresses")
+                .asArray()
+                .hasSize(2);
+        // Moreno 20 and Alsina 30 were located; the pin of Belgrano 10 was kept, and so was the main address's point.
+        verify(geocoder, times(1)).locate(argThat(address -> address.street().equals("Moreno 20")));
+        verify(geocoder, times(1)).locate(argThat(address -> address.street().equals("Alsina 30")));
+        verify(geocoder, never()).locate(argThat(address -> address.street().equals("Belgrano 10")));
+    }
+
+    @Test
+    void leavesTheOtherAddressesAsTheyAreWhenTheRequestDoesNotListThem() {
+        String token = token("coop@test.local");
+        put("/location", token, withOthers(other(null, "Belgrano 10", "PUBLIC", null)));
+
+        assertThat(put("/location", token, location("Mitre 500", "PUBLIC", null)))
+                .bodyJson()
+                .extractingPath("$.location.otherAddresses[0].address.street")
+                .isEqualTo("Belgrano 10");
+        assertThat(put("/location", token, withOthers()))
+                .bodyJson()
+                .extractingPath("$.location.otherAddresses")
+                .asArray()
+                .isEmpty();
+    }
+
+    @Test
+    void namesTheMainAddressAndRemovesABlankName() {
+        String token = token("coop@test.local");
+        String named = location("Mitre 500", "PUBLIC", null)
+                .replace("{\"address\"", "{\"addressName\": \" Planta \", \"address\"");
+
+        assertThat(put("/location", token, named))
+                .bodyJson()
+                .extractingPath("$.location.addressName")
+                .isEqualTo("Planta");
+        assertThat(mvc.get().uri("/api/organizations/la-cacerola"))
+                .bodyJson()
+                .extractingPath("$.addressName")
+                .isEqualTo("Planta");
+        assertThat(put("/location", token, named.replace(" Planta ", "  ")))
+                .bodyJson()
+                .extractingPath("$.location.addressName")
+                .isNull();
+    }
+
+    @Test
+    void rejectsNamesLongerThanFiftyCharacters() {
+        String token = token("coop@test.local");
+        String longName = "x".repeat(51);
+
+        assertThat(put(
+                        "/location",
+                        token,
+                        location("Mitre 500", "PUBLIC", null)
+                                .replace("{\"address\"", "{\"addressName\": \"" + longName + "\", \"address\"")))
+                .hasStatus(HttpStatus.BAD_REQUEST);
+        assertThat(put(
+                        "/location",
+                        token,
+                        withOthers(other(null, "Belgrano 10", "PUBLIC", null).replace("  Sucursal Bernal ", longName))))
+                .hasStatus(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void rejectsInvalidOtherAddresses() {
+        String token = token("coop@test.local");
+        String eleven = String.join(", ", Collections.nCopies(11, other(null, "Belgrano 10", "PUBLIC", null)));
+
+        assertThat(put("/location", token, withOthers(eleven))).hasStatus(HttpStatus.BAD_REQUEST);
+        assertThat(put("/location", token, withOthers(other(null, "", "PUBLIC", null))))
+                .hasStatus(HttpStatus.BAD_REQUEST);
+        assertThat(put(
+                        "/location",
+                        token,
+                        withOthers(other(null, "Belgrano 10", "PUBLIC", null).replace("SECONDARY", "STORE"))))
+                .hasStatus(HttpStatus.BAD_REQUEST);
+    }
+
+    private static String withOthers(String... others) {
+        String main = location("Mitre 500", "PUBLIC", null).strip();
+        return main.substring(0, main.length() - 1) + ", \"otherAddresses\": [" + String.join(", ", others) + "]}";
+    }
+
+    private static String other(String id, String street, String streetVisibility, String point) {
+        return """
+                {"id": %s, "type": "SECONDARY", "name": "  Sucursal Bernal ",
+                 "address": {"province": "BUENOS_AIRES", "district": "Quilmes", "locality": "Bernal", "street": "%s",
+                             "additionalReferences": "Galpón azul"},
+                 "streetVisibility": "%s", "point": %s}
+                """.formatted(id, street, streetVisibility, point);
     }
 
     private static String location(String street, String streetVisibility, String point) {

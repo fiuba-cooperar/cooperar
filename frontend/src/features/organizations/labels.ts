@@ -1,12 +1,33 @@
 import type { MantineColor } from '@mantine/core';
 import {
   ActivityType,
+  AddressType,
   RegistrationStatus,
   OrganizationType,
   Province,
   ResponseTime,
   Sector,
 } from '@/api/generated/model';
+
+/** What an address other than the main one is. */
+export const ADDRESS_TYPE_LABELS: Record<AddressType, string> = {
+  [AddressType.SECONDARY]: 'Secundaria',
+};
+
+/**
+ * How an address other than the main one is called: its name and its type («Sucursal Bernal · Secundaria»), or, when
+ * it has no name, its type and its district («Secundaria Quilmes»).
+ */
+export function otherAddressTitle(
+  name: string | null | undefined,
+  type: AddressType,
+  district: string,
+): string {
+  const typeLabel = ADDRESS_TYPE_LABELS[type];
+  const trimmed = name?.trim();
+  if (trimmed) return `${trimmed} · ${typeLabel}`;
+  return [typeLabel, district.trim()].filter(Boolean).join(' ');
+}
 
 export const ORGANIZATION_TYPE_LABELS: Record<OrganizationType, string> = {
   [OrganizationType.COOPERATIVE]: 'Cooperativa',

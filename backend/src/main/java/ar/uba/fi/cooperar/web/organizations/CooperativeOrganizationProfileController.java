@@ -63,9 +63,9 @@ public class CooperativeOrganizationProfileController {
     @PutMapping("/location")
     @Operation(
             operationId = "updateProfileLocation",
-            summary = "Save the address and the point on the map",
-            description = "Without a `point`, a changed address is located again; if it cannot be found, the profile"
-                    + " is saved without a point.")
+            summary = "Save the main address, the other ones and their points on the map",
+            description = "Without a `point`, a changed address is located again; if it cannot be found, it is"
+                    + " saved without a point. The same goes for each of the other addresses.")
     public CooperativeOrganizationProfileResponse updateLocation(
             @PathVariable UUID id,
             @Valid @RequestBody ProfileLocationRequest request,
@@ -73,9 +73,11 @@ public class CooperativeOrganizationProfileController {
         return CooperativeOrganizationProfileResponse.from(profileService.updateLocation(
                 id,
                 accountId(jwt),
+                request.addressName(),
                 request.address().toAddress(),
                 request.streetVisibility(),
-                request.point() == null ? null : request.point().toPoint()));
+                request.point() == null ? null : request.point().toPoint(),
+                request.toOtherAddresses()));
     }
 
     @PutMapping("/contact")

@@ -57,9 +57,13 @@ async function fillOrganizationStep(cuit = '30-12345678-1', user = setupUser()) 
   // Typed, not pasted: this checks that the province list filters as the person writes.
   await user.type(screen.getByRole('combobox', { name: 'Provincia' }), 'Santa');
   await user.click(await screen.findByRole('option', { name: 'Santa Fe' }));
-  await fill(user, screen.getByLabelText('Departamento/Partido/Comuna'), 'Rosario');
-  await fill(user, screen.getByLabelText('Localidad/Barrio'), 'Centro');
-  await fill(user, screen.getByLabelText('Calle y número'), 'Rivadavia 100');
+  await fill(
+    user,
+    screen.getByRole('combobox', { name: 'Departamento/Partido/Comuna' }),
+    'Rosario',
+  );
+  await fill(user, screen.getByRole('combobox', { name: 'Localidad/Barrio' }), 'Centro');
+  await fill(user, screen.getByRole('combobox', { name: 'Calle y número' }), 'Rivadavia 100');
 }
 
 function requestBody(init: RequestInit | undefined): string {
@@ -291,14 +295,12 @@ describe('registration', () => {
     await fillAccountStep(user);
     const address = await screen.findByRole('group', { name: 'Dirección principal' });
     expect(within(address).getByRole('combobox', { name: 'Provincia' })).toBeInTheDocument();
-    for (const label of [
-      'Departamento/Partido/Comuna',
-      'Localidad/Barrio',
-      'Calle y número',
-      'Referencias adicionales (opcional)',
-    ]) {
-      expect(within(address).getByLabelText(label)).toBeInTheDocument();
+    for (const label of ['Departamento/Partido/Comuna', 'Localidad/Barrio', 'Calle y número']) {
+      expect(within(address).getByRole('combobox', { name: label })).toBeInTheDocument();
     }
+    expect(
+      within(address).getByRole('textbox', { name: 'Referencias adicionales (opcional)' }),
+    ).toBeInTheDocument();
     await fillOrganizationStep('30-12345678-1', user);
     await user.type(screen.getByLabelText('Referencias adicionales (opcional)'), ' Portón verde ');
     await submit();

@@ -19,3 +19,6 @@ cooperar:
       directory: build/test-images
   geocoding:
     provider: none
+  # Nothing reaches GeoRef: the address fields get no suggestions.
+  geography:
+    provider: none

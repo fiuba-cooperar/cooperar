@@ -67,6 +67,13 @@ cooperar:
     provider: ${GEOCODING_PROVIDER:nominatim}
     nominatim:
       base-url: ${NOMINATIM_URL:https://nominatim.openstreetmap.org}
+  geography:
+    # Suggestions for the address fields: georef (the public API of the national government by default, or a
+    # self-hosted one in GEOREF_URL) or none. Districts and localities are cached in memory for GEOGRAPHY_CACHE_TTL.
+    provider: ${GEOGRAPHY_PROVIDER:georef}
+    cache-ttl: ${GEOGRAPHY_CACHE_TTL:7d}
+    georef:
+      base-url: ${GEOREF_URL:https://apis.datos.gob.ar/georef/api}
 
 management:
   # An unreachable SMTP server must not take the API out of the load balancer: emails are best effort.

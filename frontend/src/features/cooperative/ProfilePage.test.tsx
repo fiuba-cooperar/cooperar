@@ -369,11 +369,11 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
     await userEvent.click(within(other).getByRole('combobox', { name: 'Provincia' }));
     await userEvent.click(await screen.findByRole('option', { name: 'Buenos Aires' }));
     await userEvent.type(
-      within(other).getByRole('textbox', { name: 'Departamento/Partido/Comuna' }),
+      within(other).getByRole('combobox', { name: 'Departamento/Partido/Comuna' }),
       'Quilmes',
     );
     await userEvent.type(
-      within(other).getByRole('textbox', { name: 'Localidad/Barrio' }),
+      within(other).getByRole('combobox', { name: 'Localidad/Barrio' }),
       'Bernal',
     );
     await userEvent.type(
@@ -381,7 +381,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
       'Depósito',
     );
     await userEvent.type(
-      within(other).getByRole('textbox', { name: 'Calle y número' }),
+      within(other).getByRole('combobox', { name: 'Calle y número' }),
       'Belgrano 10',
     );
     await userEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
@@ -440,12 +440,12 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
       name: /^Sucursal · Secundaria/,
     });
     expect(secondary).toHaveTextContent('Belgrano 10, Bernal, Quilmes, Buenos Aires');
-    expect(screen.queryByRole('textbox', { name: 'Calle y número' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: 'Calle y número' })).not.toBeInTheDocument();
 
     await userEvent.click(secondary);
 
     expect(secondary).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByRole('textbox', { name: 'Calle y número' })).toHaveValue('Belgrano 10');
+    expect(screen.getByRole('combobox', { name: 'Calle y número' })).toHaveValue('Belgrano 10');
     expect(screen.getByRole('textbox', { name: 'Nombre de la dirección (opcional)' })).toHaveValue(
       'Sucursal',
     );
@@ -490,7 +490,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
     renderRoute('/cooperative/profile?section=location');
     await userEvent.click(await screen.findByRole('button', { name: /Dirección principal/ }));
     expect(await screen.findByText(/No pudimos ubicar la dirección/)).toBeVisible();
-    const street = screen.getByRole('textbox', { name: 'Calle y número' });
+    const street = screen.getByRole('combobox', { name: 'Calle y número' });
     await userEvent.clear(street);
     await userEvent.type(street, 'Mitre 500');
     const visibility = screen.getByRole('radiogroup', {

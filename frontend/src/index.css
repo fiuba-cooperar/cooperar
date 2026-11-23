@@ -26,3 +26,15 @@ body {
   color: var(--mantine-color-dimmed);
   opacity: 1;
 }
+
+/*
+ * Fields that cannot be edited, like the type of organization or the CUIT in the profile, still show data the person
+ * needs to read. Mantine dims them to 60% with light gray text, below the AA contrast; the gray background and the
+ * cursor already say they cannot be changed.
+ */
+.mantine-Input-input:disabled,
+.mantine-Input-input[data-disabled],
+.mantine-Input-input:has(input:disabled) {
+  opacity: 1;
+  color: var(--mantine-color-text);
+}

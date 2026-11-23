@@ -41,11 +41,14 @@ export const theme = createTheme({
     Button: { defaultProps: { size: 'md' } },
     // Cards are white on the pale page background, as in the mocks.
     Paper: { defaultProps: { bg: 'var(--mantine-color-default)' } },
-    // 48px fields with a border dark enough to meet the 3:1 contrast of WCAG 1.4.11.
+    // 48px fields with a border dark enough to meet the 3:1 contrast of WCAG 1.4.11. A text area takes the height of
+    // its rows instead, or it would show a single line.
     Input: Input.extend({
-      styles: {
-        input: { height: 48, borderColor: 'var(--color-field-border)' },
-      },
+      styles: (_theme, props) => ({
+        input: props.multiline
+          ? { borderColor: 'var(--color-field-border)' }
+          : { height: 48, borderColor: 'var(--color-field-border)' },
+      }),
     }),
     InputWrapper: InputWrapper.extend({
       // Block labels: inline-block ones sit on the line box and drop 2px below a label that has a hint icon.

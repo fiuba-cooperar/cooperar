@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.core.NestedExceptionUtils;
 import org.springframework.stereotype.Service;
 
 /**
@@ -35,6 +36,8 @@ public class GeographyService {
     public static final int STREET_LIMIT = 10;
     /** Fewest characters of a street that are looked up, so a single letter does not spend the provider's quota. */
     public static final int STREET_MIN_QUERY = 3;
+    /** Times the districts and localities are asked for in a row before waiting {@code retry-after-failure}. */
+    static final int LOAD_ATTEMPTS = 2;
 
     private static final List<String> LOWERCASE_WORDS = List.of("de", "del", "la", "las", "los", "el", "y", "e");
     private static final Logger log = LoggerFactory.getLogger(GeographyService.class);
@@ -107,8 +110,8 @@ public class GeographyService {
                     .distinct()
                     .toList();
         } catch (RuntimeException exception) {
-            // What the person typed is left out of the log: only the failure matters here.
-            log.warn("Street lookup failed: {}", exception.getMessage());
+            // Only the cause: the message of the exception has the URL, with what the person typed.
+            log.warn("Street lookup failed: {}", cause(exception));
             return List.of();
         }
     }
@@ -133,21 +136,39 @@ public class GeographyService {
     }
 
     private Snapshot load(Places previous) {
-        try {
-            Places loaded = directory.places();
-            log.info(
-                    "Loaded {} districts and {} localities",
-                    loaded.districts().size(),
-                    loaded.localities().size());
-            Instant now = clock.instant();
-            // An empty list is not worth a week: it is asked for again soon.
-            return new Snapshot(
-                    loaded,
-                    now.plus(loaded.districts().isEmpty() ? properties.retryAfterFailure() : properties.cacheTtl()));
-        } catch (RuntimeException exception) {
-            log.warn("Loading districts and localities failed: {}", exception.getMessage());
-            return new Snapshot(previous, clock.instant().plus(properties.retryAfterFailure()));
+        // A failure right after the server starts is common (a slow first connection), so it is tried again at once
+        // before waiting.
+        for (int attempt = 1; ; attempt++) {
+            try {
+                Places loaded = directory.places();
+                log.info(
+                        "Loaded {} districts and {} localities",
+                        loaded.districts().size(),
+                        loaded.localities().size());
+                Instant now = clock.instant();
+                // An empty list is not worth a week: it is asked for again soon.
+                return new Snapshot(
+                        loaded,
+                        now.plus(
+                                loaded.districts().isEmpty() ? properties.retryAfterFailure() : properties.cacheTtl()));
+            } catch (RuntimeException exception) {
+                log.warn(
+                        "Loading districts and localities failed (attempt {} of {}): {}",
+                        attempt,
+                        LOAD_ATTEMPTS,
+                        cause(exception));
+                if (attempt == LOAD_ATTEMPTS) {
+                    return new Snapshot(previous, clock.instant().plus(properties.retryAfterFailure()));
+                }
+            }
         }
+    }
+
+    /** The innermost cause, which says what went wrong (a timeout, a refused connection, a malformed body). */
+    static String cause(Throwable exception) {
+        Throwable root = NestedExceptionUtils.getMostSpecificCause(exception);
+        String message = root.getMessage();
+        return root.getClass().getSimpleName() + (message == null ? "" : ": " + message);
     }
 
     private static Optional<District> findDistrict(Places places, Province province, String name) {

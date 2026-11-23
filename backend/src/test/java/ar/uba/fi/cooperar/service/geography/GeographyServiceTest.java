@@ -6,6 +6,8 @@ import ar.uba.fi.cooperar.domain.geography.District;
 import ar.uba.fi.cooperar.domain.geography.Locality;
 import ar.uba.fi.cooperar.domain.geography.Places;
 import ar.uba.fi.cooperar.domain.organizations.Province;
+import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -92,14 +94,32 @@ class GeographyServiceTest {
         directory.failing = true;
 
         assertThat(service.districts(Province.BUENOS_AIRES)).hasSize(3);
-        // It waits before asking again, so a provider that is down is not hit on every request.
+        // Tried twice in a row, then it waits, so a provider that is down is not hit on every request.
         service.districts(Province.BUENOS_AIRES);
-        assertThat(directory.placeLoads).isEqualTo(2);
+        assertThat(directory.placeLoads).isEqualTo(3);
 
         directory.failing = false;
         clock.advance(Duration.ofMinutes(2));
         service.districts(Province.BUENOS_AIRES);
-        assertThat(directory.placeLoads).isEqualTo(3);
+        assertThat(directory.placeLoads).isEqualTo(4);
+    }
+
+    @Test
+    void triesAgainAtOnceWhenTheFirstLoadFails() {
+        directory.failuresLeft = 1;
+
+        assertThat(service.districts(Province.BUENOS_AIRES)).hasSize(3);
+        assertThat(directory.placeLoads).isEqualTo(2);
+    }
+
+    @Test
+    void describesAFailureByItsInnermostCause() {
+        RuntimeException failure = new IllegalStateException(
+                "I/O error on GET request for \"https://georef.test/calles?nombre=gascon\"",
+                new IOException("wrapped", new SocketTimeoutException("Read timed out")));
+
+        assertThat(GeographyService.cause(failure)).isEqualTo("SocketTimeoutException: Read timed out");
+        assertThat(GeographyService.cause(new IllegalStateException())).isEqualTo("IllegalStateException");
     }
 
     @Test
@@ -156,6 +176,7 @@ class GeographyServiceTest {
         Places places = PLACES;
         List<String> streets = List.of();
         boolean failing;
+        int failuresLeft;
         int placeLoads;
         final List<String> streetQueries = new ArrayList<>();
 
@@ -163,6 +184,10 @@ class GeographyServiceTest {
         public Places places() {
             placeLoads++;
             if (failing) throw new IllegalStateException("down");
+            if (failuresLeft > 0) {
+                failuresLeft--;
+                throw new IllegalStateException("slow start");
+            }
             return places;
         }
 

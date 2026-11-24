@@ -161,7 +161,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
   it('shows the identification first, with what is missing in each section', async () => {
     signedIn();
 
-    renderRoute('/cooperative/profile');
+    renderRoute('/cooperative/la-litoralena/profile');
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Ficha' })).toBeVisible();
     expect(await screen.findByRole('textbox', { name: 'Nombre de la entidad' })).toHaveValue(
@@ -206,7 +206,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
   it('warns before leaving the profile with changes that are not saved', async () => {
     signedIn();
 
-    renderRoute('/cooperative/profile');
+    renderRoute('/cooperative/la-litoralena/profile');
     const name = await screen.findByRole('textbox', { name: 'Nombre de la entidad' });
     await userEvent.type(name, ' Ltda.');
     const menu = screen.getByRole('navigation', { name: 'Panel de la cooperativa' });
@@ -236,7 +236,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
   it('asks before leaving a section with changes that are not saved, and discards them if so', async () => {
     signedIn();
 
-    renderRoute('/cooperative/profile');
+    renderRoute('/cooperative/la-litoralena/profile');
     const name = await screen.findByRole('textbox', { name: 'Nombre de la entidad' });
     await userEvent.type(name, ' (editado)');
     const sections = screen.getByRole('navigation', { name: 'Secciones de la ficha' });
@@ -261,7 +261,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
   it('does not warn when nothing changed, or when the changes were saved', async () => {
     signedIn({ [`PUT ${PROFILE_URL}/identification`]: { body: PROFILE } });
 
-    renderRoute('/cooperative/profile');
+    renderRoute('/cooperative/la-litoralena/profile');
     const name = await screen.findByRole('textbox', { name: 'Nombre de la entidad' });
     await userEvent.type(name, 'X');
     await userEvent.clear(name);
@@ -280,7 +280,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
   it('explains the visibility of the data in a dialog', async () => {
     signedIn();
 
-    renderRoute('/cooperative/profile');
+    renderRoute('/cooperative/la-litoralena/profile');
     await userEvent.click(await screen.findByRole('button', { name: '¿Quién ve mis datos?' }));
 
     const dialog = await screen.findByRole('dialog', { name: '¿Quién ve mis datos?' });
@@ -292,7 +292,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
   it('opens the section in the URL and moves to the next one', async () => {
     signedIn();
 
-    renderRoute('/cooperative/profile?section=photos');
+    renderRoute('/cooperative/la-litoralena/profile?section=photos');
 
     expect(await screen.findByRole('heading', { name: 'Fotos' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Cargar logo' })).toBeVisible();
@@ -311,7 +311,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
       'GET /api/organizations/la-litoralena': { body: {} },
     });
 
-    renderRoute('/cooperative/profile?section=photos');
+    renderRoute('/cooperative/la-litoralena/profile?section=photos');
     await userEvent.upload(
       await screen.findByLabelText('Archivo para el logo'),
       new File(['x'], 'logo.png', { type: 'image/png' }),
@@ -349,7 +349,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
   it('uploads nothing when the framing is cancelled', async () => {
     const fetchMock = signedIn({ 'GET /api/organizations/la-litoralena': { body: {} } });
 
-    renderRoute('/cooperative/profile?section=photos');
+    renderRoute('/cooperative/la-litoralena/profile?section=photos');
     await userEvent.upload(
       await screen.findByLabelText('Archivo para el logo'),
       new File(['x'], 'logo.png', { type: 'image/png' }),
@@ -363,7 +363,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
   it('says why a logo was not taken', async () => {
     signedIn({ [`PUT ${PROFILE_URL}/cover`]: { status: 502, body: {} } });
 
-    renderRoute('/cooperative/profile?section=photos');
+    renderRoute('/cooperative/la-litoralena/profile?section=photos');
     const input = await screen.findByLabelText('Archivo para el logo');
     await userEvent
       .setup({ applyAccept: false })
@@ -398,7 +398,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
       'GET /api/organizations/la-litoralena': { body: {} },
     });
 
-    renderRoute('/cooperative/profile?section=photos');
+    renderRoute('/cooperative/la-litoralena/profile?section=photos');
     await userEvent.upload(await screen.findByTestId('photos-input'), [
       new File(['x'], 'a.png', { type: 'image/png' }),
       new File(['y'], 'b.png', { type: 'image/png' }),
@@ -426,7 +426,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
     URL.revokeObjectURL = () => undefined;
     signedIn({ [`POST ${PROFILE_URL}/photos`]: { status: 502, body: {} } });
 
-    renderRoute('/cooperative/profile?section=photos');
+    renderRoute('/cooperative/la-litoralena/profile?section=photos');
     await userEvent.upload(await screen.findByTestId('photos-input'), [
       new File(['x'], 'a.png', { type: 'image/png' }),
       new File(['y'], 'b.png', { type: 'image/png' }),
@@ -451,7 +451,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
       },
     });
 
-    renderRoute('/cooperative/profile');
+    renderRoute('/cooperative/la-litoralena/profile');
     const name = await screen.findByRole('textbox', { name: 'Nombre de la entidad' });
     await userEvent.clear(name);
     await userEvent.type(name, 'La Litoraleña Nueva');
@@ -476,7 +476,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
   it('asks for the name before saving', async () => {
     const fetchMock = signedIn();
 
-    renderRoute('/cooperative/profile');
+    renderRoute('/cooperative/la-litoralena/profile');
     await userEvent.clear(await screen.findByRole('textbox', { name: 'Nombre de la entidad' }));
     await userEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
 
@@ -487,7 +487,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
   it('counts the characters of the name and stops at the limit', async () => {
     signedIn();
 
-    renderRoute('/cooperative/profile');
+    renderRoute('/cooperative/la-litoralena/profile');
     const name = await screen.findByRole('textbox', { name: 'Nombre de la entidad' });
     expect(name).toHaveAttribute('maxlength', '50');
     await userEvent.clear(name);
@@ -505,7 +505,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
       },
     });
 
-    renderRoute('/cooperative/profile');
+    renderRoute('/cooperative/la-litoralena/profile');
     expect(await screen.findByText('80/50')).toBeVisible();
     await userEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
 
@@ -523,7 +523,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
       },
     });
 
-    renderRoute('/cooperative/profile');
+    renderRoute('/cooperative/la-litoralena/profile');
     const legalName = await screen.findByRole('textbox', { name: 'Razón social' });
     expect(legalName).toHaveAttribute('maxlength', '120');
     expect(screen.getByText('130/120')).toBeVisible();
@@ -538,7 +538,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
   it('saves the activity, leaving out what was not filled in', async () => {
     const fetchMock = signedIn({ [`PUT ${PROFILE_URL}/activity`]: { body: PROFILE } });
 
-    renderRoute('/cooperative/profile?section=activity');
+    renderRoute('/cooperative/la-litoralena/profile?section=activity');
     await userEvent.click(await screen.findByRole('checkbox', { name: 'Textil' }));
     await userEvent.type(
       screen.getByRole('textbox', { name: 'Descripción' }),
@@ -564,7 +564,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
   it('rejects a start year in the future', async () => {
     const fetchMock = signedIn();
 
-    renderRoute('/cooperative/profile?section=activity');
+    renderRoute('/cooperative/la-litoralena/profile?section=activity');
     await userEvent.type(
       await screen.findByRole('textbox', { name: 'Año de inicio' }),
       String(new Date().getFullYear() + 1),
@@ -595,7 +595,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
       },
     });
 
-    renderRoute('/cooperative/profile?section=location');
+    renderRoute('/cooperative/la-litoralena/profile?section=location');
     await userEvent.click(await screen.findByRole('button', { name: 'Agregar otra dirección' }));
     const other = screen.getByRole('group', { name: /Secundaria/ });
     expect(within(other).getByRole('combobox', { name: 'Tipo de dirección' })).toHaveValue(
@@ -667,7 +667,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
       },
     });
 
-    renderRoute('/cooperative/profile?section=location');
+    renderRoute('/cooperative/la-litoralena/profile?section=location');
 
     const main = await screen.findByRole('button', { name: /Dirección principal/ });
     expect(main).toHaveAttribute('aria-expanded', 'false');
@@ -692,7 +692,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
   it('asks for the fields of an added address and lets it be removed', async () => {
     const fetchMock = signedIn({ [`PUT ${PROFILE_URL}/location`]: { body: PROFILE } });
 
-    renderRoute('/cooperative/profile?section=location');
+    renderRoute('/cooperative/la-litoralena/profile?section=location');
     await userEvent.click(await screen.findByRole('button', { name: 'Agregar otra dirección' }));
     await userEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
 
@@ -729,7 +729,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
       },
     });
 
-    renderRoute('/cooperative/profile?section=location');
+    renderRoute('/cooperative/la-litoralena/profile?section=location');
     await userEvent.click(await screen.findByRole('button', { name: /Dirección principal/ }));
     await waitFor(() => {
       expect(screen.getByText(/No pudimos ubicar la dirección/)).toBeVisible();
@@ -783,7 +783,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
       },
     });
 
-    renderRoute('/cooperative/profile?section=location');
+    renderRoute('/cooperative/la-litoralena/profile?section=location');
     await userEvent.click(await screen.findByRole('button', { name: /Dirección principal/ }));
     await userEvent.click(await screen.findByRole('button', { name: 'Ver más grande' }));
 
@@ -815,7 +815,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
       [`PUT ${PROFILE_URL}/location`]: { body: PROFILE },
     });
 
-    renderRoute('/cooperative/profile?section=location');
+    renderRoute('/cooperative/la-litoralena/profile?section=location');
     await userEvent.click(await screen.findByRole('button', { name: /Dirección principal/ }));
     expect(screen.queryByRole('button', { name: 'Ubicar en el mapa' })).not.toBeInTheDocument();
     const street = screen.getByRole('combobox', { name: 'Calle y número' });
@@ -850,7 +850,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
   it('says when the address to locate cannot be found', async () => {
     signedIn({ [`POST ${PROFILE_URL}/location/geocode`]: { body: {} } });
 
-    renderRoute('/cooperative/profile?section=location');
+    renderRoute('/cooperative/la-litoralena/profile?section=location');
     await userEvent.click(await screen.findByRole('button', { name: /Dirección principal/ }));
     await userEvent.click(await screen.findByRole('button', { name: 'Ubicar en el mapa' }));
 
@@ -861,7 +861,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
   it('checks the email and the website, and sends only the filled in contact details', async () => {
     const fetchMock = signedIn({ [`PUT ${PROFILE_URL}/contact`]: { body: PROFILE } });
 
-    renderRoute('/cooperative/profile?section=contact');
+    renderRoute('/cooperative/la-litoralena/profile?section=contact');
     const email = await screen.findByRole('textbox', { name: 'Email de contacto' });
     await userEvent.type(email, 'no-es-un-email');
     await userEvent.type(screen.getByRole('textbox', { name: 'Sitio web' }), 'litoralena.org');
@@ -899,7 +899,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
   it('sets the hours of each day, with split shifts and the hours of the day before', async () => {
     const fetchMock = signedIn({ [`PUT ${PROFILE_URL}/contact`]: { body: PROFILE } });
 
-    renderRoute('/cooperative/profile?section=contact');
+    renderRoute('/cooperative/la-litoralena/profile?section=contact');
     await openHours();
     const monday = await screen.findByRole('switch', { name: 'Lunes' });
     expect(monday).not.toBeChecked();
@@ -948,7 +948,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
   it('only offers the quarters of an hour, and the end of the day to close', async () => {
     signedIn();
 
-    renderRoute('/cooperative/profile?section=contact');
+    renderRoute('/cooperative/la-litoralena/profile?section=contact');
     await openHours();
     await userEvent.click(await screen.findByRole('switch', { name: 'Lunes' }));
     await userEvent.click(screen.getByRole('combobox', { name: 'Lunes, apertura' }));
@@ -963,7 +963,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
   it('discards the hours edited in the dialog when it is closed without saving them', async () => {
     signedIn();
 
-    renderRoute('/cooperative/profile?section=contact');
+    renderRoute('/cooperative/la-litoralena/profile?section=contact');
     await openHours();
     await userEvent.click(await screen.findByRole('switch', { name: 'Miércoles' }));
     await userEvent.keyboard('{Escape}');
@@ -980,7 +980,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
   it('drops the ranges that were added and left empty when applying the hours', async () => {
     const fetchMock = signedIn({ [`PUT ${PROFILE_URL}/contact`]: { body: PROFILE } });
 
-    renderRoute('/cooperative/profile?section=contact');
+    renderRoute('/cooperative/la-litoralena/profile?section=contact');
     await openHours();
     await userEvent.click(await screen.findByRole('switch', { name: 'Miércoles' }));
     await userEvent.click(screen.getByRole('button', { name: 'Agregar una franja el miércoles' }));
@@ -1001,7 +1001,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
   it('does not apply hours that close before they open or overlap', async () => {
     const fetchMock = signedIn({ [`PUT ${PROFILE_URL}/contact`]: { body: PROFILE } });
 
-    renderRoute('/cooperative/profile?section=contact');
+    renderRoute('/cooperative/la-litoralena/profile?section=contact');
     await openHours();
     await userEvent.click(await screen.findByRole('switch', { name: 'Lunes' }));
     // A closing time before the opening one is the next day: it is flagged as soon as it is written.
@@ -1030,7 +1030,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
   it('asks for the phone as an area code and a number, and saves it formatted', async () => {
     const fetchMock = signedIn({ [`PUT ${PROFILE_URL}/contact`]: { body: PROFILE } });
 
-    renderRoute('/cooperative/profile?section=contact');
+    renderRoute('/cooperative/la-litoralena/profile?section=contact');
     // The phone of the profile comes split into its two fields.
     expect(await screen.findByRole('textbox', { name: 'Característica del teléfono' })).toHaveValue(
       '341',
@@ -1068,7 +1068,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
   it('tells when a section could not be saved', async () => {
     signedIn({ [`PUT ${PROFILE_URL}/identification`]: { status: 500, body: { status: 500 } } });
 
-    renderRoute('/cooperative/profile');
+    renderRoute('/cooperative/la-litoralena/profile');
     await screen.findByRole('textbox', { name: 'Nombre de la entidad' });
     await userEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
 
@@ -1078,7 +1078,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
   it('tells when the profile could not be loaded', async () => {
     signedIn({ [`GET ${PROFILE_URL}`]: { status: 500, body: { status: 500 } } });
 
-    renderRoute('/cooperative/profile');
+    renderRoute('/cooperative/la-litoralena/profile');
 
     expect(await screen.findByText('No pudimos cargar tu ficha')).toBeVisible();
   });
@@ -1086,7 +1086,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
   it('has no accessibility violations', async () => {
     signedIn();
 
-    const { container } = renderRoute('/cooperative/profile?section=contact');
+    const { container } = renderRoute('/cooperative/la-litoralena/profile?section=contact');
     await screen.findByRole('textbox', { name: 'Email de contacto' });
 
     await expectNoA11yViolations(container);
@@ -1095,7 +1095,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
   it('does not take more than four digits for the start year', async () => {
     signedIn();
 
-    renderRoute('/cooperative/profile?section=activity');
+    renderRoute('/cooperative/la-litoralena/profile?section=activity');
     const year = await screen.findByRole('textbox', { name: /Año de inicio/ });
     await userEvent.type(year, '200345');
 
@@ -1105,7 +1105,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
   it('does not take more workers than the limit', async () => {
     signedIn();
 
-    renderRoute('/cooperative/profile?section=activity');
+    renderRoute('/cooperative/la-litoralena/profile?section=activity');
     const workers = await screen.findByRole('textbox', { name: /Cantidad de trabajadores/ });
     await userEvent.type(workers, '123456');
 
@@ -1115,7 +1115,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
   it('counts the characters of the description', async () => {
     signedIn();
 
-    renderRoute('/cooperative/profile?section=activity');
+    renderRoute('/cooperative/la-litoralena/profile?section=activity');
     const description = await screen.findByRole('textbox', { name: 'Descripción' });
     await userEvent.type(description, 'Hacemos remeras');
 
@@ -1144,7 +1144,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
       },
     });
 
-    const { container } = renderRoute('/cooperative/profile?section=location');
+    const { container } = renderRoute('/cooperative/la-litoralena/profile?section=location');
     await userEvent.click(await screen.findByRole('button', { name: /Dirección principal/ }));
     await userEvent.click(screen.getByRole('button', { name: /^Secundaria Rosario/ }));
 

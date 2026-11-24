@@ -10,7 +10,7 @@ import {
 import { NotificationsPanel } from '@/features/notifications/components/NotificationsPanel';
 import { useAuth } from '@/features/auth/useAuth';
 import { displayName } from '@/features/auth/userName';
-import { COOPERATIVE_HOME_PATH } from '@/features/cooperative/cooperativeSections';
+import { cooperativePanel } from '@/features/cooperative/cooperativeSections';
 import {
   ACCOUNT_REGISTRATION_REQUESTS_PATH,
   NEW_REGISTRATION_REQUEST_PATH,
@@ -127,8 +127,7 @@ export function AccountHomePage() {
                   </Group>
                   <Button
                     component={Link}
-                    to={COOPERATIVE_HOME_PATH}
-                    state={{ organizationId: organization.id }}
+                    to={cooperativePanel(organization.slug).home}
                     aria-label={`Ir al panel de ${organization.name}`}
                     h={44}
                     className={styles.entityAction}

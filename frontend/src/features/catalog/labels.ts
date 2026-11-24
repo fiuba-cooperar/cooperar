@@ -1,5 +1,11 @@
-import { SaleMode, type CatalogOrganizationResponse } from '@/api/generated/model';
+import { ProductType, SaleMode, type CatalogOrganizationResponse } from '@/api/generated/model';
 import { PROVINCE_LABELS } from '@/features/organizations/labels';
+
+/** Plural, as the options of the filter and its pills. */
+export const TYPE_LABELS: Record<ProductType, string> = {
+  [ProductType.PRODUCT]: 'Productos',
+  [ProductType.SERVICE]: 'Servicios',
+};
 
 export const SALE_MODE_LABELS: Record<SaleMode, string> = {
   [SaleMode.RETAIL]: 'Minorista',
@@ -29,4 +35,11 @@ export function priceLines(price: number | undefined): { caption: string; amount
 /** "Centro, Rosario, Santa Fe": the zone only, never the street. */
 export function placeLabel(organization: CatalogOrganizationResponse): string {
   return `${organization.locality}, ${organization.district}, ${PROVINCE_LABELS[organization.province]}`;
+}
+
+/** Why the quote cannot be asked for: the item belongs to an organization of the signed-in account. */
+export function ownItemLabel(type: ProductType): string {
+  return type === ProductType.SERVICE
+    ? 'Este servicio pertenece a una de tus entidades'
+    : 'Este producto pertenece a una de tus entidades';
 }

@@ -42,7 +42,6 @@ import {
   useProducts,
   usePublishProduct,
 } from './api/useProducts';
-import { editProductPath, NEW_PRODUCT_PATH } from './cooperativeSections';
 import {
   hasFilters,
   PRODUCTS_PAGE_SIZE,
@@ -51,7 +50,7 @@ import {
   writeFilters,
   type ProductFilters,
 } from './productFilters';
-import { useActiveOrganization } from './useActiveOrganization';
+import { useActiveOrganization, usePanelPaths } from './useActiveOrganization';
 import styles from './ProductsPage.module.css';
 
 /** "Productos y servicios": what the active organization offers, with the entries to add, edit, publish and unpublish. */
@@ -62,6 +61,7 @@ export function ProductsPage() {
 }
 
 function ProductsList({ organization }: { organization: OrganizationSummary }) {
+  const paths = usePanelPaths();
   const [searchParams, setSearchParams] = useSearchParams();
   const filters = readFilters(searchParams);
   const filtered = hasFilters(filters);
@@ -120,7 +120,7 @@ function ProductsList({ organization }: { organization: OrganizationSummary }) {
             Lo que publiques se muestra en tu ficha y en el catálogo público.
           </Text>
         </Stack>
-        <Button component={Link} to={NEW_PRODUCT_PATH} h={48} px={22}>
+        <Button component={Link} to={paths.newProduct} h={48} px={22}>
           Agregar producto o servicio
         </Button>
       </Group>
@@ -161,7 +161,7 @@ function ProductsList({ organization }: { organization: OrganizationSummary }) {
               oferta.
             </Text>
           </Stack>
-          <Button component={Link} to={NEW_PRODUCT_PATH} h={48} px={22}>
+          <Button component={Link} to={paths.newProduct} h={48} px={22}>
             Agregar el primero
           </Button>
         </Paper>
@@ -430,6 +430,7 @@ function ProductRow({
   onPublish: () => void;
   onDelete: () => void;
 }) {
+  const paths = usePanelPaths();
   const published = product.status === ProductStatus.PUBLISHED;
   return (
     <tr>
@@ -463,7 +464,7 @@ function ProductRow({
         <div className={styles.actions}>
           <Button
             component={Link}
-            to={editProductPath(product.id)}
+            to={paths.product(product.id)}
             variant="default"
             size="sm"
             h={38}

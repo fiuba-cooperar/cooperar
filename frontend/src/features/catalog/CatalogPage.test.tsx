@@ -1,6 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
+import { saveTokens } from '@/api/session';
 import { expectNoA11yViolations } from '@/test/axe';
 import { stubFetchRoutes } from '@/test/http';
 import { renderRoute } from '@/test/render';
@@ -21,6 +22,7 @@ const CLOTHING = { id: 'c1', name: 'Indumentaria' };
 const SHIRT = {
   id: 'p1',
   name: 'Remera de algodón',
+  type: 'PRODUCT',
   category: CLOTHING,
   saleModes: ['RETAIL', 'WHOLESALE'],
   description: 'Remera lisa de algodón peinado.',
@@ -35,6 +37,7 @@ const SHIRT = {
 const PRINTING = {
   id: 'p2',
   name: 'Estampado de prendas',
+  type: 'SERVICE',
   category: { id: 'c2', name: 'Servicios' },
   saleModes: ['WHOLESALE'],
   photos: [],
@@ -91,12 +94,42 @@ describe('public catalog', () => {
     );
     expect(
       within(shirt).getByRole('link', { name: 'Pedir presupuesto de Remera de algodón' }),
-    ).toHaveAttribute('href', '/organizations/textil-sur');
+    ).toHaveAttribute('href', '/catalog/p1#inquiry');
 
     const printing = screen.getByRole('article', { name: 'Estampado de prendas' });
     expect(within(printing).getByText('Consultar')).toBeInTheDocument();
     expect(within(printing).getByText('Sin foto')).toBeInTheDocument();
     await expectNoA11yViolations(document.body);
+  });
+
+  it('disables the quote button on the products of the signed-in organization', async () => {
+    saveTokens({ accessToken: 'access-1', refreshToken: 'refresh-1' });
+    stubFetchRoutes({
+      'GET /api/me': {
+        body: {
+          id: 'u1',
+          email: 'ana@example.com',
+          role: 'COOPERATIVE',
+          emailVerified: true,
+          organizations: [{ id: 'o1', name: 'Textil Sur', slug: 'textil-sur' }],
+          registrationRequests: [],
+        },
+      },
+      [SEARCH]: { body: result([SHIRT]) },
+      [CATEGORIES]: { body: [CLOTHING] },
+    });
+
+    renderRoute('/catalog');
+
+    const shirt = await screen.findByRole('article', { name: 'Remera de algodón' });
+    const button = await within(shirt).findByRole('button', {
+      name: 'Pedir presupuesto de Remera de algodón',
+    });
+    expect(button).toHaveAttribute('aria-disabled', 'true');
+    await userEvent.hover(button);
+    expect(
+      await screen.findByText('Este producto pertenece a una de tus entidades'),
+    ).toBeInTheDocument();
   });
 
   it('shows how many products each sale mode would leave', async () => {
@@ -149,6 +182,34 @@ describe('public catalog', () => {
     expect(screen.getByRole('button', { name: 'Quitar el filtro Córdoba' })).toBeInTheDocument();
   });
 
+  it('filters by product or service and removes the filter from its pill', async () => {
+    const fetchMock = stubFetchRoutes({
+      [SEARCH]: { body: result([PRINTING]) },
+      [CATEGORIES]: { body: [CLOTHING] },
+    });
+
+    renderRoute('/catalog?type=service&type=bogus');
+
+    expect(requestedUrls(fetchMock)).toContain('/api/products?type=SERVICE&size=18');
+    expect(await screen.findByRole('checkbox', { name: 'Servicios' })).toBeChecked();
+    await userEvent.click(screen.getByRole('button', { name: 'Quitar el filtro Servicios' }));
+
+    await waitFor(() => {
+      expect(requestedUrls(fetchMock).at(-1)).toBe('/api/products?size=18');
+    });
+  });
+
+  it('finds a province typed without its accent', async () => {
+    stubFetchRoutes({ [SEARCH]: { body: result([SHIRT]) }, [CATEGORIES]: { body: [CLOTHING] } });
+
+    renderRoute('/catalog');
+    const province = await screen.findByRole('combobox', { name: 'Provincia' });
+    await userEvent.click(province);
+    await userEvent.type(province, 'cord');
+
+    expect(await screen.findByRole('option', { name: 'Córdoba' })).toBeVisible();
+  });
+
   it('filters by organization from the address and removes it from its pill', async () => {
     const fetchMock = stubFetchRoutes({
       [SEARCH]: { body: result([SHIRT]) },
@@ -164,6 +225,61 @@ describe('public catalog', () => {
     await waitFor(() => {
       expect(requestedUrls(fetchMock).at(-1)).toBe('/api/products?size=18');
     });
+  });
+
+  it('lets a cooperative account see only the products of its own entities', async () => {
+    saveTokens({ accessToken: 'access-1', refreshToken: 'refresh-1' });
+    const fetchMock = stubFetchRoutes({
+      'GET /api/me': {
+        body: {
+          id: 'u1',
+          email: 'ana@example.com',
+          role: 'COOPERATIVE',
+          emailVerified: true,
+          organizations: [
+            { id: 'o1', name: 'Textil Sur', slug: 'textil-sur' },
+            { id: 'o2', name: 'Panadería La Unión', slug: 'panaderia-la-union' },
+          ],
+          registrationRequests: [],
+        },
+      },
+      [SEARCH]: { body: result([SHIRT]) },
+      [CATEGORIES]: { body: [CLOTHING] },
+    });
+    const user = userEvent.setup();
+
+    renderRoute('/catalog');
+
+    const group = await screen.findByRole('group', { name: 'Mis entidades' });
+    await user.click(within(group).getByRole('checkbox', { name: 'Textil Sur' }));
+    await user.click(within(group).getByRole('checkbox', { name: 'Panadería La Unión' }));
+
+    await waitFor(() => {
+      expect(requestedUrls(fetchMock).at(-1)).toBe(
+        '/api/products?organization=textil-sur&organization=panaderia-la-union&size=18',
+      );
+    });
+    expect(
+      screen.getByRole('button', { name: 'Quitar el filtro Panadería La Unión' }),
+    ).toBeInTheDocument();
+    await user.click(within(group).getByRole('checkbox', { name: 'Textil Sur' }));
+    await waitFor(() => {
+      expect(requestedUrls(fetchMock).at(-1)).toBe(
+        '/api/products?organization=panaderia-la-union&size=18',
+      );
+    });
+  });
+
+  it('does not offer the own entities filter without a cooperative account', async () => {
+    stubFetchRoutes({
+      [SEARCH]: { body: result([SHIRT]) },
+      [CATEGORIES]: { body: [CLOTHING] },
+    });
+
+    renderRoute('/catalog');
+
+    await screen.findByText('1 producto o servicio');
+    expect(screen.queryByRole('group', { name: 'Mis entidades' })).not.toBeInTheDocument();
   });
 
   it('filters by category from the filters and removes it from its pill', async () => {
@@ -216,7 +332,7 @@ describe('public catalog', () => {
     renderRoute('/catalog?q=zapatos');
 
     expect(
-      await screen.findByText('No encontramos productos con esa búsqueda'),
+      await screen.findByText('No encontramos productos para esta búsqueda'),
     ).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Ver todo el catálogo' }));
     expect(screen.getByRole('searchbox')).toHaveValue('');

@@ -3,7 +3,7 @@ import {
   ACCOUNT_REGISTRATION_REQUESTS_PATH,
   registrationRequestPath,
 } from '@/features/account/accountSections';
-import { COOPERATIVE_HOME_PATH } from '@/features/cooperative/cooperativeSections';
+import { COOPERATIVE_PATH } from '@/features/cooperative/cooperativeSections';
 
 export type NotificationTone = 'green' | 'orange' | 'red';
 
@@ -28,7 +28,7 @@ export function notificationContent(notification: NotificationResponse): Notific
         description: 'Ya podés administrar la entidad desde su panel.',
         tone: 'green',
         actionLabel: 'Ir al panel',
-        to: COOPERATIVE_HOME_PATH,
+        to: COOPERATIVE_PATH,
         ...(notification.organizationId ? { organizationId: notification.organizationId } : {}),
       };
     case NotificationType.REGISTRATION_REJECTED:

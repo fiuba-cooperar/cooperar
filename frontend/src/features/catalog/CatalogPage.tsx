@@ -1,4 +1,5 @@
 import {
+  ActionIcon,
   Alert,
   Button,
   Container,
@@ -8,17 +9,25 @@ import {
   Stack,
   Text,
   Title,
+  Tooltip,
 } from '@mantine/core';
-import { IconAlertCircle, IconSearch, IconSearchOff, IconX } from '@tabler/icons-react';
-import { useState } from 'react';
+import {
+  IconAlertCircle,
+  IconInfoCircle,
+  IconSearch,
+  IconSearchOff,
+  IconX,
+} from '@tabler/icons-react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { ProductSearchSort, type ProductSearchResponse } from '@/api/generated/model';
+import { useAuth } from '@/features/auth/useAuth';
 import { PROVINCE_LABELS } from '@/features/organizations/labels';
 import { useProductCategories } from './api/useProductCategories';
 import { useProductSearch } from './api/useProductSearch';
 import { CatalogFilters } from './components/CatalogFilters';
 import { CARD_MIN_WIDTH, GRID_GAP, ProductGrid } from './components/ProductGrid';
-import { SALE_MODE_LABELS } from './labels';
+import { SALE_MODE_LABELS, TYPE_LABELS } from './labels';
 import {
   hasFilters,
   readSearch,
@@ -92,7 +101,7 @@ interface ActiveFilter {
 
 function activeFilters(
   search: ProductSearch,
-  names: { category: string | undefined; organization: string | undefined },
+  names: { category: string | undefined; organization: (slug: string) => string },
 ): ActiveFilter[] {
   const filters: ActiveFilter[] = [];
   if (search.query) {
@@ -112,12 +121,17 @@ function activeFilters(
       saleModes: search.saleModes.filter((other) => other !== mode),
     });
   });
-  if (search.province) filter('province', PROVINCE_LABELS[search.province], { province: null });
-  if (search.organizationSlug) {
-    filter('organization', names.organization ?? search.organizationSlug, {
-      organizationSlug: null,
+  search.types.forEach((type) => {
+    filter(`type-${type}`, TYPE_LABELS[type], {
+      types: search.types.filter((other) => other !== type),
     });
-  }
+  });
+  if (search.province) filter('province', PROVINCE_LABELS[search.province], { province: null });
+  search.organizationSlugs.forEach((slug) => {
+    filter(`organization-${slug}`, names.organization(slug), {
+      organizationSlugs: search.organizationSlugs.filter((other) => other !== slug),
+    });
+  });
   return filters;
 }
 
@@ -141,11 +155,11 @@ function Results({
       <Paper withBorder radius={14} className={styles.empty}>
         <IconSearchOff size={40} stroke={1.8} aria-hidden className={styles.emptyIcon} />
         <Text fw={700} fz={18}>
-          No encontramos productos con esa búsqueda
+          No encontramos productos para esta búsqueda
         </Text>
         <Text c="dimmed" fz={15} maw={440} lh={1.5}>
-          Probá con otras palabras o sacá algún filtro. Igual registramos la búsqueda para saber qué
-          se está buscando y no se encuentra.
+          Probá con otras palabras o quitá algún filtro. Registramos las búsquedas sin resultados
+          para detectar necesidades y ampliar la oferta del catálogo día a día.
         </Text>
         <Button
           variant="outline"
@@ -169,18 +183,18 @@ function Results({
             total={pages}
             value={search.page}
             size="lg"
-            withEdges={false}
+            withEdges
             getItemProps={(page) => ({ 'aria-label': `Página ${String(page)}` })}
             getControlProps={(control) =>
-              control === 'previous'
-                ? { 'aria-label': 'Página anterior' }
-                : control === 'next'
-                  ? { 'aria-label': 'Página siguiente' }
-                  : {}
+              ({
+                first: { 'aria-label': 'Primera página' },
+                previous: { 'aria-label': 'Página anterior' },
+                next: { 'aria-label': 'Página siguiente' },
+                last: { 'aria-label': 'Última página' },
+              })[control]
             }
             onChange={(page) => {
               onChange({ page });
-              window.scrollTo({ top: 0 });
             }}
           />
         </Group>
@@ -202,11 +216,30 @@ export function CatalogPage() {
   const { data: categories } = useProductCategories();
   const categoryName = categories?.find(({ id }) => id === search.categoryId)?.name;
   const filtered = hasFilters(search);
-  // The address only carries the slug: the name comes from the results, which all belong to that organization.
-  const organizationName = search.organizationSlug ? data?.items[0]?.organization.name : undefined;
+  // The address only carries the slugs: the name comes from the account's organizations or, for a single one, from the
+  // results, which all belong to it.
+  const { user } = useAuth();
+  const organizationName = (slug: string) =>
+    user?.organizations.find((organization) => organization.slug === slug)?.name ??
+    (search.organizationSlugs.length === 1 ? data?.items[0]?.organization.name : undefined) ??
+    slug;
   const active = activeFilters(search, { category: categoryName, organization: organizationName });
 
+  // A new page of results starts at the top of the page. It scrolls when the page is chosen and again once its results
+  // arrive, because the previous ones stay on screen meanwhile and the page can shrink under the scroll.
+  const scrollToTop = useRef(false);
+  useEffect(() => {
+    if (scrollToTop.current && !isPlaceholderData) {
+      window.scrollTo({ top: 0 });
+      scrollToTop.current = false;
+    }
+  }, [isPlaceholderData, data]);
+
   function update(changes: Partial<ProductSearch>) {
+    if (changes.page !== undefined) {
+      scrollToTop.current = true;
+      window.scrollTo({ top: 0 });
+    }
     // Changing what is searched starts again from the first page.
     setSearchParams(writeSearch({ ...search, page: 1, ...changes }));
   }
@@ -248,9 +281,27 @@ export function CatalogPage() {
             aria-busy={isPlaceholderData}
           >
             <Group justify="space-between" gap={12}>
-              <Title order={2} fz={18} id="results-count" role="status">
-                {isPending ? 'Buscando…' : data ? countText(data.total, filtered) : ''}
-              </Title>
+              <Group gap={6} wrap="nowrap">
+                <Title order={2} fz={18} id="results-count" role="status">
+                  {isPending ? 'Buscando…' : data ? countText(data.total, filtered) : ''}
+                </Title>
+                <Tooltip
+                  label="Los precios son orientativos y los define cada cooperativa. El precio final se acuerda al pedir el presupuesto."
+                  multiline
+                  maw={280}
+                  withArrow
+                  events={{ hover: true, focus: true, touch: true }}
+                >
+                  <ActionIcon
+                    variant="transparent"
+                    color="gray"
+                    size={24}
+                    aria-label="Información sobre los precios"
+                  >
+                    <IconInfoCircle size={18} />
+                  </ActionIcon>
+                </Tooltip>
+              </Group>
               <Group gap={12}>
                 <SortSelect
                   options={SORT_OPTIONS}

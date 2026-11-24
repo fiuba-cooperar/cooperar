@@ -1,22 +1,29 @@
 import { IconBox, IconFileText, IconHome, IconUsers } from '@tabler/icons-react';
 
-export const COOPERATIVE_HOME_PATH = '/cooperative';
-export const COOPERATIVE_PROFILE_PATH = '/cooperative/profile';
-export const COOPERATIVE_PRODUCTS_PATH = '/cooperative/products';
-export const NEW_PRODUCT_PATH = `${COOPERATIVE_PRODUCTS_PATH}/new`;
-/** Not in the menu: it is reached from the product list. */
-export const COOPERATIVE_PRODUCT_PATH = `${COOPERATIVE_PRODUCTS_PATH}/:id`;
+/** Entry of the panel: sends to the panel of one of the account's organizations. */
+export const COOPERATIVE_PATH = '/cooperative';
 
-export function editProductPath(id: string) {
-  return COOPERATIVE_PRODUCT_PATH.replace(':id', id);
+/**
+ * The addresses of the panel of an organization. The organization is part of the address, so reloading the page or
+ * sharing the link keeps showing the same one.
+ */
+export function cooperativePanel(slug: string) {
+  const home = `${COOPERATIVE_PATH}/${encodeURIComponent(slug)}`;
+  return {
+    home,
+    profile: `${home}/profile`,
+    products: `${home}/products`,
+    newProduct: `${home}/products/new`,
+    team: `${home}/team`,
+    product: (id: string) => `${home}/products/${id}`,
+  };
 }
-export const COOPERATIVE_TEAM_PATH = '/cooperative/team';
 
-/** Sections of the cooperative panel, in menu order. */
+/** Sections of the cooperative panel, in menu order. `segment` is the part of the address after the organization. */
 export const COOPERATIVE_SECTIONS = [
-  { path: COOPERATIVE_HOME_PATH, label: 'Inicio', icon: IconHome },
-  { path: COOPERATIVE_PROFILE_PATH, label: 'Ficha', icon: IconFileText },
-  { path: COOPERATIVE_PRODUCTS_PATH, label: 'Productos y servicios', icon: IconBox },
+  { segment: '', label: 'Inicio', icon: IconHome },
+  { segment: 'profile', label: 'Ficha', icon: IconFileText },
+  { segment: 'products', label: 'Productos y servicios', icon: IconBox },
   // TODO(#68): replace the "coming soon" page with the team management.
-  { path: COOPERATIVE_TEAM_PATH, label: 'Usuarios', icon: IconUsers },
+  { segment: 'team', label: 'Usuarios', icon: IconUsers },
 ] as const;

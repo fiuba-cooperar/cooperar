@@ -49,6 +49,7 @@ const ACCOUNT = {
 const SHIRT = {
   id: 'p1',
   name: 'Remera de algodón',
+  type: 'PRODUCT',
   category: { id: 'k1', name: 'Indumentaria' },
   saleModes: ['RETAIL', 'WHOLESALE'],
   description: 'Talles del S al XXL',
@@ -59,6 +60,7 @@ const SHIRT = {
 const PRINTING = {
   id: 'p2',
   name: 'Estampado de prendas',
+  type: 'SERVICE',
   category: { id: 'k4', name: 'Servicios' },
   saleModes: ['WHOLESALE'],
   description: null,
@@ -69,6 +71,7 @@ const PRINTING = {
 const BAGS = {
   id: 'p3',
   name: 'Bolsas de tela',
+  type: 'PRODUCT',
   category: { id: 'k3', name: 'Accesorios' },
   saleModes: ['RETAIL'],
   indicativePrice: 2200,
@@ -120,7 +123,9 @@ describe('ProductsPage', { timeout: FORM_TIMEOUT }, () => {
   it('searches by name and filters, keeping them in the address', async () => {
     const fetchMock = signedIn();
 
-    renderRoute('/cooperative/products?q=remera&status=published&saleMode=retail&category=k1');
+    renderRoute(
+      '/cooperative/la-litoralena/products?q=remera&status=published&saleMode=retail&category=k1',
+    );
 
     expect(await screen.findByRole('searchbox', { name: 'Buscar por nombre' })).toHaveValue(
       'remera',
@@ -142,7 +147,7 @@ describe('ProductsPage', { timeout: FORM_TIMEOUT }, () => {
   it('clears the search from the box', async () => {
     const fetchMock = signedIn();
 
-    renderRoute('/cooperative/products?q=remera');
+    renderRoute('/cooperative/la-litoralena/products?q=remera');
     expect(await screen.findByRole('searchbox', { name: 'Buscar por nombre' })).toHaveValue(
       'remera',
     );
@@ -158,7 +163,7 @@ describe('ProductsPage', { timeout: FORM_TIMEOUT }, () => {
 
   it('filters by status from the filters', async () => {
     const fetchMock = signedIn();
-    renderRoute('/cooperative/products');
+    renderRoute('/cooperative/la-litoralena/products');
     await screen.findByText('Estampado de prendas');
 
     await userEvent.click(screen.getByRole('combobox', { name: 'Estado' }));
@@ -174,7 +179,7 @@ describe('ProductsPage', { timeout: FORM_TIMEOUT }, () => {
       [`GET ${PRODUCTS_URL}`]: { body: page([]) },
     });
 
-    renderRoute('/cooperative/products?q=zzz');
+    renderRoute('/cooperative/la-litoralena/products?q=zzz');
 
     expect(await screen.findByText('No encontramos productos con esos filtros')).toBeVisible();
     expect(screen.queryByText('Mostrá lo que ofrecés')).not.toBeInTheDocument();
@@ -190,7 +195,7 @@ describe('ProductsPage', { timeout: FORM_TIMEOUT }, () => {
       [`GET ${PRODUCTS_URL}`]: { body: page([SHIRT, PRINTING], 45) },
     });
 
-    renderRoute('/cooperative/products');
+    renderRoute('/cooperative/la-litoralena/products');
 
     expect(await screen.findByText('45 productos y servicios')).toBeVisible();
     await userEvent.click(screen.getByRole('button', { name: 'Página 2' }));
@@ -203,14 +208,14 @@ describe('ProductsPage', { timeout: FORM_TIMEOUT }, () => {
   it('lists the products with their category, mode, price and status', async () => {
     signedIn();
 
-    const { container } = renderRoute('/cooperative/products');
+    const { container } = renderRoute('/cooperative/la-litoralena/products');
 
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Productos y servicios' }),
     ).toBeVisible();
     expect(screen.getByRole('link', { name: 'Agregar producto o servicio' })).toHaveAttribute(
       'href',
-      '/cooperative/products/new',
+      '/cooperative/la-litoralena/products/new',
     );
     await screen.findByText('Estampado de prendas');
     const shirt = within(screen.getByRole('row', { name: /Remera de algodón/ }));
@@ -230,19 +235,19 @@ describe('ProductsPage', { timeout: FORM_TIMEOUT }, () => {
   it('says so when there are no products yet', async () => {
     signedIn({ [`GET ${PRODUCTS_URL}`]: { body: page([]) } });
 
-    renderRoute('/cooperative/products');
+    renderRoute('/cooperative/la-litoralena/products');
 
     expect(await screen.findByRole('heading', { name: 'Mostrá lo que ofrecés' })).toBeVisible();
     expect(screen.getByRole('link', { name: 'Agregar el primero' })).toHaveAttribute(
       'href',
-      '/cooperative/products/new',
+      '/cooperative/la-litoralena/products/new',
     );
   });
 
   it('shows an error when the list cannot be loaded', async () => {
     signedIn({ [`GET ${PRODUCTS_URL}`]: { status: 500 } });
 
-    renderRoute('/cooperative/products');
+    renderRoute('/cooperative/la-litoralena/products');
 
     expect(await screen.findByText('No pudimos cargar tus productos y servicios')).toBeVisible();
   });
@@ -252,7 +257,7 @@ describe('ProductsPage', { timeout: FORM_TIMEOUT }, () => {
       [`POST ${PRODUCTS_URL}/p1/unpublish`]: { body: { ...SHIRT, status: 'UNPUBLISHED' } },
     });
 
-    renderRoute('/cooperative/products');
+    renderRoute('/cooperative/la-litoralena/products');
     await openActions('Remera de algodón');
     await userEvent.click(screen.getByRole('menuitem', { name: 'Ocultar del catálogo' }));
     const dialog = await screen.findByRole('dialog', { name: 'Ocultar del catálogo' });
@@ -275,7 +280,7 @@ describe('ProductsPage', { timeout: FORM_TIMEOUT }, () => {
       [`POST ${PRODUCTS_URL}/p3/publish`]: { body: { ...BAGS, status: 'PUBLISHED' } },
     });
 
-    renderRoute('/cooperative/products');
+    renderRoute('/cooperative/la-litoralena/products');
     await openActions('Bolsas de tela');
     await userEvent.click(screen.getByRole('menuitem', { name: 'Publicar' }));
 
@@ -290,7 +295,7 @@ describe('ProductsPage', { timeout: FORM_TIMEOUT }, () => {
   it('deletes a product for good only after confirming', async () => {
     const fetchMock = signedIn({ [`DELETE ${PRODUCTS_URL}/p3`]: { status: 204 } });
 
-    renderRoute('/cooperative/products');
+    renderRoute('/cooperative/la-litoralena/products');
     await openActions('Bolsas de tela');
     await userEvent.click(screen.getByRole('menuitem', { name: 'Eliminar' }));
     const dialog = await screen.findByRole('dialog', { name: 'Eliminar definitivamente' });
@@ -312,7 +317,7 @@ describe('ProductsPage', { timeout: FORM_TIMEOUT }, () => {
   it('does not delete when the confirmation is cancelled', async () => {
     const fetchMock = signedIn();
 
-    renderRoute('/cooperative/products');
+    renderRoute('/cooperative/la-litoralena/products');
     await openActions('Bolsas de tela');
     await userEvent.click(screen.getByRole('menuitem', { name: 'Eliminar' }));
     await userEvent.click(
@@ -328,7 +333,7 @@ describe('ProductsPage', { timeout: FORM_TIMEOUT }, () => {
   it('offers to unpublish or delete a published product, not to publish it', async () => {
     signedIn();
 
-    renderRoute('/cooperative/products');
+    renderRoute('/cooperative/la-litoralena/products');
 
     await openActions('Remera de algodón');
     expect(screen.getByRole('menuitem', { name: 'Ocultar del catálogo' })).toBeVisible();
@@ -339,7 +344,7 @@ describe('ProductsPage', { timeout: FORM_TIMEOUT }, () => {
   it('offers to publish or delete an unpublished product, not to unpublish it again', async () => {
     signedIn();
 
-    renderRoute('/cooperative/products');
+    renderRoute('/cooperative/la-litoralena/products');
     await openActions('Bolsas de tela');
 
     expect(screen.getByRole('menuitem', { name: 'Publicar' })).toBeVisible();
@@ -352,7 +357,7 @@ describe('ProductsPage', { timeout: FORM_TIMEOUT }, () => {
   it('does not unpublish when the confirmation is cancelled', async () => {
     const fetchMock = signedIn();
 
-    renderRoute('/cooperative/products');
+    renderRoute('/cooperative/la-litoralena/products');
     await openActions('Remera de algodón');
     await userEvent.click(screen.getByRole('menuitem', { name: 'Ocultar del catálogo' }));
     await userEvent.click(
@@ -365,7 +370,7 @@ describe('ProductsPage', { timeout: FORM_TIMEOUT }, () => {
   it('shows an error when unpublishing fails', async () => {
     signedIn({ [`POST ${PRODUCTS_URL}/p1/unpublish`]: { status: 500 } });
 
-    renderRoute('/cooperative/products');
+    renderRoute('/cooperative/la-litoralena/products');
     await openActions('Remera de algodón');
     await userEvent.click(screen.getByRole('menuitem', { name: 'Ocultar del catálogo' }));
     await userEvent.click(
@@ -380,7 +385,7 @@ describe('ProductFormPage', { timeout: FORM_TIMEOUT }, () => {
   it('asks for the required fields before saving', async () => {
     const fetchMock = signedIn();
 
-    const { container } = renderRoute('/cooperative/products/new');
+    const { container } = renderRoute('/cooperative/la-litoralena/products/new');
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Nuevo producto o servicio' }),
     ).toBeVisible();
@@ -401,7 +406,7 @@ describe('ProductFormPage', { timeout: FORM_TIMEOUT }, () => {
   it('creates a product and goes back to the list', async () => {
     const fetchMock = signedIn({ [`POST ${PRODUCTS_URL}`]: { status: 201, body: SHIRT } });
 
-    renderRoute('/cooperative/products/new');
+    renderRoute('/cooperative/la-litoralena/products/new');
     await userEvent.type(await screen.findByRole('textbox', { name: 'Nombre' }), ' Remera ');
     await userEvent.click(screen.getByRole('combobox', { name: 'Categoría' }));
     await userEvent.click(await screen.findByRole('option', { name: 'Indumentaria' }));
@@ -413,6 +418,7 @@ describe('ProductFormPage', { timeout: FORM_TIMEOUT }, () => {
     await waitFor(() => {
       expect(sentBody(fetchMock, 'POST', PRODUCTS_URL)).toEqual({
         name: 'Remera',
+        type: 'PRODUCT',
         categoryId: 'k1',
         saleModes: ['RETAIL', 'WHOLESALE'],
         description: 'De algodón',
@@ -432,7 +438,7 @@ describe('ProductFormPage', { timeout: FORM_TIMEOUT }, () => {
     URL.createObjectURL = () => 'blob:preview';
     URL.revokeObjectURL = () => undefined;
 
-    renderRoute('/cooperative/products/new');
+    renderRoute('/cooperative/la-litoralena/products/new');
     await userEvent.type(await screen.findByRole('textbox', { name: 'Nombre' }), 'Remera');
     await userEvent.click(screen.getByRole('combobox', { name: 'Categoría' }));
     await userEvent.click(await screen.findByRole('option', { name: 'Indumentaria' }));
@@ -459,7 +465,7 @@ describe('ProductFormPage', { timeout: FORM_TIMEOUT }, () => {
     URL.createObjectURL = () => 'blob:preview';
     URL.revokeObjectURL = () => undefined;
 
-    renderRoute('/cooperative/products/new');
+    renderRoute('/cooperative/la-litoralena/products/new');
     const input = await screen.findByTestId('photos-input');
     // The browser filters by `accept`; this checks the rule again for the files that get through (drops, other pickers).
     await userEvent
@@ -485,7 +491,7 @@ describe('ProductFormPage', { timeout: FORM_TIMEOUT }, () => {
       [`PUT ${PRODUCTS_URL}/p1/photos/order`]: { body: withPhotos },
     });
 
-    renderRoute('/cooperative/products/p1');
+    renderRoute('/cooperative/la-litoralena/products/p1');
     await screen.findByRole('img', { name: 'Foto 2' });
     finishDrag('f2', 'f1');
 
@@ -509,7 +515,7 @@ describe('ProductFormPage', { timeout: FORM_TIMEOUT }, () => {
       [`PUT ${PRODUCTS_URL}/p1/photos/order`]: { status: 500 },
     });
 
-    renderRoute('/cooperative/products/p1');
+    renderRoute('/cooperative/la-litoralena/products/p1');
     await screen.findByRole('img', { name: 'Foto 2' });
     finishDrag('f2', 'f1');
 
@@ -527,7 +533,7 @@ describe('ProductFormPage', { timeout: FORM_TIMEOUT }, () => {
     URL.createObjectURL = (file) => `blob:${(file as File).name}`;
     URL.revokeObjectURL = () => undefined;
 
-    renderRoute('/cooperative/products/new');
+    renderRoute('/cooperative/la-litoralena/products/new');
     await userEvent.upload(await screen.findByTestId('photos-input'), [
       new File(['x'], 'a.png', { type: 'image/png' }),
       new File(['y'], 'b.png', { type: 'image/png' }),
@@ -541,7 +547,7 @@ describe('ProductFormPage', { timeout: FORM_TIMEOUT }, () => {
   it('shows how many characters the name and the description have used', async () => {
     signedIn({});
 
-    renderRoute('/cooperative/products/new');
+    renderRoute('/cooperative/la-litoralena/products/new');
     await userEvent.type(await screen.findByRole('textbox', { name: 'Nombre' }), 'Remera');
     await userEvent.type(screen.getByRole('textbox', { name: 'Descripción' }), 'De algodón');
 
@@ -554,7 +560,7 @@ describe('ProductFormPage', { timeout: FORM_TIMEOUT }, () => {
     URL.createObjectURL = () => 'blob:preview';
     URL.revokeObjectURL = () => undefined;
 
-    renderRoute('/cooperative/products/new');
+    renderRoute('/cooperative/la-litoralena/products/new');
     const area = (await screen.findByTestId('photos-input')).parentElement;
     if (!area) throw new Error('missing photo area');
     fireEvent.drop(area, {
@@ -571,7 +577,7 @@ describe('ProductFormPage', { timeout: FORM_TIMEOUT }, () => {
       [`DELETE ${PRODUCTS_URL}/p1/photos/f1`]: { body: SHIRT },
     });
 
-    renderRoute('/cooperative/products/p1');
+    renderRoute('/cooperative/la-litoralena/products/p1');
     expect(await screen.findByRole('img', { name: 'Foto 1' })).toHaveAttribute(
       'src',
       '/api/images/f1.png',
@@ -589,7 +595,7 @@ describe('ProductFormPage', { timeout: FORM_TIMEOUT }, () => {
   it('saves without publishing when only Guardar is pressed, and publishes with Guardar y publicar', async () => {
     const fetchMock = signedIn({ [`POST ${PRODUCTS_URL}`]: { status: 201, body: SHIRT } });
 
-    renderRoute('/cooperative/products/new');
+    renderRoute('/cooperative/la-litoralena/products/new');
     await userEvent.type(await screen.findByRole('textbox', { name: 'Nombre' }), 'Remera');
     await userEvent.click(screen.getByRole('combobox', { name: 'Categoría' }));
     await userEvent.click(await screen.findByRole('option', { name: 'Indumentaria' }));
@@ -603,7 +609,7 @@ describe('ProductFormPage', { timeout: FORM_TIMEOUT }, () => {
   it('does not ask to publish a product that is already published', async () => {
     signedIn({ [`GET ${PRODUCTS_URL}/p1`]: { body: SHIRT } });
 
-    renderRoute('/cooperative/products/p1');
+    renderRoute('/cooperative/la-litoralena/products/p1');
 
     expect(await screen.findByRole('button', { name: 'Guardar' })).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Guardar y publicar' })).not.toBeInTheDocument();
@@ -612,7 +618,7 @@ describe('ProductFormPage', { timeout: FORM_TIMEOUT }, () => {
   it('filters the categories as you type, ignoring accents and case', async () => {
     signedIn({});
 
-    renderRoute('/cooperative/products/new');
+    renderRoute('/cooperative/la-litoralena/products/new');
     const category = await screen.findByRole('combobox', { name: 'Categoría' });
     await userEvent.click(category);
     await screen.findByRole('option', { name: 'Servicios' });
@@ -625,7 +631,7 @@ describe('ProductFormPage', { timeout: FORM_TIMEOUT }, () => {
   it('says so when no category matches what was typed', async () => {
     signedIn({});
 
-    renderRoute('/cooperative/products/new');
+    renderRoute('/cooperative/la-litoralena/products/new');
     const category = await screen.findByRole('combobox', { name: 'Categoría' });
     await userEvent.click(category);
     await userEvent.type(category, 'zzz');
@@ -636,8 +642,9 @@ describe('ProductFormPage', { timeout: FORM_TIMEOUT }, () => {
   it('leaves the price out when it is not shown', async () => {
     const fetchMock = signedIn({ [`POST ${PRODUCTS_URL}`]: { status: 201, body: PRINTING } });
 
-    renderRoute('/cooperative/products/new');
+    renderRoute('/cooperative/la-litoralena/products/new');
     await userEvent.type(await screen.findByRole('textbox', { name: 'Nombre' }), 'Estampado');
+    await userEvent.click(screen.getByRole('radio', { name: 'Servicio' }));
     await userEvent.click(screen.getByRole('combobox', { name: 'Categoría' }));
     await userEvent.click(await screen.findByRole('option', { name: 'Servicios' }));
     await userEvent.type(screen.getByRole('textbox', { name: 'Precio orientativo (ARS)' }), '100');
@@ -648,6 +655,7 @@ describe('ProductFormPage', { timeout: FORM_TIMEOUT }, () => {
     await waitFor(() => {
       expect(sentBody(fetchMock, 'POST', PRODUCTS_URL)).toEqual({
         name: 'Estampado',
+        type: 'SERVICE',
         categoryId: 'k4',
         saleModes: ['RETAIL'],
       });
@@ -660,7 +668,7 @@ describe('ProductFormPage', { timeout: FORM_TIMEOUT }, () => {
       [`PUT ${PRODUCTS_URL}/p1`]: { body: { ...SHIRT, name: 'Remera lisa' } },
     });
 
-    renderRoute('/cooperative/products/p1');
+    renderRoute('/cooperative/la-litoralena/products/p1');
     const name = await screen.findByRole('textbox', { name: 'Nombre' });
     expect(
       screen.getByRole('heading', { level: 1, name: 'Editar producto o servicio' }),
@@ -689,7 +697,7 @@ describe('ProductFormPage', { timeout: FORM_TIMEOUT }, () => {
   it('shows an error when the product cannot be saved', async () => {
     signedIn({ [`POST ${PRODUCTS_URL}`]: { status: 500 } });
 
-    renderRoute('/cooperative/products/new');
+    renderRoute('/cooperative/la-litoralena/products/new');
     await userEvent.type(await screen.findByRole('textbox', { name: 'Nombre' }), 'Remera');
     await userEvent.click(screen.getByRole('combobox', { name: 'Categoría' }));
     await userEvent.click(await screen.findByRole('option', { name: 'Indumentaria' }));
@@ -701,7 +709,7 @@ describe('ProductFormPage', { timeout: FORM_TIMEOUT }, () => {
   it('shows the not found page for a product that does not exist', async () => {
     signedIn({ [`GET ${PRODUCTS_URL}/nope`]: { status: 404 } });
 
-    renderRoute('/cooperative/products/nope');
+    renderRoute('/cooperative/la-litoralena/products/nope');
 
     expect(await screen.findByRole('heading', { name: 'Página no encontrada' })).toBeVisible();
   });

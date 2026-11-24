@@ -1,6 +1,7 @@
 import { Burger, Button, Container, Drawer, Group, Stack, Text } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconLayoutDashboard, IconLogout } from '@tabler/icons-react';
+import { useEffect } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router';
 import { ROLE_HOME } from '@/features/auth/roleHome';
 import { useAuth } from '@/features/auth/useAuth';
@@ -80,6 +81,10 @@ const FLUSH_PAGES = new Set(['/', '/organizations', '/catalog']);
 
 export function AppLayout() {
   const { pathname } = useLocation();
+  // Going to another page starts at its top, not where the previous one was scrolled; filters only change the query.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
   const isLoginPage = pathname === '/login';
   const isRegisterPage = pathname === REGISTER_PATH;
   // The login page keeps only the logo: its own form links to the registration.

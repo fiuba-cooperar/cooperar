@@ -69,7 +69,7 @@ describe('account home', () => {
     ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Ir al panel de La Litoraleña' })).toHaveAttribute(
       'href',
-      '/cooperative',
+      '/cooperative/la-litoralena',
     );
     expect(screen.getByRole('link', { name: 'Dar de alta otra entidad' })).toHaveAttribute(
       'href',

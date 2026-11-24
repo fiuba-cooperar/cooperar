@@ -7,6 +7,7 @@
  */
 import type { ProductCategoryResponse } from './productCategoryResponse';
 import type { ProductPhotoResponse } from './productPhotoResponse';
+import type { ProductType } from './productType';
 import type { SaleMode } from './saleMode';
 
 export interface PublicProductResponse {
@@ -19,4 +20,5 @@ export interface PublicProductResponse {
   /** The first one is the cover */
   photos: ProductPhotoResponse[];
   saleModes: SaleMode[];
+  type: ProductType;
 }

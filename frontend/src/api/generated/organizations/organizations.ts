@@ -20,7 +20,7 @@ import type {
 
 import type {
   GetMapOrganizationsParams,
-  OrganizationMapPointResponse,
+  OrganizationMapResponse,
   OrganizationProfileResponse,
   OrganizationSearchResponse,
   SearchOrganizationsParams,
@@ -46,7 +46,7 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 };
 
 export type getMapOrganizationsResponse200 = {
-  data: OrganizationMapPointResponse[];
+  data: OrganizationMapResponse[];
   status: 200;
 };
 
@@ -81,8 +81,8 @@ export const getGetMapOrganizationsUrl = (params?: GetMapOrganizationsParams) =>
 };
 
 /**
- * All of them in one answer, so the nearest ones are found in the visitor's browser and the visitor's location is never sent. Organizations not located yet are left out.
- * @summary Every organization with a point on the map, by name, with the directory's filters
+ * Each one comes with all its located addresses. All of them in one answer, so the nearest ones are found in the visitor's browser and the visitor's location is never sent. Organizations with no located address are left out.
+ * @summary Every organization with an address on the map, by name, with the directory's filters
  */
 export const getMapOrganizations = async (
   params?: GetMapOrganizationsParams,
@@ -185,7 +185,7 @@ export function useGetMapOrganizations<
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 /**
- * @summary Every organization with a point on the map, by name, with the directory's filters
+ * @summary Every organization with an address on the map, by name, with the directory's filters
  */
 
 export function useGetMapOrganizations<

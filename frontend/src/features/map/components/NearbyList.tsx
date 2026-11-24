@@ -1,33 +1,35 @@
 import { Text, UnstyledButton } from '@mantine/core';
-import type { OrganizationMapPointResponse } from '@/api/generated/model';
 import { ORGANIZATION_TYPE_LABELS } from '@/features/organizations/labels';
 import { formatDistance } from '../geo';
+import type { MapPin } from '../pins';
 import styles from './NearbyList.module.css';
 
 interface Props {
-  nearby: { place: OrganizationMapPointResponse; km: number }[];
+  nearby: { item: MapPin; km: number }[];
+  /** The key of the chosen pin. */
   selected: string | null;
-  onSelect: (slug: string) => void;
+  onSelect: (key: string) => void;
 }
 
-/** The nearest organizations, each one a button that shows it on the map. */
+/** The nearest organizations by their nearest address, each one a button that shows that address on the map. */
 export function NearbyList({ nearby, selected, onSelect }: Props) {
   return (
     <ol className={styles.list}>
-      {nearby.map(({ place, km }) => (
-        <li key={place.slug}>
+      {nearby.map(({ item: pin, km }) => (
+        <li key={pin.key}>
           <UnstyledButton
             className={styles.item}
-            aria-pressed={place.slug === selected}
+            aria-pressed={pin.key === selected}
             onClick={() => {
-              onSelect(place.slug);
+              onSelect(pin.key);
             }}
           >
             <Text fw={600} size="sm" lh={1.3}>
-              {place.name}
+              {pin.organization.name}
             </Text>
             <Text size="xs" c="dimmed">
-              {ORGANIZATION_TYPE_LABELS[place.type]} · {place.locality} · {formatDistance(km)}
+              {ORGANIZATION_TYPE_LABELS[pin.organization.type]} · {pin.place.locality} ·{' '}
+              {formatDistance(km)}
             </Text>
           </UnstyledButton>
         </li>

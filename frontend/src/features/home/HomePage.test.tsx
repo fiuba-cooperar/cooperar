@@ -9,7 +9,6 @@ import { renderRoute } from '@/test/render';
 const MENU = [
   ['Entidades', '/organizations'],
   ['Catálogo', '/catalog'],
-  ['Mapa', '/map'],
   ['Ferias', '/fairs'],
   ['Historia del sector', '/history'],
 ] as const;
@@ -107,7 +106,14 @@ describe('public site', () => {
     renderRoute('/');
 
     const hrefs = screen.getAllByRole('link').map((link) => link.getAttribute('href'));
-    for (const href of ['/organizations', '/catalog', '/map', '/fairs', '/history', '/register']) {
+    for (const href of [
+      '/organizations',
+      '/catalog',
+      '/organizations?view=map',
+      '/fairs',
+      '/history',
+      '/register',
+    ]) {
       expect(hrefs).toContain(href);
     }
   });
@@ -157,12 +163,17 @@ describe('public site', () => {
           name,
           type: 'COOPERATIVE',
           sectors: ['FOOD'],
-          province: 'BUENOS_AIRES',
-          district: 'Avellaneda',
-          locality: 'Sarandí',
-          latitude: -34.6 - south,
-          longitude: -58.4,
-          approximate: false,
+          places: [
+            {
+              type: 'MAIN',
+              province: 'BUENOS_AIRES',
+              district: 'Avellaneda',
+              locality: 'Sarandí',
+              latitude: -34.6 - south,
+              longitude: -58.4,
+              approximate: false,
+            },
+          ],
         })),
       },
     });

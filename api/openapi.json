@@ -1641,9 +1641,20 @@
     },
     "/api/map/organizations" : {
       "get" : {
-        "description" : "All of them in one answer, so the nearest ones are found in the visitor's browser and the visitor's location is never sent. Organizations not located yet are left out.",
+        "description" : "Each one comes with all its located addresses. All of them in one answer, so the nearest ones are found in the visitor's browser and the visitor's location is never sent. Organizations with no located address are left out.",
         "operationId" : "getMapOrganizations",
         "parameters" : [ {
+          "description" : "Words to look for, as in the directory",
+          "in" : "query",
+          "name" : "q",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "description" : "Words to look for, as in the directory",
+            "maxLength" : 200,
+            "minLength" : 0
+          }
+        }, {
           "description" : "Any of these types",
           "in" : "query",
           "name" : "type",
@@ -1697,7 +1708,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/OrganizationMapPointResponse"
+                    "$ref" : "#/components/schemas/OrganizationMapResponse"
                   }
                 }
               }
@@ -1705,7 +1716,7 @@
             "description" : "OK"
           }
         },
-        "summary" : "Every organization with a point on the map, by name, with the directory's filters",
+        "summary" : "Every organization with an address on the map, by name, with the directory's filters",
         "tags" : [ "organizations" ]
       }
     },
@@ -2688,7 +2699,7 @@
         },
         "required" : [ "items", "page", "size", "total" ]
       },
-      "OrganizationMapPointResponse" : {
+      "MapPlaceResponse" : {
         "type" : "object",
         "properties" : {
           "approximate" : {
@@ -2705,19 +2716,43 @@
           "locality" : {
             "type" : "string"
           },
-          "logoUrl" : {
-            "type" : "string",
-            "description" : "Missing until the organization uploads one"
-          },
           "longitude" : {
             "type" : "number",
             "format" : "double"
           },
           "name" : {
-            "type" : "string"
+            "type" : "string",
+            "description" : "How the organization calls it, like «planta» or «sucursal»"
           },
           "province" : {
             "$ref" : "#/components/schemas/Province"
+          },
+          "street" : {
+            "type" : "string",
+            "description" : "Street and number; missing when the organization keeps it private"
+          },
+          "type" : {
+            "$ref" : "#/components/schemas/AddressType"
+          }
+        },
+        "required" : [ "approximate", "district", "latitude", "locality", "longitude", "province", "type" ]
+      },
+      "OrganizationMapResponse" : {
+        "type" : "object",
+        "properties" : {
+          "logoUrl" : {
+            "type" : "string",
+            "description" : "Missing until the organization uploads one"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "places" : {
+            "type" : "array",
+            "description" : "Every address with a point, the main one first; never empty",
+            "items" : {
+              "$ref" : "#/components/schemas/MapPlaceResponse"
+            }
           },
           "sectors" : {
             "type" : "array",
@@ -2734,7 +2769,7 @@
             "$ref" : "#/components/schemas/OrganizationType"
           }
         },
-        "required" : [ "approximate", "district", "latitude", "locality", "longitude", "name", "province", "sectors", "slug", "type" ]
+        "required" : [ "name", "places", "sectors", "slug", "type" ]
       },
       "OrganizationProfileResponse" : {
         "type" : "object",

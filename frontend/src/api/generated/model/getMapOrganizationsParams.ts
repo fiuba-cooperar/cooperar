@@ -12,6 +12,12 @@ import type { Sector } from './sector';
 
 export type GetMapOrganizationsParams = {
   /**
+   * Words to look for, as in the directory
+   * @minLength 0
+   * @maxLength 200
+   */
+  q?: string;
+  /**
    * Any of these types
    */
   type?: OrganizationType[];

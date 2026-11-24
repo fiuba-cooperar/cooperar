@@ -2,10 +2,12 @@ import { Anchor, Button, Group, Paper, Stack, Text } from '@mantine/core';
 import { IconCurrentLocation } from '@tabler/icons-react';
 import { lazy, Suspense, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router';
+import type { OrganizationMapResponse } from '@/api/generated/model';
 import { ORGANIZATION_TYPE_LABELS } from '@/features/organizations/labels';
+import { ORGANIZATIONS_PATH } from '@/features/organizations/organizationSearch';
 import { useMapOrganizations } from '../api/useMapOrganizations';
-import { byDistance, formatDistance, type GeoPoint } from '../geo';
-import { MAP_PATH } from '../mapFilters';
+import { formatDistance, type GeoPoint } from '../geo';
+import { nearestOrganizations, pinsOf } from '../pins';
 import { useVisitorLocation } from '../useVisitorLocation';
 import styles from './NearbyPreview.module.css';
 
@@ -14,20 +16,23 @@ const OrganizationsMap = lazy(() =>
 );
 
 const PREVIEW_COUNT = 3;
+// Stable while loading, so the pins are not rebuilt on every render.
+const NO_ORGANIZATIONS: OrganizationMapResponse[] = [];
 
 /** The map of the home page: the organizations around the visitor, or the whole country until the visitor says where. */
 export function NearbyPreview() {
   const navigate = useNavigate();
-  const { data: organizations = [], isError } = useMapOrganizations();
+  const { data: organizations = NO_ORGANIZATIONS, isError } = useMapOrganizations();
   const { location, locate } = useVisitorLocation();
   const visitor = location.status === 'located' ? location.point : null;
+  const pins = useMemo(() => pinsOf(organizations), [organizations]);
   const nearby = useMemo(
-    () => (visitor ? byDistance(organizations, visitor).slice(0, PREVIEW_COUNT) : []),
-    [organizations, visitor],
+    () => (visitor ? nearestOrganizations(pins, visitor).slice(0, PREVIEW_COUNT) : []),
+    [pins, visitor],
   );
   const frame = useMemo<GeoPoint[]>(
-    () => (visitor ? [visitor, ...nearby.map(({ place }) => place)] : organizations),
-    [visitor, nearby, organizations],
+    () => (visitor ? [visitor, ...nearby.map(({ item }) => item)] : pins),
+    [visitor, nearby, pins],
   );
 
   return (
@@ -35,15 +40,17 @@ export function NearbyPreview() {
       <div className={styles.box}>
         <Suspense fallback={<Text c="dimmed">Cargando el mapa…</Text>}>
           <OrganizationsMap
-            organizations={organizations}
+            pins={pins}
             visitor={visitor}
             selected={null}
-            onSelect={(slug) => {
-              void navigate(`/organizations/${slug}`);
+            onSelect={(key) => {
+              const pin = pins.find((candidate) => candidate.key === key);
+              if (pin) void navigate(`/organizations/${pin.organization.slug}`);
             }}
             frame={frame}
             label="Mapa de cooperativas"
             className={styles.map}
+            scrollWheelZoom={false}
           />
         </Suspense>
       </div>
@@ -54,14 +61,19 @@ export function NearbyPreview() {
               Cerca tuyo
             </Text>
             <ol className={styles.nearby}>
-              {nearby.map(({ place, km }) => (
-                <li key={place.slug}>
-                  <Anchor component={Link} to={`/organizations/${place.slug}`} size="sm" fw={600}>
-                    {place.name}
+              {nearby.map(({ item: pin, km }) => (
+                <li key={pin.key}>
+                  <Anchor
+                    component={Link}
+                    to={`/organizations/${pin.organization.slug}`}
+                    size="sm"
+                    fw={600}
+                  >
+                    {pin.organization.name}
                   </Anchor>
                   <Text size="xs" c="dimmed" component="span">
                     {' '}
-                    · {ORGANIZATION_TYPE_LABELS[place.type]} · {formatDistance(km)}
+                    · {ORGANIZATION_TYPE_LABELS[pin.organization.type]} · {formatDistance(km)}
                   </Text>
                 </li>
               ))}
@@ -93,7 +105,13 @@ export function NearbyPreview() {
           </Text>
         )}
         <Group justify="flex-end">
-          <Anchor component={Link} to={MAP_PATH} fw={600} size="sm" underline="always">
+          <Anchor
+            component={Link}
+            to={`${ORGANIZATIONS_PATH}?view=map`}
+            fw={600}
+            size="sm"
+            underline="always"
+          >
             Abrir el mapa →
           </Anchor>
         </Group>

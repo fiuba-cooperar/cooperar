@@ -9,9 +9,9 @@ import {
   Text,
   Title,
 } from '@mantine/core';
-import { IconAlertCircle, IconMap, IconSearch, IconSearchOff, IconX } from '@tabler/icons-react';
+import { IconAlertCircle, IconSearch, IconSearchOff, IconX } from '@tabler/icons-react';
 import { useState } from 'react';
-import { Link, useSearchParams } from 'react-router';
+import { useSearchParams } from 'react-router';
 import { ProductSearchSort, type ProductSearchResponse } from '@/api/generated/model';
 import { PROVINCE_LABELS } from '@/features/organizations/labels';
 import { useProductCategories } from './api/useProductCategories';
@@ -259,16 +259,6 @@ export function CatalogPage() {
                     update({ sort });
                   }}
                 />
-                <Button
-                  component={Link}
-                  to="/map"
-                  variant="outline"
-                  h={44}
-                  px={16}
-                  leftSection={<IconMap size={18} stroke={2} aria-hidden />}
-                >
-                  Ver en el mapa
-                </Button>
               </Group>
             </Group>
             {active.length > 0 && (

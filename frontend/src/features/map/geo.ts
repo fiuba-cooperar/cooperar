@@ -21,11 +21,9 @@ export function distanceKm(from: GeoPoint, to: GeoPoint) {
   return 2 * EARTH_RADIUS_KM * Math.asin(Math.sqrt(a));
 }
 
-/** The places with how far each is from `from`, the nearest first. */
-export function byDistance<T extends GeoPoint>(places: T[], from: GeoPoint) {
-  return places
-    .map((place) => ({ place, km: distanceKm(from, place) }))
-    .sort((a, b) => a.km - b.km);
+/** The items with how far each is from `from`, the nearest first. */
+export function byDistance<T extends GeoPoint>(items: T[], from: GeoPoint) {
+  return items.map((item) => ({ item, km: distanceKm(from, item) })).sort((a, b) => a.km - b.km);
 }
 
 /** «a 350 m», «a 1,2 km», «a 45 km». */

@@ -5,21 +5,16 @@
  * Open observatory of worker-recovered companies and worker cooperatives
  * OpenAPI spec version: v1
  */
+import type { MapPlaceResponse } from './mapPlaceResponse';
 import type { OrganizationType } from './organizationType';
-import type { Province } from './province';
 import type { Sector } from './sector';
 
-export interface OrganizationMapPointResponse {
-  /** True when the point marks only the area, because the street is private */
-  approximate: boolean;
-  district: string;
-  latitude: number;
-  locality: string;
+export interface OrganizationMapResponse {
   /** Missing until the organization uploads one */
   logoUrl?: string;
-  longitude: number;
   name: string;
-  province: Province;
+  /** Every address with a point, the main one first; never empty */
+  places: MapPlaceResponse[];
   sectors: Sector[];
   /** Path segment of its public profile */
   slug: string;

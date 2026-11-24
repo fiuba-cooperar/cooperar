@@ -32,3 +32,22 @@
   stroke: var(--mantine-color-white);
   stroke-width: 3;
 }
+
+/* Leaflet paints its popups white; these follow the color scheme, so the text keeps its contrast in dark mode. */
+.popup :global(.leaflet-popup-content-wrapper),
+.popup :global(.leaflet-popup-tip) {
+  background: var(--mantine-color-body);
+  color: var(--mantine-color-text);
+}
+
+.popup :global(.leaflet-popup-content) {
+  margin: var(--mantine-spacing-sm) var(--mantine-spacing-md);
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+/* Leaflet spaces out the paragraphs of a popup; the summary keeps its own spacing. */
+.popup :global(.leaflet-popup-content p) {
+  margin: 0;
+}

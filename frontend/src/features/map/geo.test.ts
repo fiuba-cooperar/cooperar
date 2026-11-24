@@ -21,7 +21,7 @@ describe('geo', () => {
       ],
       from,
     );
-    expect(sorted.map(({ place }) => place.name)).toEqual(['near', 'far']);
+    expect(sorted.map(({ item }) => item.name)).toEqual(['near', 'far']);
   });
 
   it('writes the distance in meters, then with one decimal and then in whole kilometers', () => {

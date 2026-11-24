@@ -1,27 +1,32 @@
 import { Anchor, Avatar, Group, Paper, Stack, Text } from '@mantine/core';
+import type { ReactNode } from 'react';
 import { Link } from 'react-router';
-import type { OrganizationMapPointResponse } from '@/api/generated/model';
 import { initials } from '@/features/organizations/initials';
-import {
-  ORGANIZATION_TYPE_LABELS,
-  PROVINCE_LABELS,
-  SECTOR_LABELS,
-} from '@/features/organizations/labels';
+import { ORGANIZATION_TYPE_LABELS, SECTOR_LABELS } from '@/features/organizations/labels';
 import { formatDistance } from '../geo';
+import type { MapPin } from '../pins';
 
-/** The summary of the organization chosen on the map, with the way to its profile. */
+/** The summary of the address chosen on the map and its organization, with the way to its profile. */
 export function MapOrganizationCard({
-  organization,
+  pin,
   km,
+  children,
+  framed = true,
 }: {
-  organization: OrganizationMapPointResponse;
+  pin: MapPin;
   km: number | null;
+  /** More about the organization, before the link to its profile. */
+  children?: ReactNode;
+  /** With a border of its own; a popup, which already has one, goes without. */
+  framed?: boolean;
 }) {
+  const { organization, place } = pin;
   return (
     <Paper
-      withBorder
+      withBorder={framed}
       radius="md"
-      p="md"
+      p={framed ? 'md' : 0}
+      {...(!framed && { bg: 'transparent' })}
       aria-label={`Entidad elegida: ${organization.name}`}
       role="group"
     >
@@ -44,15 +49,15 @@ export function MapOrganizationCard({
             {organization.sectors.map((sector) => SECTOR_LABELS[sector]).join(', ')}
           </Text>
           <Text size="sm">
-            {organization.locality}, {organization.district},{' '}
-            {PROVINCE_LABELS[organization.province]}
+            {[place.street, place.locality, place.district].filter(Boolean).join(', ')}
             {km !== null && ` · ${formatDistance(km)}`}
           </Text>
-          {organization.approximate && (
+          {place.approximate && (
             <Text size="xs" c="dimmed">
               El mapa marca solo la zona: no publica su dirección exacta.
             </Text>
           )}
+          {children}
           <Anchor component={Link} to={`/organizations/${organization.slug}`} size="sm" fw={600}>
             Ver la ficha
           </Anchor>

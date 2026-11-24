@@ -9,11 +9,18 @@ import {
   Text,
   Title,
 } from '@mantine/core';
-import { IconAlertCircle, IconMap, IconSearch, IconSearchOff, IconX } from '@tabler/icons-react';
+import { IconAlertCircle, IconSearch, IconSearchOff, IconX } from '@tabler/icons-react';
 import { useState } from 'react';
-import { Link, useSearchParams } from 'react-router';
-import { OrganizationSearchSort, type OrganizationSearchResponse } from '@/api/generated/model';
-import { MAP_PATH, writeFilters } from '@/features/map/mapFilters';
+import { useSearchParams } from 'react-router';
+import {
+  OrganizationSearchSort,
+  type GetMapOrganizationsParams,
+  type OrganizationSearchResponse,
+} from '@/api/generated/model';
+import { useMapOrganizations } from '@/features/map/api/useMapOrganizations';
+import { ResultsMap } from '@/features/map/components/ResultsMap';
+import { ViewToggle } from '@/features/map/components/ViewToggle';
+import { isMapView, withView } from '@/features/map/resultsView';
 import { useOrganizationSearch } from './api/useOrganizationSearch';
 import { OrganizationResult } from './components/OrganizationResult';
 import { SearchFilters } from './components/SearchFilters';
@@ -36,10 +43,15 @@ import styles from './OrganizationSearchPage.module.css';
 // 1180px of content between 48px gutters, as in the mock and the home page.
 const SECTION = { size: 1276, px: { base: 'md', sm: 48 } } as const;
 
-/** The map with the same types and sectors as the directory. */
-function mapPath({ types, sectors }: OrganizationSearch) {
-  const query = writeFilters({ types, sectors }).toString();
-  return query ? `${MAP_PATH}?${query}` : MAP_PATH;
+/** The search without its order and its page, which the map does not have. */
+function mapParams(search: OrganizationSearch): GetMapOrganizationsParams {
+  return {
+    ...(search.query && { q: search.query }),
+    ...(search.types.length > 0 && { type: search.types }),
+    ...(search.sectors.length > 0 && { sector: search.sectors }),
+    ...(search.activityTypes.length > 0 && { activityType: search.activityTypes }),
+    ...(search.province && { province: search.province }),
+  };
 }
 
 const SORT_OPTIONS = [
@@ -225,10 +237,12 @@ export function OrganizationSearchPage() {
   );
   const filtered = hasFilters(search);
   const active = activeFilters(search);
+  const mapView = isMapView(searchParams);
+  const map = useMapOrganizations(mapParams(search), mapView);
 
   function update(changes: Partial<OrganizationSearch>) {
-    // Changing what is searched starts again from the first page.
-    setSearchParams(writeSearch({ ...search, page: 1, ...changes }));
+    // Changing what is searched starts again from the first page, in the same view.
+    setSearchParams(withView(writeSearch({ ...search, page: 1, ...changes }), mapView));
   }
 
   return (
@@ -269,23 +283,21 @@ export function OrganizationSearchPage() {
                 {isPending ? 'Buscando entidades…' : data ? countText(data.total, filtered) : ''}
               </Title>
               <Group gap={12}>
-                <SortSelect
-                  options={SORT_OPTIONS}
-                  value={search.sort}
-                  onChange={(sort) => {
-                    update({ sort });
+                {!mapView && (
+                  <SortSelect
+                    options={SORT_OPTIONS}
+                    value={search.sort}
+                    onChange={(sort) => {
+                      update({ sort });
+                    }}
+                  />
+                )}
+                <ViewToggle
+                  map={mapView}
+                  onChange={(showMap) => {
+                    setSearchParams(withView(writeSearch({ ...search, page: 1 }), showMap));
                   }}
                 />
-                <Button
-                  component={Link}
-                  to={mapPath(search)}
-                  variant="outline"
-                  h={44}
-                  px={16}
-                  leftSection={<IconMap size={18} stroke={2} aria-hidden />}
-                >
-                  Ver en el mapa
-                </Button>
               </Group>
             </Group>
             {active.length > 0 && (
@@ -312,6 +324,12 @@ export function OrganizationSearchPage() {
               <Alert color="red" icon={<IconAlertCircle aria-hidden />} role="alert">
                 No pudimos cargar las entidades. Intentá de nuevo en unos minutos.
               </Alert>
+            ) : mapView ? (
+              <ResultsMap
+                organizations={map.data}
+                isError={map.isError}
+                label="Mapa de las entidades encontradas"
+              />
             ) : (
               data && <Results search={search} result={data} onChange={update} />
             )}

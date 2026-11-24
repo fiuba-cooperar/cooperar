@@ -26,6 +26,7 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.PrecisionModel;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,6 +43,9 @@ class OrganizationMapIntegrationTest {
 
     @Autowired
     private OrganizationRepository organizations;
+
+    @Autowired
+    private JdbcClient jdbcClient;
 
     @BeforeEach
     void createOrganizations() {
@@ -81,18 +85,21 @@ class OrganizationMapIntegrationTest {
         assertThat(mvc.get().uri(MAP)).hasStatusOk().bodyJson().isStrictlyEqualTo("""
                 [
                   {"slug": "panaderia-la-union", "name": "Panadería La Unión", "type": "COOPERATIVE",
-                   "sectors": ["FOOD"], "province": "SANTA_FE", "district": "Rosario", "locality": "Centro",
-                   "logoUrl": null, "latitude": -32.9468, "longitude": -60.6393, "approximate": false},
+                   "sectors": ["FOOD"], "logoUrl": null,
+                   "places": [{"type": "MAIN", "name": null, "province": "SANTA_FE", "district": "Rosario",
+                               "locality": "Centro", "street": "Rivadavia 100", "latitude": -32.9468, "longitude": -60.6393,
+                               "approximate": false}]},
                   {"slug": "zapateria-del-oeste", "name": "Zapatería del Oeste", "type": "ERT",
-                   "sectors": ["TEXTILE"], "province": "BUENOS_AIRES", "district": "La Matanza",
-                   "locality": "San Justo", "logoUrl": null, "latitude": -34.68, "longitude": -58.57,
-                   "approximate": true}
+                   "sectors": ["TEXTILE"], "logoUrl": null,
+                   "places": [{"type": "MAIN", "name": null, "province": "BUENOS_AIRES", "district": "La Matanza",
+                               "locality": "San Justo", "street": null, "latitude": -34.68, "longitude": -58.57,
+                               "approximate": true}]}
                 ]
                 """);
     }
 
     @Test
-    void placesEachOrganizationByItsMainAddressOnly() {
+    void bringsEveryLocatedAddressTheMainOneFirst() {
         Organization printer = organizations.findBySlug("grafica-norte").orElseThrow();
         printer.replaceAddresses(List.of(
                 new AddressDetails(
@@ -102,12 +109,50 @@ class OrganizationMapIntegrationTest {
                         AddressType.SECONDARY,
                         "Depósito",
                         new Address(Province.MENDOZA, "Godoy Cruz", "Centro", "San Martín 1", null),
+                        Visibility.PRIVATE,
+                        point(-32.92345, -68.84567)),
+                new AddressDetails(
+                        null,
+                        AddressType.SECONDARY,
+                        "Local",
+                        new Address(Province.CORDOBA, "Capital", "Centro", "Colón 1", null),
                         Visibility.PUBLIC,
-                        point(-32.92, -68.84))));
+                        point(-31.41, -64.18))));
+        Organization bakery = organizations.findBySlug("panaderia-la-union").orElseThrow();
+        bakery.replaceAddresses(List.of(
+                new AddressDetails(
+                        null,
+                        AddressType.MAIN,
+                        "Planta",
+                        bakery.getMainAddress().getAddress(),
+                        Visibility.PUBLIC,
+                        bakery.getMainAddress().getLocation()),
+                new AddressDetails(
+                        null,
+                        AddressType.SECONDARY,
+                        "Sucursal",
+                        new Address(Province.SANTA_FE, "Rosario", "Fisherton", "Eva Perón 8000", null),
+                        Visibility.PUBLIC,
+                        point(-32.93, -60.75))));
         organizations.flush();
 
-        assertThat(names(MAP)).containsExactly("Panadería La Unión", "Zapatería del Oeste");
-        assertThat(names(MAP + "?province=MENDOZA")).isEmpty();
+        assertThat(mvc.get().uri(MAP)).bodyJson().isLenientlyEqualTo("""
+                [
+                  {"slug": "grafica-norte",
+                   "places": [{"type": "SECONDARY", "name": "Depósito", "locality": "Centro",
+                               "latitude": -32.92, "longitude": -68.85, "approximate": true},
+                              {"type": "SECONDARY", "name": "Local", "latitude": -31.41, "longitude": -64.18,
+                               "approximate": false}]},
+                  {"slug": "panaderia-la-union",
+                   "places": [{"type": "MAIN", "name": "Planta", "locality": "Centro"},
+                              {"type": "SECONDARY", "name": "Sucursal", "locality": "Fisherton"}]},
+                  {"slug": "zapateria-del-oeste"}
+                ]
+                """);
+        assertThat(body(mvc.get().uri(MAP).exchange()))
+                .doesNotContain("San Martín")
+                .doesNotContain("-32.92345");
+        assertThat(names(MAP + "?province=MENDOZA")).containsExactly("Gráfica Norte");
     }
 
     @Test
@@ -120,6 +165,19 @@ class OrganizationMapIntegrationTest {
                 .doesNotContain("-34.68123")
                 .doesNotContain("cuit")
                 .doesNotContain("Ltda.");
+    }
+
+    @Test
+    void findsTheWordsLikeTheDirectoryWithoutLoggingTheSearch() {
+        assertThat(names(MAP + "?q=zapateria")).containsExactly("Zapatería del Oeste");
+        assertThat(names(MAP + "?q=rosario")).containsExactly("Panadería La Unión");
+        assertThat(names(MAP + "?q=grafica")).isEmpty();
+        assertThat(names(MAP + "?q=de la")).containsExactly("Panadería La Unión", "Zapatería del Oeste");
+        assertThat(jdbcClient
+                        .sql("SELECT count(*) FROM organization_searches")
+                        .query(Long.class)
+                        .single())
+                .isZero();
     }
 
     @Test

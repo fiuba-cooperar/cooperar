@@ -317,7 +317,7 @@
     },
     "/api/auth/login" : {
       "post" : {
-        "description" : "Each address and each email can try a limited number of times per quarter of an hour; past it the answer is 429 with `Retry-After`.",
+        "description" : "Each address and each email can fail a limited number of times per quarter of an hour; past it the answer is 429 with `Retry-After`.",
         "operationId" : "login",
         "requestBody" : {
           "content" : {

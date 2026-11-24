@@ -58,15 +58,16 @@ public class AuthService {
 
     /**
      * @param sender the address the request came from, which only counts toward the limit and is never kept
-     * @throws TooManyRequestsException if `sender` or `email` already tried too many times in the period
+     * @throws TooManyRequestsException if `sender` or `email` already failed too many times in the period
      */
     @Transactional
     public AuthTokens login(String email, String password, String sender) {
-        loginRateLimiter.acquire(sender, email);
+        loginRateLimiter.check(sender, email);
         UserAccount user = users.findByEmail(UserAccount.normalizeEmail(email)).orElse(null);
         String hash = user != null ? user.getPasswordHash() : decoyHash;
         boolean matches = passwordEncoder.matches(password, hash);
         if (user == null || !matches) {
+            loginRateLimiter.recordFailure(sender, email);
             throw new InvalidCredentialsException();
         }
         log.info("User {} logged in", user.getId());

@@ -62,6 +62,18 @@ class SlidingWindowRateLimiterTest {
         assertThatCode(() -> limiter.acquire("sender-0")).doesNotThrowAnyException();
     }
 
+    @Test
+    void checkingCountsNothingAndRecordingCountsWithoutBlocking() {
+        limiter.check("1.1.1.1");
+        limiter.check("1.1.1.1");
+        limiter.check("1.1.1.1");
+        limiter.record("1.1.1.1");
+        limiter.check("1.1.1.1");
+        limiter.record("1.1.1.1");
+
+        assertThatThrownBy(() -> limiter.check("1.1.1.1")).isInstanceOf(TooManyRequestsException.class);
+    }
+
     private static class MutableClock extends Clock {
         private Instant now = Instant.parse("2026-11-23T12:00:00Z");
 

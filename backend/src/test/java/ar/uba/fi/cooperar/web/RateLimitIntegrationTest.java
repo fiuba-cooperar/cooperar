@@ -29,7 +29,7 @@ class RateLimitIntegrationTest {
     private MockMvcTester mvc;
 
     @Test
-    void blocksGuessingTheSamePasswordOfAnEmailEvenFromDifferentAddresses() {
+    void blocksFailingTheSameEmailEvenFromDifferentAddresses() {
         assertThat(login("victim@coop.local", "10.2.0.1")).hasStatus(HttpStatus.UNAUTHORIZED);
         assertThat(login("VICTIM@coop.local", "10.2.0.2")).hasStatus(HttpStatus.UNAUTHORIZED);
 
@@ -41,7 +41,15 @@ class RateLimitIntegrationTest {
     }
 
     @Test
-    void blocksAnAddressThatTriesManyEmailsButNotOtherAddresses() {
+    void doesNotCountTheSignInsThatSucceed() {
+        for (int i = 0; i < 6; i++) {
+            assertThat(login("admin@test.local", "test-admin-password", "10.5.0.1"))
+                    .hasStatusOk();
+        }
+    }
+
+    @Test
+    void blocksAnAddressThatFailsWithManyEmailsButNotOtherAddresses() {
         for (int i = 0; i < 4; i++) {
             assertThat(login("many" + i + "@coop.local", "10.3.0.1")).hasStatus(HttpStatus.UNAUTHORIZED);
         }
@@ -67,6 +75,10 @@ class RateLimitIntegrationTest {
     }
 
     private MvcTestResult login(String email, String remoteAddress) {
+        return login(email, "wrong-password", remoteAddress);
+    }
+
+    private MvcTestResult login(String email, String password, String remoteAddress) {
         return mvc.post()
                 .uri("/api/auth/login")
                 .with(request -> {
@@ -74,7 +86,7 @@ class RateLimitIntegrationTest {
                     return request;
                 })
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"email\": \"%s\", \"password\": \"wrong-password\"}".formatted(email))
+                .content("{\"email\": \"%s\", \"password\": \"%s\"}".formatted(email, password))
                 .exchange();
     }
 

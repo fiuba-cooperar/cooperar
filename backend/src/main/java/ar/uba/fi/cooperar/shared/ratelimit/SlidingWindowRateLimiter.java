@@ -30,6 +30,27 @@ public class SlidingWindowRateLimiter {
 
     /** Counts an attempt from `sender`, or throws if it already made the maximum in the window. */
     public void acquire(String sender) {
+        throwIfBlocked(evaluate(sender, true));
+    }
+
+    /** Throws if `sender` already made the maximum in the window, without counting anything. */
+    public void check(String sender) {
+        throwIfBlocked(evaluate(sender, false));
+    }
+
+    /** Counts an attempt from `sender` that was not counted before, for what can only be told once it is done. */
+    public void record(String sender) {
+        evaluate(sender, true);
+    }
+
+    private static void throwIfBlocked(Duration retryAfter) {
+        if (retryAfter != null) {
+            throw new TooManyRequestsException(retryAfter);
+        }
+    }
+
+    /** How long until `sender` can make another attempt, or null if it can now; `count` adds this one if it can. */
+    private Duration evaluate(String sender, boolean count) {
         Instant now = clock.instant();
         if (attempts.size() > PURGE_THRESHOLD) {
             purge(now);
@@ -43,14 +64,13 @@ public class SlidingWindowRateLimiter {
             if (attemptsInWindow.size() >= maxPerWindow) {
                 retryAfter[0] =
                         Duration.between(now, attemptsInWindow.peekFirst().plus(window));
-            } else {
+            } else if (count) {
                 attemptsInWindow.addLast(now);
             }
-            return attemptsInWindow;
+            // Looking at a sender that made no attempts leaves nothing behind.
+            return attemptsInWindow.isEmpty() ? null : attemptsInWindow;
         });
-        if (retryAfter[0] != null) {
-            throw new TooManyRequestsException(retryAfter[0]);
-        }
+        return retryAfter[0];
     }
 
     private void purge(Instant now) {

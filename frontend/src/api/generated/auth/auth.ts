@@ -65,7 +65,7 @@ export const getLoginUrl = () => {
 };
 
 /**
- * Each address and each email can try a limited number of times per quarter of an hour; past it the answer is 429 with `Retry-After`.
+ * Each address and each email can fail a limited number of times per quarter of an hour; past it the answer is 429 with `Retry-After`.
  * @summary Sign in with email and password
  */
 export const login = async (

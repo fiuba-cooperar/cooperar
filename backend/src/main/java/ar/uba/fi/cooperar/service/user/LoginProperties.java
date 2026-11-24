@@ -5,8 +5,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
- * Anti brute-force limit on the sign-in: in each `window` an address can try `maxPerAddress` times and an email
- * `maxPerEmail`. The second one stops the guessing of one account from many addresses.
+ * Anti brute-force limit on the sign-in: in each `window` an address can fail `maxPerAddress` times and an email
+ * `maxPerEmail`; the ones that succeed do not count. The second one stops the guessing of one account from many addresses.
  */
 @ConfigurationProperties("cooperar.login.rate-limit")
 public record LoginProperties(

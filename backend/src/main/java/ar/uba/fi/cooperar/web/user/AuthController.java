@@ -27,7 +27,7 @@ public class AuthController {
     @Operation(
             operationId = "login",
             summary = "Sign in with email and password",
-            description = "Each address and each email can try a limited number of times per quarter of an hour; past"
+            description = "Each address and each email can fail a limited number of times per quarter of an hour; past"
                     + " it the answer is 429 with `Retry-After`.")
     public TokenResponse login(@Valid @RequestBody LoginRequest request, HttpServletRequest http) {
         return TokenResponse.from(authService.login(request.email(), request.password(), http.getRemoteAddr()));

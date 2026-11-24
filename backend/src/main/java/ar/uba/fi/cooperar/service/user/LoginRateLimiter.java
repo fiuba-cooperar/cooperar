@@ -6,7 +6,7 @@ import java.time.Clock;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Component;
 
-/** Counts each sign-in attempt against its address and against the email it tries; see {@link LoginProperties}. */
+/** Counts the failed sign-ins against their address and against the email they try; see {@link LoginProperties}. */
 @Component
 @EnableConfigurationProperties(LoginProperties.class)
 public class LoginRateLimiter {
@@ -19,9 +19,15 @@ public class LoginRateLimiter {
         this.perEmail = new SlidingWindowRateLimiter(properties.maxPerEmail(), properties.window(), clock);
     }
 
-    /** The address and the email only live in memory, as keys of the counters: they are never stored or logged. */
-    public void acquire(String address, String email) {
-        perAddress.acquire(address);
-        perEmail.acquire(UserAccount.normalizeEmail(email));
+    /** Throws if the address or the email already failed too many times; counts nothing. */
+    public void check(String address, String email) {
+        perAddress.check(address);
+        perEmail.check(UserAccount.normalizeEmail(email));
+    }
+
+    /** Counts a failed attempt. The address and the email only live in memory, as keys: never stored or logged. */
+    public void recordFailure(String address, String email) {
+        perAddress.record(address);
+        perEmail.record(UserAccount.normalizeEmail(email));
     }
 }

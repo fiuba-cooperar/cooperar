@@ -27,3 +27,11 @@ cooperar:
   registration:
     rate-limit:
       max-per-window: 100000
+  # The tests sign in and search many times from the same address; the limits have their own test with low values.
+  login:
+    rate-limit:
+      max-per-address: 100000
+      max-per-email: 100000
+  search:
+    rate-limit:
+      max-per-window: 100000

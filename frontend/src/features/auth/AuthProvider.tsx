@@ -52,6 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await loginRequest({ email, password });
       const httpStatus: number = response.status;
       if (httpStatus === 401) throw new LoginError('invalid-credentials');
+      if (httpStatus === 429) throw new LoginError('rate-limited');
       if (httpStatus !== 200) throw new LoginError('unavailable');
       saveTokens(response.data);
       account = await fetchCurrentUser();

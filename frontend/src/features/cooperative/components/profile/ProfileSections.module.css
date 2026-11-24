@@ -5,39 +5,82 @@
   min-width: 0;
 }
 
-.placeholder {
+/* The same arrangement as the public profile: the cover across the top and, below it, the logo beside the name. */
+.banner {
+  overflow: hidden;
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-lg);
+  background: var(--mantine-color-body);
+}
+
+.identity {
   display: flex;
   align-items: center;
-  justify-content: center;
-  border-radius: var(--mantine-radius-md);
-  background: var(--mantine-color-default-hover);
-  color: var(--mantine-color-dimmed);
-  font-size: var(--mantine-font-size-sm);
+  gap: var(--mantine-spacing-md);
+  padding: var(--mantine-spacing-lg);
 }
 
-.logo {
-  width: 96px;
-  height: 96px;
-  border-radius: 50%;
+.photo {
+  position: relative;
 }
 
-.cover {
-  height: 140px;
-}
-
-/* A photo fills its frame, cropped to it, instead of the placeholder text. */
-.image {
+.frame {
   display: block;
   width: 100%;
   object-fit: cover;
 }
 
-.logo.image {
-  width: 96px;
+.cover {
+  aspect-ratio: 6 / 1;
+  /* A phone would make the strip too thin to show anything. */
+  min-height: 88px;
 }
 
-.photo {
-  height: 110px;
+/* Same size as on the public profile. */
+.logo {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+}
+
+.bannerLogo {
+  flex: none;
+  width: 80px;
+}
+
+/* Empty frame: dashed outline and an icon, so it reads as a place to fill in. */
+.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px dashed var(--color-field-border);
+  background: var(--mantine-color-default);
+  color: var(--mantine-color-dimmed);
+}
+
+.editCover {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+
+.editLogo {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+}
+
+.loadCover {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: fit-content;
+}
+
+.loadLogo {
+  position: absolute;
+  inset: 0;
+  margin: auto;
 }
 
 .panel {
@@ -120,4 +163,33 @@
   .chevron {
     transition: none;
   }
+}
+
+/* The opening hours as a line that says what is set, and opens the dialog to edit them. */
+.hoursToggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mantine-spacing-sm);
+  width: 100%;
+  min-height: 48px;
+  padding: 0 var(--mantine-spacing-md);
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-default);
+  background: var(--mantine-color-default);
+  text-align: left;
+
+  &:hover {
+    border-color: var(--mantine-color-brand-6);
+  }
+}
+
+.hoursEdit {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  gap: 4px;
+  color: var(--mantine-color-brand-light-color);
+  font-size: var(--mantine-font-size-sm);
+  font-weight: 600;
 }

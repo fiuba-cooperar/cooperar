@@ -1,0 +1,8 @@
+/* The cropper fills its container, so the frame gives it the size. */
+.frame {
+  position: relative;
+  height: 400px;
+  overflow: hidden;
+  border-radius: var(--mantine-radius-md);
+  background: var(--mantine-color-dark-8);
+}

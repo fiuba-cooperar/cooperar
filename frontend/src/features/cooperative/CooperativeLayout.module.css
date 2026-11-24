@@ -3,12 +3,6 @@
   background: var(--mantine-color-default);
 }
 
-.separator {
-  width: 1px;
-  height: 30px;
-  background: var(--color-line);
-}
-
 .navbar {
   background: var(--mantine-color-default);
 }
@@ -36,18 +30,6 @@
   font-weight: 600;
 }
 
-/* On phones the account sits at the bottom of the opened menu, since the header has no room for it. */
-.navbarAccount {
-  margin-top: var(--mantine-spacing-md);
-  padding: var(--mantine-spacing-sm);
-  border-radius: 8px;
-  background: var(--mantine-color-body);
-
-  @media (min-width: $mantine-breakpoint-sm) {
-    display: none;
-  }
-}
-
 .content {
   padding: var(--mantine-spacing-xl) var(--mantine-spacing-md);
 
@@ -58,4 +40,39 @@
 
 .main:focus {
   outline: none;
+}
+
+.groupTitle {
+  padding: 0 14px;
+  margin-bottom: 6px;
+  color: var(--mantine-color-dimmed);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Collapsed (wide screens only): a column of icons. The texts stay in the page, hidden, so every link keeps its name. */
+@media (min-width: $mantine-breakpoint-sm) {
+  .navbar[data-collapsed] .label,
+  .navbar[data-collapsed] .groupTitle {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .navbar[data-collapsed] .navLink {
+    justify-content: center;
+    padding: 0;
+  }
+}
+
+.navbar .navLink:where(button) {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
 }

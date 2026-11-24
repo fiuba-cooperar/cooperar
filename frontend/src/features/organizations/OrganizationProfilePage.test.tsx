@@ -20,7 +20,15 @@ const fullProfile = {
   email: 'contacto@example.org',
   website: 'https://lacacerola.example.org',
   socialMedia: '@lacacerola',
-  openingHours: 'Lunes a viernes de 8 a 17',
+  openingHours: [
+    ...(['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'] as const).map((day) => ({
+      day,
+      opensAt: '08:00',
+      closesAt: '17:00',
+    })),
+    { day: 'SATURDAY', opensAt: '09:00', closesAt: '12:00' },
+    { day: 'SATURDAY', opensAt: '15:00', closesAt: '18:00' },
+  ],
   responseTime: 'TWO_DAYS',
   addresses: [
     {
@@ -51,7 +59,7 @@ const minimalProfile = {
   email: null,
   website: null,
   socialMedia: null,
-  openingHours: null,
+  openingHours: [],
   responseTime: null,
   addresses: [
     {
@@ -110,6 +118,25 @@ describe('OrganizationProfilePage', () => {
       'https://img.example/2.png',
     );
     expect(document.querySelector('img[src="https://img.example/cover.png"]')).not.toBeNull();
+  });
+
+  it('shows no empty strip when the organization has no cover', async () => {
+    stubProfile('la-cacerola', {
+      ...fullProfile,
+      photos: { logoUrl: 'https://img.example/logo.png', coverUrl: null, gallery: [] },
+    });
+
+    renderRoute('/organizations/la-cacerola');
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'La Cacerola' })).toBeVisible();
+    expect(screen.getByRole('img', { name: 'Logo de La Cacerola' })).toBeVisible();
+    // The page has other images (the site logo, the map tiles): only the ones of the organization count.
+    const sources = Array.from(document.querySelectorAll('img')).map((image) =>
+      image.getAttribute('src'),
+    );
+    expect(sources.filter((src) => src?.startsWith('https://img.example/'))).toEqual([
+      'https://img.example/logo.png',
+    ]);
   });
 
   it('lists the other addresses, without the street the organization keeps private', async () => {
@@ -251,7 +278,8 @@ describe('OrganizationProfilePage', () => {
       'https://lacacerola.example.org',
     );
     expect(within(contact).getByText('@lacacerola')).toBeVisible();
-    expect(within(contact).getByText('Lunes a viernes de 8 a 17')).toBeVisible();
+    expect(within(contact).getByText('Lunes a viernes: 8:00 a 17:00')).toBeVisible();
+    expect(within(contact).getByText('Sábado: 9:00 a 12:00 y 15:00 a 18:00')).toBeVisible();
     expect(within(contact).getByText('48 horas')).toBeVisible();
     expect(within(contact).getByRole('link', { name: '11 1234-5678' })).toHaveAttribute(
       'href',

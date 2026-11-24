@@ -1,5 +1,8 @@
-import { Alert, Select, SimpleGrid, Stack, TextInput } from '@mantine/core';
-import { IconMessage } from '@tabler/icons-react';
+import { AppModal } from '@/components/AppModal';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { CountedTextInput } from '@/components/form/CountedTextInput';
+import { Alert, Button, Group, Select, SimpleGrid, Stack, UnstyledButton } from '@mantine/core';
+import { IconAlertCircle, IconMessage, IconPencil } from '@tabler/icons-react';
 import { useState } from 'react';
 import {
   ResponseTime,
@@ -8,8 +11,22 @@ import {
   type ProfileContactRequest,
 } from '@/api/generated/model';
 import { RESPONSE_TIME_LABELS } from '@/features/organizations/labels';
+import { formatOpeningHours } from '@/features/organizations/openingHours';
+import { OpeningHoursField } from './OpeningHoursField';
+import {
+  periodsFromWeek,
+  weekFromPeriods,
+  weekProblems,
+  withTypingProblems,
+  withoutEmptyRanges,
+  type WeekErrors,
+  type WeekHours,
+} from './openingHoursForm';
+import { joinPhone, phoneProblem, splitPhone, type PhoneParts } from './phone';
+import { PhoneField } from './PhoneField';
+import styles from './ProfileSections.module.css';
 import { SectionForm } from './SectionForm';
-import { hasErrors, type Errors, type SectionProps } from './sectionProps';
+import { differs, hasErrors, type Errors, type SectionProps } from './sectionProps';
 import { FieldHeader, VisibilityBadge, VisibilityToggle } from './Visibility';
 
 const RESPONSE_TIMES = Object.values(ResponseTime);
@@ -17,34 +34,35 @@ const RESPONSE_TIME_OPTIONS = RESPONSE_TIMES.map((value) => ({
   value,
   label: RESPONSE_TIME_LABELS[value],
 }));
+const PHONE_HINT = 'Escribilo sin el 0 ni el 15 de celular.';
 const EMAIL_HINT = 'Puede ser distinto del email con el que ingresás a CooperAR.';
 
 interface Form {
-  phone: string;
+  phone: PhoneParts;
   phoneVisibility: Visibility;
-  whatsapp: string;
+  whatsapp: PhoneParts;
   whatsappVisibility: Visibility;
   email: string;
   emailVisibility: Visibility;
   website: string;
   socialMedia: string;
-  openingHours: string;
+  openingHours: WeekHours;
   responseTime: ResponseTime | null;
 }
 
-type TextField = 'phone' | 'whatsapp' | 'email' | 'website' | 'socialMedia' | 'openingHours';
+type TextField = 'email' | 'website' | 'socialMedia';
 
 function fromProfile({ contact }: CooperativeOrganizationProfileResponse): Form {
   return {
-    phone: contact.phone ?? '',
+    phone: splitPhone(contact.phone),
     phoneVisibility: contact.phoneVisibility,
-    whatsapp: contact.whatsapp ?? '',
+    whatsapp: splitPhone(contact.whatsapp),
     whatsappVisibility: contact.whatsappVisibility,
     email: contact.email ?? '',
     emailVisibility: contact.emailVisibility,
     website: contact.website ?? '',
     socialMedia: contact.socialMedia ?? '',
-    openingHours: contact.openingHours ?? '',
+    openingHours: weekFromPeriods(contact.openingHours),
     responseTime: contact.responseTime ?? null,
   };
 }
@@ -53,6 +71,8 @@ function validate(form: Form): Errors<Form> {
   const email = form.email.trim();
   const website = form.website.trim();
   return {
+    phone: phoneProblem(form.phone),
+    whatsapp: phoneProblem(form.whatsapp),
     email:
       email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
         ? 'Revisá el email, por ejemplo contacto@cooperativa.org.'
@@ -64,13 +84,19 @@ function validate(form: Form): Errors<Form> {
   };
 }
 
+/** One line for the closed section: the days with their hours, or that there are none yet. */
+function hoursSummary(week: WeekHours): string {
+  const complete = periodsFromWeek(week).filter(({ opensAt, closesAt }) => opensAt && closesAt);
+  const parts = formatOpeningHours(complete).map(({ days, hours }) => `${days}: ${hours}`);
+  return parts.length > 0 ? parts.join(' · ') : 'Sin horarios cargados';
+}
+
 function toRequest(form: Form): ProfileContactRequest {
-  const phone = form.phone.trim();
-  const whatsapp = form.whatsapp.trim();
+  const phone = joinPhone(form.phone);
+  const whatsapp = joinPhone(form.whatsapp);
   const email = form.email.trim();
   const website = form.website.trim();
   const socialMedia = form.socialMedia.trim();
-  const openingHours = form.openingHours.trim();
   return {
     ...(phone && { phone }),
     phoneVisibility: form.phoneVisibility,
@@ -80,14 +106,64 @@ function toRequest(form: Form): ProfileContactRequest {
     emailVisibility: form.emailVisibility,
     ...(website && { website }),
     ...(socialMedia && { socialMedia }),
-    ...(openingHours && { openingHours }),
+    openingHours: periodsFromWeek(form.openingHours),
     ...(form.responseTime && { responseTime: form.responseTime }),
   };
 }
 
-export function ContactSection({ profile, hidden, saving, next, save }: SectionProps) {
+export function ContactSection({
+  profile,
+  hidden,
+  saving,
+  next,
+  save,
+  onDirtyChange,
+  revision,
+}: SectionProps) {
   const [form, setForm] = useState(() => fromProfile(profile));
   const [errors, setErrors] = useState<Errors<Form>>({});
+  const [seenRevision, setSeenRevision] = useState(revision);
+  // The week is edited in a dialog, on a draft: it reaches the form only with «Guardar», and the profile only with
+  // the button of the section. The section shows a line that says what is set.
+  const [draft, setDraft] = useState<WeekHours | null>(null);
+  const [draftErrors, setDraftErrors] = useState<WeekErrors>({});
+  const [confirmingDiscard, setConfirmingDiscard] = useState(false);
+  if (seenRevision !== revision) {
+    setSeenRevision(revision);
+    setForm(fromProfile(profile));
+    setErrors({});
+    setDraft(null);
+  }
+
+  function openHours() {
+    setDraft(form.openingHours);
+    setDraftErrors({});
+  }
+
+  /** Closing the dialog loses what was edited in it, so it asks first when there is something to lose. */
+  function closeHours() {
+    if (draft && differs(draft, form.openingHours)) {
+      setConfirmingDiscard(true);
+    } else {
+      setDraft(null);
+    }
+  }
+
+  function applyHours() {
+    if (!draft) return;
+    const week = withoutEmptyRanges(draft);
+    const problems = weekProblems(week);
+    setDraftErrors(problems);
+    if (Object.keys(problems).length > 0) {
+      setDraft(week);
+      return;
+    }
+    setForm((current) => ({
+      ...current,
+      openingHours: week,
+    }));
+    setDraft(null);
+  }
 
   function update<K extends keyof Form>(field: K, value: Form[K]) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -108,7 +184,7 @@ export function ContactSection({ profile, hidden, saving, next, save }: SectionP
     props: { type?: string; placeholder?: string; autoComplete?: string; maxLength: number },
   ) {
     return (
-      <TextInput
+      <CountedTextInput
         id={`profile-${field}`}
         type={props.type ?? 'text'}
         placeholder={props.placeholder}
@@ -131,6 +207,8 @@ export function ContactSection({ profile, hidden, saving, next, save }: SectionP
       hidden={hidden}
       saving={saving}
       next={next}
+      dirty={differs(form, fromProfile(profile))}
+      onDirtyChange={onDirtyChange}
       onSave={onSave}
     >
       <Stack gap="md">
@@ -139,6 +217,7 @@ export function ContactSection({ profile, hidden, saving, next, save }: SectionP
             <FieldHeader
               htmlFor="profile-phone"
               label="Teléfono"
+              hint={PHONE_HINT}
               visibility={
                 <VisibilityToggle
                   field="el teléfono"
@@ -149,12 +228,23 @@ export function ContactSection({ profile, hidden, saving, next, save }: SectionP
                 />
               }
             />
-            {textInput('phone', { type: 'tel', autoComplete: 'tel', maxLength: 50 })}
+            <PhoneField
+              id="profile-phone"
+              label="Característica del teléfono"
+              autoComplete="tel-national"
+              description={PHONE_HINT}
+              value={form.phone}
+              error={errors.phone}
+              onChange={(phone) => {
+                update('phone', phone);
+              }}
+            />
           </div>
           <div>
             <FieldHeader
               htmlFor="profile-whatsapp"
               label="WhatsApp"
+              hint={PHONE_HINT}
               visibility={
                 <VisibilityToggle
                   field="el WhatsApp"
@@ -165,7 +255,16 @@ export function ContactSection({ profile, hidden, saving, next, save }: SectionP
                 />
               }
             />
-            {textInput('whatsapp', { type: 'tel', maxLength: 50 })}
+            <PhoneField
+              id="profile-whatsapp"
+              label="Característica del WhatsApp"
+              description={PHONE_HINT}
+              value={form.whatsapp}
+              error={errors.whatsapp}
+              onChange={(whatsapp) => {
+                update('whatsapp', whatsapp);
+              }}
+            />
           </div>
         </SimpleGrid>
         <div>
@@ -183,7 +282,7 @@ export function ContactSection({ profile, hidden, saving, next, save }: SectionP
               />
             }
           />
-          <TextInput
+          <CountedTextInput
             id="profile-email"
             type="email"
             autoComplete="email"
@@ -222,18 +321,63 @@ export function ContactSection({ profile, hidden, saving, next, save }: SectionP
             })}
           </div>
         </SimpleGrid>
+        <fieldset className={styles.fieldset}>
+          <FieldHeader
+            legend
+            label="Horarios de atención"
+            visibility={<VisibilityBadge visibility={Visibility.PUBLIC} />}
+          />
+          <UnstyledButton
+            type="button"
+            className={styles.hoursToggle}
+            aria-haspopup="dialog"
+            onClick={openHours}
+          >
+            <span>{hoursSummary(form.openingHours)}</span>
+            <span className={styles.hoursEdit}>
+              <IconPencil size={16} aria-hidden />
+              Editar
+            </span>
+          </UnstyledButton>
+          <AppModal
+            opened={draft !== null}
+            onClose={closeHours}
+            title="Horarios de atención"
+            size="xl"
+          >
+            <Stack gap="md">
+              <OpeningHoursField
+                value={draft ?? form.openingHours}
+                errors={withTypingProblems(draftErrors, draft ?? form.openingHours)}
+                onChange={(day, ranges) => {
+                  setDraft((current) => current && { ...current, [day]: ranges });
+                  setDraftErrors((current) => ({ ...current, [day]: undefined }));
+                }}
+              />
+              <Group justify="flex-end">
+                <Button h={44} onClick={applyHours}>
+                  Guardar
+                </Button>
+              </Group>
+            </Stack>
+          </AppModal>
+          <ConfirmDialog
+            opened={confirmingDiscard}
+            title="Tenés cambios sin guardar"
+            icon={<IconAlertCircle aria-hidden />}
+            confirmLabel="Descartar cambios"
+            onConfirm={() => {
+              setConfirmingDiscard(false);
+              setDraft(null);
+            }}
+            onClose={() => {
+              setConfirmingDiscard(false);
+            }}
+          >
+            Si cerrás ahora, se pierden los horarios que editaste y no guardaste.
+          </ConfirmDialog>
+        </fieldset>
         <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="md">
-          <div>
-            <FieldHeader
-              htmlFor="profile-openingHours"
-              label="Horarios de atención"
-              visibility={<VisibilityBadge visibility={Visibility.PUBLIC} />}
-            />
-            {textInput('openingHours', {
-              placeholder: 'Ej.: lunes a viernes de 8 a 17',
-              maxLength: 200,
-            })}
-          </div>
           <div>
             <FieldHeader
               htmlFor="profile-response-time"
@@ -253,9 +397,8 @@ export function ContactSection({ profile, hidden, saving, next, save }: SectionP
           </div>
         </SimpleGrid>
         <Alert variant="light" icon={<IconMessage aria-hidden />}>
-          Aunque ocultes el teléfono, el WhatsApp y el email, el público te va a poder escribir con
-          el formulario de consultas de tu ficha, y nadie más va a ver los datos de quien te
-          escribe.
+          Los datos que marques como privados no se muestran en la ficha. Aun así, los visitantes
+          pueden enviarte consultas desde el formulario de la ficha.
         </Alert>
       </Stack>
     </SectionForm>

@@ -27,10 +27,10 @@ public class RegistrationController {
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(
             operationId = "register",
-            summary = "Create an account together with the request to add its first organization",
-            description = "Answers 409 with a `conflicts` list (`EMAIL`, `CUIT`) when either is already registered.")
+            summary = "Create an account, which needs no approval",
+            description = "Organizations are added afterwards, from the panel, with a registration request the "
+                    + "observatory reviews. Answers 409 with `conflicts: [\"EMAIL\"]` when the email is taken.")
     public RegistrationResponse register(@Valid @RequestBody RegistrationRequest request) {
-        return RegistrationResponse.from(registrationService.register(
-                request.account().toNewAccount(), request.organization().toDetails()));
+        return new RegistrationResponse(registrationService.register(request.toNewAccount()));
     }
 }

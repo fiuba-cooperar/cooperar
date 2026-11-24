@@ -29,7 +29,9 @@
 .cover {
   display: block;
   width: 100%;
-  height: clamp(120px, 25vw, 240px);
+  /* The same proportion the cover is framed in when it is loaded (`COVER_ASPECT`). */
+  aspect-ratio: 6 / 1;
+  min-height: 88px;
   object-fit: cover;
   background: var(--mantine-color-default-border);
 }

@@ -11,13 +11,13 @@ export interface ProfileIdentificationRequest {
   /**
    * Razón social, as registered with the tax authority
    * @minLength 0
-   * @maxLength 200
+   * @maxLength 120
    */
   legalName: string;
   legalNameVisibility: Visibility;
   /**
    * @minLength 0
-   * @maxLength 200
+   * @maxLength 50
    */
   name: string;
 }

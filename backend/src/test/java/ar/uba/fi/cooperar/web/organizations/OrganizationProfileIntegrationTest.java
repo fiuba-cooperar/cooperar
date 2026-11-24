@@ -7,6 +7,8 @@ import ar.uba.fi.cooperar.domain.organizations.ActivityType;
 import ar.uba.fi.cooperar.domain.organizations.Address;
 import ar.uba.fi.cooperar.domain.organizations.AddressDetails;
 import ar.uba.fi.cooperar.domain.organizations.AddressType;
+import ar.uba.fi.cooperar.domain.organizations.OpeningDay;
+import ar.uba.fi.cooperar.domain.organizations.OpeningPeriod;
 import ar.uba.fi.cooperar.domain.organizations.Organization;
 import ar.uba.fi.cooperar.domain.organizations.OrganizationDetails;
 import ar.uba.fi.cooperar.domain.organizations.OrganizationType;
@@ -25,6 +27,7 @@ import ar.uba.fi.cooperar.repository.organizations.RegistrationRequestRepository
 import ar.uba.fi.cooperar.repository.user.UserAccountRepository;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Set;
 import org.assertj.core.api.InstanceOfAssertFactories;
@@ -84,7 +87,7 @@ class OrganizationProfileIntegrationTest {
                 Visibility.PUBLIC,
                 "https://lacacerola.example.org",
                 "@lacacerola",
-                "Lunes a viernes de 8 a 17",
+                List.of(new OpeningPeriod(OpeningDay.MONDAY, LocalTime.of(8, 0), LocalTime.of(17, 0))),
                 ResponseTime.ONE_DAY));
         organizations.saveAndFlush(organization);
 
@@ -107,7 +110,7 @@ class OrganizationProfileIntegrationTest {
                           "email": "contacto@example.org",
                           "website": "https://lacacerola.example.org",
                           "socialMedia": "@lacacerola",
-                          "openingHours": "Lunes a viernes de 8 a 17",
+                          "openingHours": [{"day": "MONDAY", "opensAt": "08:00", "closesAt": "17:00"}],
                           "responseTime": "ONE_DAY",
                           "addresses": [
                             {
@@ -151,7 +154,7 @@ class OrganizationProfileIntegrationTest {
                 Visibility.PRIVATE,
                 null,
                 null,
-                null,
+                List.of(),
                 null));
         organizations.saveAndFlush(organization);
 

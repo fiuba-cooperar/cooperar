@@ -1,0 +1,40 @@
+.columns {
+  display: grid;
+  gap: var(--mantine-spacing-xl);
+  align-items: start;
+
+  @media (min-width: $mantine-breakpoint-md) {
+    grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+  }
+}
+
+.entities {
+  /* Few organizations are the usual case; with many, the box scrolls instead of stretching the page. */
+  max-height: 480px;
+  overflow-y: auto;
+  display: grid;
+  gap: var(--mantine-spacing-sm);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr));
+}
+
+.entity {
+  padding: var(--mantine-spacing-sm);
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-md);
+}
+
+.entityAction {
+  flex-shrink: 0;
+}
+
+.publicLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+
+  &:hover {
+    color: var(--mantine-color-brand-6);
+    text-decoration: underline;
+  }
+}

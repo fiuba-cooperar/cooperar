@@ -91,6 +91,8 @@ public class RegistrationReviewService {
         Organization organization =
                 request.approve(slugs.uniqueFor(request.getName()), users.getReferenceById(reviewerId), now());
         log.info("Registration request {} was approved as organization {}", requestId, organization.getId());
+        // The notification points at the organization with a plain column, so the organization has to exist first.
+        organizations.flush();
         notify(request, ReviewOutcome.APPROVED);
     }
 
@@ -125,7 +127,9 @@ public class RegistrationReviewService {
                 account.getId(),
                 account.getEmail(),
                 account.getFirstName(),
+                request.getId(),
                 request.getName(),
+                outcome == ReviewOutcome.APPROVED ? request.getOrganization().getId() : null,
                 outcome,
                 request.getReviewMessage()));
     }

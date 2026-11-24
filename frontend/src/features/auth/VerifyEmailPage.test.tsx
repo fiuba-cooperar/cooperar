@@ -13,10 +13,7 @@ describe('email verification page', () => {
     expect(
       await screen.findByRole('heading', { level: 1, name: '¡Confirmaste tu email!' }),
     ).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Ir a mi panel' })).toHaveAttribute(
-      'href',
-      '/cooperative',
-    );
+    expect(screen.getByRole('link', { name: 'Ir a mi panel' })).toHaveAttribute('href', '/account');
     const calls = fetchMock.mock.calls.filter(([url]) => url === '/api/auth/verify-email');
     expect(calls).toHaveLength(1);
     expect(calls[0]?.[1]?.body).toBe(JSON.stringify({ token: 'abc-123' }));

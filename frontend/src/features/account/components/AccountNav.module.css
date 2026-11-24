@@ -1,0 +1,32 @@
+.navLink {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 8px;
+  color: var(--mantine-color-text);
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.navLink:hover {
+  background: var(--color-hover);
+}
+
+.navLink[aria-current='page'] {
+  color: var(--mantine-color-brand-light-color);
+  font-weight: 600;
+}
+
+/* A line under the link marks the current page without painting the link as if it were pressed. */
+.navLink[aria-current='page']::after {
+  content: '';
+  position: absolute;
+  inset: auto 16px 4px;
+  height: 2px;
+  border-radius: 1px;
+  background: currentcolor;
+}

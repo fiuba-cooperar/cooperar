@@ -2,7 +2,6 @@ import {
   Alert,
   Button,
   Group,
-  Modal,
   Paper,
   Stack,
   Text,
@@ -11,6 +10,7 @@ import {
   type TextInputProps,
 } from '@mantine/core';
 import { IconAlertCircle } from '@tabler/icons-react';
+import { AppModal } from '@/components/AppModal';
 import { useState, type SyntheticEvent } from 'react';
 import type { AdminProductCategoryResponse } from '@/api/generated/model';
 import {
@@ -252,7 +252,7 @@ function DeleteModal({
   }
 
   return (
-    <Modal opened={opened} onClose={onClose} title="Eliminar categoría" centered>
+    <AppModal opened={opened} onClose={onClose} title="Eliminar categoría">
       <Stack gap="lg">
         <Text>
           Vas a eliminar la categoría <strong>{category.name}</strong>. No se puede deshacer.
@@ -277,6 +277,6 @@ function DeleteModal({
           </Button>
         </Group>
       </Stack>
-    </Modal>
+    </AppModal>
   );
 }

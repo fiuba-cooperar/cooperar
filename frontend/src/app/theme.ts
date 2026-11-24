@@ -4,6 +4,7 @@ import {
   InputWrapper,
   MultiSelect,
   Select,
+  Textarea,
   Title,
   type CSSVariablesResolver,
   type MantineColorsTuple,
@@ -56,10 +57,20 @@ export const theme = createTheme({
     }),
     Title: Title.extend({ styles: { root: { letterSpacing: '-0.02em' } } }),
     TextInput: { defaultProps: { size: 'md' } },
-    Textarea: { defaultProps: { size: 'md' } },
+    // The 48px of the fields above would cut a text area down to two lines, so it takes the height of its rows.
+    Textarea: Textarea.extend({
+      defaultProps: { size: 'md' },
+      styles: { input: { height: 'auto', minHeight: 48 } },
+    }),
     PasswordInput: { defaultProps: { size: 'md' } },
+    // The size also sets the error text, so without it these fields showed smaller errors than the rest.
+    Autocomplete: { defaultProps: { size: 'md' } },
     // The group's size also sets its description and its checkboxes, so they match the other fields.
-    CheckboxGroup: { defaultProps: { size: 'md' } },
+    // Its error would sit right under the checkboxes, which have no field border to give it room.
+    CheckboxGroup: {
+      defaultProps: { size: 'md' },
+      styles: { error: { marginTop: 10 } },
+    },
     Checkbox: { defaultProps: { size: 'md' } },
     // A plain chevron like the mocks, instead of Mantine's up-and-down arrows.
     Select: Select.extend({

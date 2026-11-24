@@ -1,5 +1,6 @@
-import { Button, Group, Modal, Stack, Text, Textarea } from '@mantine/core';
+import { Button, Group, Stack, Text, Textarea } from '@mantine/core';
 import { useState, type SyntheticEvent } from 'react';
+import { AppModal } from '@/components/AppModal';
 
 const MAX_MESSAGE_LENGTH = 1000;
 
@@ -11,6 +12,7 @@ export function ReviewMessageModal({
   title,
   description,
   label,
+  placeholder,
   missingMessage,
   confirmLabel,
   confirmColor,
@@ -21,6 +23,7 @@ export function ReviewMessageModal({
   title: string;
   description: string;
   label: string;
+  placeholder?: string;
   missingMessage: string;
   confirmLabel: string;
   confirmColor?: string;
@@ -41,14 +44,19 @@ export function ReviewMessageModal({
   }
 
   return (
-    <Modal opened onClose={onClose} title={title}>
+    <AppModal opened onClose={onClose} title={title} size="lg">
       <form onSubmit={handleSubmit} noValidate>
         <Stack gap="md">
-          <Text size="sm">{description}</Text>
+          <Text size="sm" c="dimmed">
+            {description}
+          </Text>
           <Textarea
             label={label}
             required
-            rows={4}
+            rows={5}
+            {...(placeholder && { placeholder })}
+            description={`${String(message.length)} de ${String(MAX_MESSAGE_LENGTH)} caracteres`}
+            descriptionProps={{ 'aria-live': 'off' }}
             maxLength={MAX_MESSAGE_LENGTH}
             value={message}
             error={error}
@@ -57,12 +65,13 @@ export function ReviewMessageModal({
               setError(null);
             }}
           />
-          <Group justify="flex-end">
-            <Button variant="default" onClick={onClose}>
+          <Group justify="flex-end" mt="xs">
+            <Button variant="default" h={44} onClick={onClose}>
               Cancelar
             </Button>
             <Button
               type="submit"
+              h={44}
               loading={submitting}
               {...(confirmColor && { color: confirmColor })}
             >
@@ -71,6 +80,6 @@ export function ReviewMessageModal({
           </Group>
         </Stack>
       </form>
-    </Modal>
+    </AppModal>
   );
 }

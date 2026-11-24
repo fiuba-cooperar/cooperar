@@ -8,23 +8,28 @@ export const PROFILE_SECTIONS: { key: ProfileSectionKey; label: string }[] = [
   { key: 'activity', label: 'Actividad' },
   { key: 'photos', label: 'Fotos' },
   { key: 'location', label: 'Ubicación' },
-  { key: 'contact', label: 'Contacto y atención' },
+  { key: 'contact', label: 'Contacto' },
 ];
 
 export function isProfileSection(value: string | null): value is ProfileSectionKey {
   return PROFILE_SECTIONS.some(({ key }) => key === value);
 }
 
-export interface SectionStatus {
-  complete: boolean;
-  /** What is missing, or why the section cannot be completed yet. */
+/** One piece of data a section asks for, and whether it is already there. */
+export interface SectionItem {
   label: string;
+  done: boolean;
 }
 
-const COMPLETE: SectionStatus = { complete: true, label: 'Completo' };
+export interface SectionStatus {
+  complete: boolean;
+  /** Each piece of data of the section, so the person sees what is there and what is missing. */
+  items: SectionItem[];
+}
 
-function missing(label: string): SectionStatus {
-  return { complete: false, label };
+/** A section is complete once every one of its data is there, optional or not: it is a progress hint, not a rule. */
+function status(items: SectionItem[]): SectionStatus {
+  return { complete: items.every(({ done }) => done), items };
 }
 
 /** How complete each section of the profile is, for the section menu. */
@@ -34,28 +39,41 @@ export function sectionStatus(
 ): SectionStatus {
   switch (section) {
     case 'identification':
-      return profile.identification.legalName ? COMPLETE : missing('Falta la razón social');
+      return status([
+        { label: 'Nombre', done: !!profile.identification.name },
+        { label: 'Razón social', done: !!profile.identification.legalName },
+      ]);
     case 'activity':
-      if (!profile.activity.description) return missing('Falta la descripción');
-      // A year is never 0, so a missing one (null from the API) is falsy.
-      if (!profile.activity.startYear) return missing('Falta el año de inicio');
-      return COMPLETE;
+      return status([
+        { label: 'Descripción', done: !!profile.activity.description },
+        // A year is never 0, so a missing one (null from the API) is falsy.
+        { label: 'Año de inicio', done: !!profile.activity.startYear },
+        { label: 'Cantidad de trabajadores', done: !!profile.activity.workerCount },
+      ]);
     case 'photos': {
       const { logoUrl, coverUrl, gallery } = profile.photos;
-      if (!logoUrl && !coverUrl && gallery.length === 0) return missing('Sin fotos todavía');
-      if (!logoUrl) return missing('Falta el logo');
-      if (!coverUrl) return missing('Falta la foto de portada');
-      return COMPLETE;
+      return status([
+        { label: 'Logo', done: !!logoUrl },
+        { label: 'Portada', done: !!coverUrl },
+        { label: 'Galería', done: gallery.length > 0 },
+      ]);
     }
     case 'location':
-      return mainAddress(profile.location.addresses)?.point
-        ? COMPLETE
-        : missing('Falta el punto en el mapa');
+      return status([
+        { label: 'Punto en el mapa', done: !!mainAddress(profile.location.addresses)?.point },
+      ]);
     case 'contact': {
-      const { phone, whatsapp, email, openingHours } = profile.contact;
-      if (!phone && !whatsapp && !email) return missing('Falta un medio de contacto');
-      if (!openingHours) return missing('Faltan los horarios');
-      return COMPLETE;
+      const { phone, whatsapp, email, website, socialMedia, openingHours, responseTime } =
+        profile.contact;
+      return status([
+        { label: 'Teléfono', done: !!phone },
+        { label: 'WhatsApp', done: !!whatsapp },
+        { label: 'Email', done: !!email },
+        { label: 'Sitio web', done: !!website },
+        { label: 'Redes sociales', done: !!socialMedia },
+        { label: 'Horarios', done: openingHours.length > 0 },
+        { label: 'Tiempo de respuesta', done: !!responseTime },
+      ]);
     }
   }
 }

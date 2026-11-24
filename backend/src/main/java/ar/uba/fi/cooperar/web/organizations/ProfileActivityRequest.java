@@ -27,7 +27,7 @@ public record ProfileActivityRequest(
                         + " it cannot be in the future")
         Integer startYear,
 
-        @Positive @Max(1_000_000) Integer workerCount,
+        @Positive @Max(99_999) Integer workerCount,
 
         @NotNull Visibility workerCountVisibility) {
 

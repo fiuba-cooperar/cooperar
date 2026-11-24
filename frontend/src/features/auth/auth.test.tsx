@@ -40,7 +40,7 @@ describe('authentication', () => {
     expect(await screen.findByRole('heading', { name: 'Ingresá a tu cuenta' })).toBeInTheDocument();
   });
 
-  it('shows only the logo and the register button in the login header', async () => {
+  it('shows only the logo in the login header, and the register link in the form', async () => {
     stubFetchRoutes({});
 
     renderRoute('/login');
@@ -50,10 +50,8 @@ describe('authentication', () => {
       'href',
       '/',
     );
-    expect(within(header).getByRole('link', { name: 'Registrá tu entidad' })).toHaveAttribute(
-      'href',
-      '/register',
-    );
+    expect(within(header).queryByRole('link', { name: 'Registrá tu entidad' })).toBeNull();
+    expect(screen.getByRole('link', { name: 'Registrate' })).toHaveAttribute('href', '/register');
     expect(screen.queryByRole('navigation', { name: 'Principal' })).not.toBeInTheDocument();
   });
 
@@ -81,7 +79,7 @@ describe('authentication', () => {
     expect(getAccessToken()).toBe('access-1');
   });
 
-  it('signs a cooperative in and lands on its own section with its organizations', async () => {
+  it('signs a cooperative in and lands on its account home with its organizations', async () => {
     stubFetchRoutes({
       'POST /api/auth/login': { body: TOKENS },
       'GET /api/me': { body: COOPERATIVE },
@@ -91,7 +89,7 @@ describe('authentication', () => {
     await fillAndSubmit('coop@test.local', 'secret');
 
     expect(await screen.findByRole('heading', { name: /Hola, / })).toBeInTheDocument();
-    expect(screen.getByText(/Estás administrando/)).toHaveTextContent('La Cooperativa');
+    expect(screen.getByRole('link', { name: 'Ir al panel de La Cooperativa' })).toBeInTheDocument();
   });
 
   it('shows a clear message when the credentials are wrong', async () => {
@@ -142,7 +140,7 @@ describe('authentication', () => {
     expect(await screen.findByRole('heading', { name: 'Acceso denegado' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Ir a mi sección' })).toHaveAttribute(
       'href',
-      '/cooperative',
+      '/account',
     );
   });
 
@@ -199,7 +197,8 @@ describe('authentication', () => {
 
     renderRoute('/cooperative');
     const header = await screen.findByRole('banner');
-    await userEvent.click(await within(header).findByRole('button', { name: 'Cerrar sesión' }));
+    await userEvent.click(await within(header).findByRole('button', { name: /coop@test.local/ }));
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Cerrar sesión' }));
 
     expect(await screen.findByRole('heading', { name: 'Ingresá a tu cuenta' })).toBeInTheDocument();
     expect(getAccessToken()).toBeNull();

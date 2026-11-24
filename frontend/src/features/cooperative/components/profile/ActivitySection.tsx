@@ -1,5 +1,5 @@
-import { Button, Chip, Group, NumberInput, SimpleGrid, Stack, Text, Textarea } from '@mantine/core';
-import { IconArrowsMaximize, IconArrowsMinimize } from '@tabler/icons-react';
+import { Chip, Group, NumberInput, SimpleGrid, Stack, Text, Textarea } from '@mantine/core';
+import { CharacterCount } from '@/components/form/CharacterCount';
 import { useState } from 'react';
 import {
   ActivityType,
@@ -9,7 +9,7 @@ import {
 } from '@/api/generated/model';
 import { ACTIVITY_TYPE_LABELS, SECTOR_LABELS } from '@/features/organizations/labels';
 import { SectionForm } from './SectionForm';
-import { hasErrors, type Errors, type SectionProps } from './sectionProps';
+import { differs, hasErrors, type Errors, type SectionProps } from './sectionProps';
 import { FieldHeader, VisibilityBadge, VisibilityToggle } from './Visibility';
 import styles from './ProfileSections.module.css';
 
@@ -17,6 +17,7 @@ const SECTORS = Object.values(Sector);
 const ACTIVITY_TYPES = Object.values(ActivityType);
 const DESCRIPTION_MAX = 1500;
 const FIRST_YEAR = 1800;
+const MAX_WORKERS = 99_999;
 const DESCRIPTION_HINT = 'Hasta 1.500 caracteres. Es lo primero que lee el público.';
 const START_YEAR_HINT =
   'Desde cuándo trabajan como cooperativa. En una empresa recuperada, el año en que los trabajadores la recuperaron.';
@@ -57,15 +58,30 @@ function validate(form: Form, currentYear: number): Errors<Form> {
   }
   if (form.workerCount !== '') {
     const count = wholeNumber(form.workerCount);
-    if (count === undefined || count < 1) errors.workerCount = 'Ingresá un número mayor que cero.';
+    if (count === undefined || count < 1 || count > MAX_WORKERS) {
+      errors.workerCount = `Ingresá un número entre 1 y ${MAX_WORKERS.toLocaleString('es-AR')}.`;
+    }
   }
   return errors;
 }
 
-export function ActivitySection({ profile, hidden, saving, next, save }: SectionProps) {
+export function ActivitySection({
+  profile,
+  hidden,
+  saving,
+  next,
+  save,
+  onDirtyChange,
+  revision,
+}: SectionProps) {
   const [form, setForm] = useState(() => fromProfile(profile));
-  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const [errors, setErrors] = useState<Errors<Form>>({});
+  const [seenRevision, setSeenRevision] = useState(revision);
+  if (seenRevision !== revision) {
+    setSeenRevision(revision);
+    setForm(fromProfile(profile));
+    setErrors({});
+  }
   const currentYear = new Date().getFullYear();
 
   function update<K extends keyof Form>(field: K, value: Form[K]) {
@@ -102,6 +118,8 @@ export function ActivitySection({ profile, hidden, saving, next, save }: Section
       hidden={hidden}
       saving={saving}
       next={next}
+      dirty={differs(form, fromProfile(profile))}
+      onDirtyChange={onDirtyChange}
       onSave={onSave}
     >
       <Stack gap="lg">
@@ -109,7 +127,7 @@ export function ActivitySection({ profile, hidden, saving, next, save }: Section
           <FieldHeader
             legend
             label="Rubros"
-            hint="Podés elegir más de uno. La lista la mantiene el observatorio."
+            hint="Podés elegir más de uno. Si tu rubro no aparece, podés pedirle al observatorio que lo agregue."
             visibility={<VisibilityBadge visibility={Visibility.PUBLIC} />}
           />
           <Chip.Group
@@ -175,7 +193,7 @@ export function ActivitySection({ profile, hidden, saving, next, save }: Section
           />
           <Textarea
             id="profile-description"
-            rows={descriptionExpanded ? 15 : 5}
+            rows={5}
             // Dragging the corner makes it taller too; the text keeps its own scroll at any size.
             resize="vertical"
             maxLength={DESCRIPTION_MAX}
@@ -187,25 +205,7 @@ export function ActivitySection({ profile, hidden, saving, next, save }: Section
             }}
           />
           <Group justify="flex-end" mt={4}>
-            <Button
-              type="button"
-              variant="subtle"
-              size="compact-sm"
-              leftSection={
-                descriptionExpanded ? (
-                  <IconArrowsMinimize size={16} aria-hidden />
-                ) : (
-                  <IconArrowsMaximize size={16} aria-hidden />
-                )
-              }
-              aria-controls="profile-description"
-              aria-expanded={descriptionExpanded}
-              onClick={() => {
-                setDescriptionExpanded((current) => !current);
-              }}
-            >
-              {descriptionExpanded ? 'Achicar la descripción' : 'Agrandar la descripción'}
-            </Button>
+            <CharacterCount length={form.description.length} max={DESCRIPTION_MAX} />
           </Group>
         </div>
         <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="md">
@@ -225,6 +225,8 @@ export function ActivitySection({ profile, hidden, saving, next, save }: Section
               allowDecimal={false}
               allowNegative={false}
               thousandSeparator=""
+              // A year has four digits: nothing more can be typed.
+              isAllowed={({ value }) => value.length <= 4}
               hideControls
               aria-description={START_YEAR_HINT}
               value={form.startYear}
@@ -252,6 +254,9 @@ export function ActivitySection({ profile, hidden, saving, next, save }: Section
               id="profile-worker-count"
               placeholder="Ej.: 45"
               min={1}
+              max={MAX_WORKERS}
+              // Nothing above the limit can be typed.
+              isAllowed={({ floatValue }) => floatValue === undefined || floatValue <= MAX_WORKERS}
               clampBehavior="none"
               allowDecimal={false}
               allowNegative={false}

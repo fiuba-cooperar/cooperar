@@ -63,8 +63,8 @@ export function VerifyEmailPage() {
         </Outcome>
       ) : status === 'success' ? (
         <Outcome title="¡Confirmaste tu email!" success>
-          Ahora el observatorio va a validar el alta de tu entidad. Te vamos a avisar por email
-          cuando esté lista.
+          Ya podés dar de alta tu entidad desde tu panel. El observatorio la va a revisar y te vamos
+          a avisar por email.
         </Outcome>
       ) : status === 'error' ? (
         <Outcome title="No pudimos confirmar tu email">

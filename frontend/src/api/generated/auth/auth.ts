@@ -394,8 +394,8 @@ export const getRegisterUrl = () => {
 };
 
 /**
- * Answers 409 with a `conflicts` list (`EMAIL`, `CUIT`) when either is already registered.
- * @summary Create an account together with the request to add its first organization
+ * Organizations are added afterwards, from the panel, with a registration request the observatory reviews. Answers 409 with `conflicts: ["EMAIL"]` when the email is taken.
+ * @summary Create an account, which needs no approval
  */
 export const register = async (
   registrationRequest: RegistrationRequest,
@@ -469,7 +469,7 @@ export type RegisterMutationError = unknown;
 export type RegisterMutationVariables = { data: RegistrationRequest };
 
 /**
- * @summary Create an account together with the request to add its first organization
+ * @summary Create an account, which needs no approval
  */
 export const useRegister = <TError = unknown, TContext = unknown>(
   options?: {

@@ -21,3 +21,11 @@ export function formatCuit(digits: string): string {
     ? `${digits.slice(0, 2)}-${digits.slice(2, 10)}-${digits.slice(10)}`
     : digits;
 }
+
+/** Keeps only the digits typed or pasted (up to 11) and adds the dashes as they go: 30-12345678-1. */
+export function maskCuit(input: string): string {
+  const digits = input.replace(/\D/g, '').slice(0, 11);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 10) return `${digits.slice(0, 2)}-${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}-${digits.slice(2, 10)}-${digits.slice(10)}`;
+}

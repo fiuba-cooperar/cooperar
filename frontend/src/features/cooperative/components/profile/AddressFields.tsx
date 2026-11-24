@@ -1,14 +1,5 @@
-import {
-  Alert,
-  Button,
-  Group,
-  Modal,
-  Select,
-  SimpleGrid,
-  Stack,
-  Text,
-  TextInput,
-} from '@mantine/core';
+import { CountedTextInput } from '@/components/form/CountedTextInput';
+import { Alert, Button, Group, Modal, Select, SimpleGrid, Stack, Text } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
 import { IconArrowsMaximize, IconMapPinOff, IconMapSearch } from '@tabler/icons-react';
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
@@ -155,7 +146,7 @@ export function AddressFields({
           hint="Para reconocerla fácil, en tu ficha y en la pública."
           visibility={<VisibilityBadge visibility={Visibility.PUBLIC} />}
         />
-        <TextInput
+        <CountedTextInput
           id={id('address-name')}
           placeholder={namePlaceholder}
           maxLength={ADDRESS_NAME_MAX}
@@ -265,7 +256,7 @@ export function AddressFields({
           hint="Se muestran solo junto con la calle y el número."
           visibility={<VisibilityBadge visibility={form.streetVisibility} />}
         />
-        <TextInput
+        <CountedTextInput
           id={id('references')}
           placeholder="Ej.: portón verde, al lado de la escuela"
           autoComplete="address-line2"

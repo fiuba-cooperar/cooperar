@@ -23,7 +23,7 @@ import {
   type AddressForm,
 } from './addressDraft';
 import { SectionForm } from './SectionForm';
-import { hasErrors, type SectionProps } from './sectionProps';
+import { differs, hasErrors, type SectionProps } from './sectionProps';
 import styles from './ProfileSections.module.css';
 
 /** Addresses besides the main one, as the backend allows. */
@@ -116,11 +116,32 @@ function validated(draft: AddressDraft): AddressDraft {
 }
 
 /** The main address and the other ones (a branch, another plant), each with its point on the map. */
-export function LocationSection({ profile, hidden, saving, next, save }: SectionProps) {
+/** What the person can change in the addresses; not the errors or the keys, which are bookkeeping. */
+function editable(main: AddressDraft, others: AddressDraft[]) {
+  const pick = ({ id, type, form, moved }: AddressDraft) => ({ id, type, form, moved });
+  return { main: pick(main), others: others.map(pick) };
+}
+
+export function LocationSection({
+  profile,
+  hidden,
+  saving,
+  next,
+  save,
+  onDirtyChange,
+  revision,
+}: SectionProps) {
   const [main, setMain] = useState(() => mainFrom(profile));
   const [others, setOthers] = useState(() => othersFrom(profile));
+  const [seenRevision, setSeenRevision] = useState(revision);
   // Every address starts collapsed; a new one opens, and so does one with errors when saving.
   const [open, setOpen] = useState<ReadonlySet<string>>(new Set());
+  if (seenRevision !== revision) {
+    setSeenRevision(revision);
+    setMain(mainFrom(profile));
+    setOthers(othersFrom(profile));
+    setOpen(new Set());
+  }
 
   function toggle(key: string) {
     setOpen((current) => {
@@ -173,6 +194,8 @@ export function LocationSection({ profile, hidden, saving, next, save }: Section
       hidden={hidden}
       saving={saving}
       next={next}
+      dirty={differs(editable(main, others), editable(mainFrom(profile), othersFrom(profile)))}
+      onDirtyChange={onDirtyChange}
       onSave={onSave}
     >
       <Stack gap={0}>

@@ -38,3 +38,16 @@
   flex: none;
   color: var(--mantine-color-green-7);
 }
+
+/* The same width for the button of every step, whatever its text. */
+.stepAction {
+  flex: none;
+  width: 170px;
+}
+
+.metric {
+  padding: 14px 16px;
+  border: 1px dashed var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-md);
+  background: var(--color-placeholder);
+}

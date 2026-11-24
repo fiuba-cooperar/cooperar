@@ -5,10 +5,26 @@
  * Open observatory of worker-recovered companies and worker cooperatives
  * OpenAPI spec version: v1
  */
-import type { RegistrationAccountRequest } from './registrationAccountRequest';
-import type { RegistrationOrganizationRequest } from './registrationOrganizationRequest';
 
 export interface RegistrationRequest {
-  account: RegistrationAccountRequest;
-  organization: RegistrationOrganizationRequest;
+  /**
+   * @minLength 0
+   * @maxLength 254
+   */
+  email: string;
+  /**
+   * @minLength 0
+   * @maxLength 100
+   */
+  firstName: string;
+  /**
+   * @minLength 0
+   * @maxLength 100
+   */
+  lastName: string;
+  /**
+   * @minLength 8
+   * @maxLength 72
+   */
+  password: string;
 }

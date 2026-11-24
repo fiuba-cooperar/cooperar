@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.tuple;
 import ar.uba.fi.cooperar.domain.user.Role;
 import ar.uba.fi.cooperar.domain.user.UserAccount;
 import java.time.Instant;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -102,7 +103,9 @@ class OrganizationProfileTest {
                 Visibility.PUBLIC,
                 " ",
                 "@lacacerola",
-                "Lunes a viernes de 8 a 17",
+                List.of(
+                        new OpeningPeriod(OpeningDay.TUESDAY, LocalTime.of(14, 0), LocalTime.of(18, 0)),
+                        new OpeningPeriod(OpeningDay.MONDAY, LocalTime.of(8, 0), LocalTime.of(12, 0))),
                 ResponseTime.TWO_DAYS));
 
         assertThat(organization.getPhone()).isEqualTo("11 1234-5678");
@@ -111,8 +114,67 @@ class OrganizationProfileTest {
         assertThat(organization.getEmail()).isEqualTo("contacto@example.org");
         assertThat(organization.getWebsite()).isNull();
         assertThat(organization.getSocialMedia()).isEqualTo("@lacacerola");
-        assertThat(organization.getOpeningHours()).isEqualTo("Lunes a viernes de 8 a 17");
+        assertThat(organization.getOpeningHours())
+                .containsExactly(
+                        new OpeningPeriod(OpeningDay.MONDAY, LocalTime.of(8, 0), LocalTime.of(12, 0)),
+                        new OpeningPeriod(OpeningDay.TUESDAY, LocalTime.of(14, 0), LocalTime.of(18, 0)));
         assertThat(organization.getResponseTime()).isEqualTo(ResponseTime.TWO_DAYS);
+    }
+
+    @Test
+    void hoursAreSetInQuartersOfAnHourOrToTheEndOfTheDay() {
+        assertThatThrownBy(() -> new OpeningPeriod(OpeningDay.MONDAY, LocalTime.of(8, 10), LocalTime.of(17, 0)))
+                .isInstanceOf(InvalidOpeningHoursException.class);
+        assertThatThrownBy(() -> new OpeningPeriod(OpeningDay.MONDAY, LocalTime.of(8, 0), LocalTime.of(17, 20)))
+                .isInstanceOf(InvalidOpeningHoursException.class);
+        assertThatThrownBy(() -> new OpeningPeriod(OpeningDay.MONDAY, LocalTime.of(23, 59), LocalTime.of(23, 59)))
+                .isInstanceOf(InvalidOpeningHoursException.class);
+
+        assertThat(new OpeningPeriod(OpeningDay.MONDAY, LocalTime.of(8, 45), LocalTime.of(17, 15)))
+                .isNotNull();
+        assertThat(new OpeningPeriod(OpeningDay.HOLIDAY, LocalTime.MIDNIGHT, LocalTime.of(23, 59)))
+                .isNotNull();
+    }
+
+    @Test
+    void rejectsARangeThatDoesNotCloseAfterItOpens() {
+        assertThatThrownBy(() -> new OpeningPeriod(OpeningDay.MONDAY, LocalTime.of(17, 0), LocalTime.of(8, 0)))
+                .isInstanceOf(InvalidOpeningHoursException.class);
+        assertThatThrownBy(() -> new OpeningPeriod(OpeningDay.MONDAY, LocalTime.of(8, 0), LocalTime.of(8, 0)))
+                .isInstanceOf(InvalidOpeningHoursException.class);
+    }
+
+    @Test
+    void rejectsOverlappingRangesOfTheSameDayButNotOfDifferentDays() {
+        Organization organization = organization();
+
+        assertThatThrownBy(() -> organization.updateContact(contactWithHours(List.of(
+                        new OpeningPeriod(OpeningDay.MONDAY, LocalTime.of(8, 0), LocalTime.of(13, 0)),
+                        new OpeningPeriod(OpeningDay.MONDAY, LocalTime.of(12, 0), LocalTime.of(18, 0))))))
+                .isInstanceOf(InvalidOpeningHoursException.class);
+
+        organization.updateContact(contactWithHours(List.of(
+                new OpeningPeriod(OpeningDay.MONDAY, LocalTime.of(8, 0), LocalTime.of(13, 0)),
+                new OpeningPeriod(OpeningDay.MONDAY, LocalTime.of(13, 0), LocalTime.of(18, 0)),
+                new OpeningPeriod(OpeningDay.TUESDAY, LocalTime.of(8, 0), LocalTime.of(18, 0)))));
+
+        assertThat(organization.getOpeningHours()).hasSize(3);
+    }
+
+    @Test
+    void replacesTheOpeningHoursAndClearsThemWhenEmpty() {
+        Organization organization = organization();
+        organization.updateContact(contactWithHours(
+                List.of(new OpeningPeriod(OpeningDay.MONDAY, LocalTime.of(8, 0), LocalTime.of(17, 0)))));
+
+        organization.updateContact(contactWithHours(List.of()));
+
+        assertThat(organization.getOpeningHours()).isEmpty();
+    }
+
+    private static ProfileContact contactWithHours(List<OpeningPeriod> hours) {
+        return new ProfileContact(
+                null, Visibility.PUBLIC, null, Visibility.PUBLIC, null, Visibility.PUBLIC, null, null, hours, null);
     }
 
     @Test

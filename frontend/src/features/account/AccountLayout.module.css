@@ -1,0 +1,22 @@
+.header {
+  border-top: 4px solid var(--mantine-color-brand-4);
+  background: var(--mantine-color-default);
+}
+
+.content {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--mantine-spacing-xl) var(--mantine-spacing-md);
+
+  @media (min-width: $mantine-breakpoint-sm) {
+    padding: 36px 40px;
+  }
+}
+
+.wide {
+  max-width: 1760px;
+}
+
+.main:focus {
+  outline: none;
+}

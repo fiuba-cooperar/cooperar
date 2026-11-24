@@ -29,7 +29,7 @@ public record OrganizationProfileResponse(
         String email,
         String website,
         String socialMedia,
-        String openingHours,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) List<OpeningPeriodResponse> openingHours,
         ResponseTime responseTime,
 
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "The main one first, then the others")
@@ -69,7 +69,9 @@ public record OrganizationProfileResponse(
                 organization.getEmailVisibility().reveal(organization.getEmail()),
                 organization.getWebsite(),
                 organization.getSocialMedia(),
-                organization.getOpeningHours(),
+                organization.getOpeningHours().stream()
+                        .map(OpeningPeriodResponse::from)
+                        .toList(),
                 organization.getResponseTime(),
                 organization.getAddresses().stream()
                         .map(PublicAddressResponse::from)

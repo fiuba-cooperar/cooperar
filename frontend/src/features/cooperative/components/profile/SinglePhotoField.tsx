@@ -1,11 +1,19 @@
-import { Button, Group, Input, Stack, Text } from '@mantine/core';
-import { IconPhotoUp, IconTrash } from '@tabler/icons-react';
-import { useId, useRef, useState, type ChangeEvent } from 'react';
+import { ActionIcon, Button, Menu } from '@mantine/core';
+import { IconPencil, IconPhoto, IconPhotoUp, IconTrash } from '@tabler/icons-react';
+import { useRef, useState, type ChangeEvent } from 'react';
+import { ImageCropDialog } from '../ImageCropDialog';
 import { ACCEPTED, photoProblem } from '../photoRules';
 import styles from './ProfileSections.module.css';
 
+// The cover shows as a strip of this proportion on the public profile (`OrganizationProfilePage.module.css`) and in
+// the panel, so the framing is what visitors get; the logo shows as a circle.
+const LOGO_ASPECT = 1;
+const COVER_ASPECT = 6;
+const LOGO_MAX_WIDTH = 512;
+const COVER_MAX_WIDTH = 1600;
+
 interface Props {
-  /** «el logo», «la foto de portada»: completes the labels of the buttons. */
+  /** «el logo», «la portada»: completes the labels of the controls. */
   name: string;
   label: string;
   shape: 'round' | 'wide';
@@ -14,46 +22,82 @@ interface Props {
   /** Rejects when the server does not take the photo. */
   onChoose: (file: File) => Promise<unknown>;
   onRemove: () => Promise<unknown>;
+  /** Why the photo was not taken, or undefined when the last attempt went well. */
+  onError: (message: string | undefined) => void;
+  className?: string | undefined;
 }
 
-/** A photo the profile has one of, like the logo or the cover: a new one replaces it at once. */
-export function SinglePhotoField({ name, label, shape, url, busy, onChoose, onRemove }: Props) {
+/**
+ * A photo the profile has one of, like the logo or the cover: a new one replaces it at once, after the person frames
+ * it. The controls sit on the photo itself: a button to load it, or a menu to change or remove it.
+ */
+export function SinglePhotoField({
+  name,
+  label,
+  shape,
+  url,
+  busy,
+  onChoose,
+  onRemove,
+  onError,
+  className,
+}: Props) {
   const input = useRef<HTMLInputElement>(null);
-  const errorId = useId();
-  const [error, setError] = useState<string>();
+  // The file chosen and not uploaded yet: the person frames it first.
+  const [chosen, setChosen] = useState<File>();
+  const round = shape === 'round';
 
-  async function choose(event: ChangeEvent<HTMLInputElement>) {
+  function choose(event: ChangeEvent<HTMLInputElement>) {
     const file = event.currentTarget.files?.[0];
     event.currentTarget.value = '';
     if (!file) return;
     const problem = photoProblem(file);
-    setError(problem ?? undefined);
-    if (problem) return;
+    onError(problem ?? undefined);
+    if (!problem) setChosen(file);
+  }
+
+  async function upload(cropped: File) {
+    setChosen(undefined);
     try {
-      await onChoose(file);
+      await onChoose(cropped);
     } catch {
-      setError('No pudimos subir la foto. Probá de nuevo en unos minutos.');
+      onError('No pudimos subir la foto. Probá de nuevo en unos minutos.');
     }
   }
 
   async function remove() {
-    setError(undefined);
+    onError(undefined);
     try {
       await onRemove();
     } catch {
-      setError('No pudimos quitar la foto. Probá de nuevo en unos minutos.');
+      onError('No pudimos quitar la foto. Probá de nuevo en unos minutos.');
     }
   }
 
-  const frame = [styles.placeholder, shape === 'round' ? styles.logo : styles.cover].join(' ');
+  const pick = () => {
+    input.current?.click();
+  };
+  const frame = [styles.frame, round ? styles.logo : styles.cover].join(' ');
   return (
-    <Stack gap={6}>
-      <Input.Label component="span">{label}</Input.Label>
+    <div className={[styles.photo, className].filter(Boolean).join(' ')}>
+      {chosen && (
+        <ImageCropDialog
+          file={chosen}
+          title={`Encuadrar ${name}`}
+          aspect={round ? LOGO_ASPECT : COVER_ASPECT}
+          round={round}
+          maxWidth={round ? LOGO_MAX_WIDTH : COVER_MAX_WIDTH}
+          onCancel={() => {
+            setChosen(undefined);
+          }}
+          onConfirm={(cropped) => void upload(cropped)}
+        />
+      )}
       {url ? (
         <img src={url} alt={label} className={[frame, styles.image].join(' ')} />
       ) : (
-        <div className={frame} aria-hidden>
-          Sin {label.toLowerCase()}
+        <div className={[frame, styles.placeholder].join(' ')} aria-hidden>
+          {!round && <IconPhoto size={28} stroke={1.5} />}
         </div>
       )}
       <input
@@ -63,39 +107,59 @@ export function SinglePhotoField({ name, label, shape, url, busy, onChoose, onRe
         hidden
         tabIndex={-1}
         aria-label={`Archivo para ${name}`}
-        onChange={(event) => void choose(event)}
+        onChange={choose}
       />
-      <Group gap="xs">
-        <Button
-          type="button"
+      {url ? (
+        <Menu position="bottom-end" withinPortal>
+          <Menu.Target>
+            <ActionIcon
+              variant="default"
+              size={36}
+              radius="xl"
+              loading={busy}
+              aria-label={`Editar ${name}`}
+              className={round ? styles.editLogo : styles.editCover}
+            >
+              <IconPencil size={18} aria-hidden />
+            </ActionIcon>
+          </Menu.Target>
+          <Menu.Dropdown>
+            <Menu.Item leftSection={<IconPhotoUp size={16} aria-hidden />} onClick={pick}>
+              Cambiar {name}
+            </Menu.Item>
+            <Menu.Item
+              color="red"
+              leftSection={<IconTrash size={16} aria-hidden />}
+              onClick={() => void remove()}
+            >
+              Quitar {name}
+            </Menu.Item>
+          </Menu.Dropdown>
+        </Menu>
+      ) : round ? (
+        <ActionIcon
           variant="default"
-          size="sm"
-          leftSection={<IconPhotoUp size={16} aria-hidden />}
+          size={44}
+          radius="xl"
           loading={busy}
-          aria-describedby={error ? errorId : undefined}
-          onClick={() => input.current?.click()}
+          aria-label={`Cargar ${name.replace(/^(el|la) /, '')}`}
+          className={styles.loadLogo}
+          onClick={pick}
         >
-          {url ? `Cambiar ${name}` : `Subir ${name}`}
+          <IconPhotoUp size={20} aria-hidden />
+        </ActionIcon>
+      ) : (
+        <Button
+          variant="default"
+          h={44}
+          loading={busy}
+          leftSection={<IconPhotoUp size={18} aria-hidden />}
+          className={styles.loadCover}
+          onClick={pick}
+        >
+          Cargar {name.replace(/^(el|la) /, '')}
         </Button>
-        {url && (
-          <Button
-            type="button"
-            variant="subtle"
-            color="red"
-            size="sm"
-            leftSection={<IconTrash size={16} aria-hidden />}
-            disabled={busy}
-            onClick={() => void remove()}
-          >
-            Quitar {name}
-          </Button>
-        )}
-      </Group>
-      {error && (
-        <Text id={errorId} size="sm" c="red.8" role="alert">
-          {error}
-        </Text>
       )}
-    </Stack>
+    </div>
   );
 }

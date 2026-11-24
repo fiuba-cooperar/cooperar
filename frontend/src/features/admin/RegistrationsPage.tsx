@@ -242,7 +242,7 @@ export function RegistrationsPage() {
       {dialog?.kind === 'reject' && (
         <ReviewMessageModal
           title={`Rechazar el alta de ${dialog.registration.name}`}
-          description="La cuenta que registró la entidad va a ver este motivo en su panel y en el email que le enviamos."
+          description="La cuenta que registró la entidad verá este motivo en su panel y en el email que recibirá."
           label="Motivo"
           missingMessage="Escribí el motivo del rechazo."
           confirmLabel="Rechazar el alta"
@@ -259,9 +259,10 @@ export function RegistrationsPage() {
       {dialog?.kind === 'request-changes' && (
         <ReviewMessageModal
           title={`Pedir más información a ${dialog.registration.name}`}
-          description="La entidad va a ver este pedido en su panel y en el email que le enviamos. Cuando corrija los datos, la solicitud vuelve a Pendientes."
-          label="Qué tiene que corregir o agregar"
-          missingMessage="Escribí qué información necesitás."
+          description="La cuenta que registró la entidad verá este pedido en su panel y en el email que recibirá. Una vez corregidos los datos, la solicitud volverá a Pendientes."
+          label="Datos a corregir o agregar"
+          placeholder="Por ejemplo: la razón social no coincide con el CUIT informado."
+          missingMessage="Indicá qué información hace falta."
           confirmLabel="Enviar el pedido"
           submitting={review.isPending}
           onClose={() => {

@@ -65,20 +65,8 @@ public record CooperativeOrganizationProfileResponse(
             Visibility workerCountVisibility) {}
 
     public record ProfileLocationResponse(
-            @Schema(description = "How the organization calls its main address")
-            String addressName,
-
-            @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-            RegistrationAddressResponse address,
-
-            @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-            Visibility streetVisibility,
-
-            @Schema(description = "Missing when the address could not be located")
-            GeoPointResponse point,
-
-            @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Besides the main one, in order")
-            List<OtherAddressResponse> otherAddresses) {}
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "The main one first, then the others")
+            List<AddressResponse> addresses) {}
 
     public record ProfileContactResponse(
             String phone,
@@ -119,14 +107,9 @@ public record CooperativeOrganizationProfileResponse(
                         organization.getStartYear(),
                         organization.getWorkerCount(),
                         organization.getWorkerCountVisibility()),
-                new ProfileLocationResponse(
-                        organization.getAddressName(),
-                        RegistrationAddressResponse.from(organization.getAddress()),
-                        organization.getStreetVisibility(),
-                        GeoPointResponse.from(organization.getLocation()),
-                        organization.getOtherAddresses().stream()
-                                .map(OtherAddressResponse::from)
-                                .toList()),
+                new ProfileLocationResponse(organization.getAddresses().stream()
+                        .map(AddressResponse::from)
+                        .toList()),
                 new ProfileContactResponse(
                         organization.getPhone(),
                         organization.getPhoneVisibility(),

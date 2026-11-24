@@ -42,7 +42,7 @@ public record AdminOrganizationResponse(
                 organization.getCuit().digits(),
                 organization.getSectors(),
                 organization.getActivityTypes(),
-                RegistrationAddressResponse.from(organization.getAddress()),
+                RegistrationAddressResponse.from(organization.getMainAddress().getAddress()),
                 organization.getCreatedAt());
     }
 }

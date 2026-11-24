@@ -3,7 +3,7 @@ import {
   Visibility,
   type GeoPointRequest,
   type GeoPointResponse,
-  type OtherAddressRequest,
+  type AddressRequest,
   type Province,
   type RegistrationAddressRequest,
   type RegistrationAddressResponse,
@@ -120,7 +120,8 @@ export function pinOf(draft: AddressDraft): GeoPointRequest | undefined {
   return draft.moved && draft.point ? draft.point : undefined;
 }
 
-export function otherAddressRequest(draft: AddressDraft): OtherAddressRequest | null {
+/** The address as the API saves it, or null when it has not been validated. */
+export function addressEntry(draft: AddressDraft): AddressRequest | null {
   const address = addressRequest(draft.form);
   if (!address) return null;
   const pin = pinOf(draft);

@@ -2,13 +2,16 @@ package ar.uba.fi.cooperar.domain.organizations;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 
 import ar.uba.fi.cooperar.domain.user.Role;
 import ar.uba.fi.cooperar.domain.user.UserAccount;
 import java.time.Instant;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -27,7 +30,7 @@ class OrganizationProfileTest {
 
         assertThat(organization.getLegalNameVisibility()).isEqualTo(Visibility.PRIVATE);
         assertThat(organization.getWorkerCountVisibility()).isEqualTo(Visibility.PUBLIC);
-        assertThat(organization.getStreetVisibility()).isEqualTo(Visibility.PUBLIC);
+        assertThat(organization.getMainAddress().getStreetVisibility()).isEqualTo(Visibility.PUBLIC);
         assertThat(organization.getPhoneVisibility()).isEqualTo(Visibility.PUBLIC);
         assertThat(organization.getWhatsappVisibility()).isEqualTo(Visibility.PUBLIC);
         assertThat(organization.getEmailVisibility()).isEqualTo(Visibility.PUBLIC);
@@ -179,9 +182,9 @@ class OrganizationProfileTest {
         Organization organization = organization();
         Point point = point(-34.617608, -58.368443);
 
-        organization.updateLocation(ADDRESS, Visibility.PUBLIC, point);
+        organization.replaceAddresses(List.of(main(Visibility.PUBLIC, point)));
 
-        assertThat(organization.getPublicLocation()).isEqualTo(point);
+        assertThat(organization.getMainAddress().getPublicLocation()).isEqualTo(point);
     }
 
     @Test
@@ -189,10 +192,10 @@ class OrganizationProfileTest {
         Organization organization = organization();
         Point point = point(-34.617608, -58.368443);
 
-        organization.updateLocation(ADDRESS, Visibility.PRIVATE, point);
+        organization.replaceAddresses(List.of(main(Visibility.PRIVATE, point)));
 
-        assertThat(organization.getLocation()).isEqualTo(point);
-        Point area = organization.getPublicLocation();
+        assertThat(organization.getMainAddress().getLocation()).isEqualTo(point);
+        Point area = organization.getMainAddress().getPublicLocation();
         assertThat(area.getY()).isEqualTo(-34.62);
         assertThat(area.getX()).isEqualTo(-58.37);
         assertThat(area.getSRID()).isEqualTo(4326);
@@ -202,9 +205,92 @@ class OrganizationProfileTest {
     void hasNoPublicPointWithoutAPoint() {
         Organization organization = organization();
 
-        organization.updateLocation(ADDRESS, Visibility.PRIVATE, null);
+        organization.replaceAddresses(List.of(main(Visibility.PRIVATE, null)));
 
-        assertThat(organization.getPublicLocation()).isNull();
+        assertThat(organization.getMainAddress().getPublicLocation()).isNull();
+    }
+
+    @Test
+    void startsWithTheAddressOfTheRegistrationAsItsOnlyOne() {
+        Organization organization = organization();
+
+        assertThat(organization.getAddresses()).singleElement().satisfies(main -> {
+            assertThat(main.getType()).isEqualTo(AddressType.MAIN);
+            assertThat(main.getAddress()).isEqualTo(ADDRESS);
+            assertThat(main.getPosition()).isZero();
+        });
+        assertThat(organization.getOtherAddresses()).isEmpty();
+    }
+
+    @Test
+    void keepsTheMainAddressFirstAndTheOthersInTheGivenOrder() {
+        Organization organization = organization();
+        OrganizationAddress main = organization.getMainAddress();
+
+        organization.replaceAddresses(
+                List.of(other(null, "Depósito"), main(Visibility.PUBLIC, null), other(null, "Sucursal Bernal")));
+
+        assertThat(organization.getMainAddress()).isSameAs(main);
+        assertThat(organization.getAddresses())
+                .extracting(
+                        OrganizationAddress::getType, OrganizationAddress::getName, OrganizationAddress::getPosition)
+                .containsExactly(
+                        tuple(AddressType.MAIN, null, 0),
+                        tuple(AddressType.SECONDARY, "Depósito", 1),
+                        tuple(AddressType.SECONDARY, "Sucursal Bernal", 2));
+    }
+
+    @Test
+    void updatesTheOtherAddressesItHasAndRemovesTheOnesLeftOut() {
+        Organization organization = organization();
+        organization.replaceAddresses(
+                List.of(main(Visibility.PUBLIC, null), other(null, "Depósito"), other(null, "Sucursal")));
+        OrganizationAddress deposit = organization.getOtherAddresses().getFirst();
+
+        organization.replaceAddresses(List.of(main(Visibility.PUBLIC, null), other(deposit.getId(), "Galpón")));
+
+        assertThat(organization.getOtherAddresses()).singleElement().satisfies(kept -> {
+            assertThat(kept).isSameAs(deposit);
+            assertThat(kept.getName()).isEqualTo("Galpón");
+        });
+    }
+
+    @Test
+    void needsExactlyOneMainAddress() {
+        Organization organization = organization();
+
+        assertThatThrownBy(() -> organization.replaceAddresses(List.of(other(null, "Depósito"))))
+                .isInstanceOf(MainAddressRequiredException.class);
+        assertThatThrownBy(() -> organization.replaceAddresses(
+                        List.of(main(Visibility.PUBLIC, null), main(Visibility.PUBLIC, null))))
+                .isInstanceOf(MainAddressRequiredException.class);
+        assertThat(organization.getAddresses()).hasSize(1);
+    }
+
+    @Test
+    void takesAtMostTenAddressesBesidesTheMainOne() {
+        Organization organization = organization();
+        List<AddressDetails> addresses = new ArrayList<>(List.of(main(Visibility.PUBLIC, null)));
+        for (int index = 0; index <= Organization.MAX_OTHER_ADDRESSES; index++) {
+            addresses.add(other(null, "Sucursal " + index));
+        }
+
+        assertThatThrownBy(() -> organization.replaceAddresses(addresses))
+                .isInstanceOf(TooManyAddressesException.class);
+    }
+
+    private static AddressDetails main(Visibility streetVisibility, Point point) {
+        return new AddressDetails(null, AddressType.MAIN, null, ADDRESS, streetVisibility, point);
+    }
+
+    private static AddressDetails other(UUID id, String name) {
+        return new AddressDetails(
+                id,
+                AddressType.SECONDARY,
+                name,
+                new Address(Province.BUENOS_AIRES, "Quilmes", "Bernal", "Belgrano 10", null),
+                Visibility.PUBLIC,
+                null);
     }
 
     @Test

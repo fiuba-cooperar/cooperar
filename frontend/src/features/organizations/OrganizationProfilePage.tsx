@@ -19,6 +19,7 @@ import { useParams } from 'react-router';
 import type { OrganizationProfileResponse } from '@/api/generated/model';
 import { PublicProducts } from '@/features/catalog/components/PublicProducts';
 import { NotFoundPage } from '@/features/errors/NotFoundPage';
+import { mainAddress, otherAddresses } from './addresses';
 import { initials } from './initials';
 import { formatOpeningHours } from './openingHours';
 import { useOrganizationProfile } from './api/useOrganizationProfile';
@@ -57,10 +58,13 @@ function phoneHref(phone: string) {
 }
 
 function Profile({ profile }: { profile: OrganizationProfileResponse }) {
-  const place = `${profile.locality}, ${PROVINCE_LABELS[profile.province]}`;
-  const address = profile.street
-    ? `${profile.street}, ${profile.locality}, ${profile.district}`
-    : `${profile.locality}, ${profile.district}`;
+  const main = mainAddress(profile.addresses);
+  const others = otherAddresses(profile.addresses);
+  const mainPoint = main?.location;
+  const place = main ? `${main.locality}, ${PROVINCE_LABELS[main.province]}` : '';
+  const address = main
+    ? [main.street, main.locality, main.district].filter(Boolean).join(', ')
+    : '';
 
   return (
     <Stack gap="lg">
@@ -199,15 +203,19 @@ function Profile({ profile }: { profile: OrganizationProfileResponse }) {
                 Datos de contacto
               </Title>
               <dl className={styles.contact}>
-                <dt>{profile.addressName ?? 'Dirección'}</dt>
-                <dd>{address}</dd>
-                {profile.additionalReferences && (
+                {main && (
                   <>
-                    <dt>Cómo llegar</dt>
-                    <dd>{profile.additionalReferences}</dd>
+                    <dt>{main.name ?? 'Dirección'}</dt>
+                    <dd>{address}</dd>
                   </>
                 )}
-                {profile.otherAddresses.map((other, index) => (
+                {main?.additionalReferences && (
+                  <>
+                    <dt>Cómo llegar</dt>
+                    <dd>{main.additionalReferences}</dd>
+                  </>
+                )}
+                {others.map((other, index) => (
                   // The API sends no id for them, and their order only changes when the organization saves.
                   <Fragment key={index}>
                     <dt>{otherAddressTitle(other.name, other.type, other.district)}</dt>
@@ -288,24 +296,24 @@ function Profile({ profile }: { profile: OrganizationProfileResponse }) {
                 )}
               </dl>
             </Paper>
-            {profile.location && (
+            {mainPoint && (
               <Paper component="section" withBorder radius="lg" p="lg" aria-labelledby="location">
                 <Title order={2} size="h4" id="location" mb="sm">
                   Ubicación
                 </Title>
                 <Suspense fallback={<Text c="dimmed">Cargando el mapa…</Text>}>
                   <LocationMap
-                    latitude={profile.location.latitude}
-                    longitude={profile.location.longitude}
-                    approximate={profile.location.approximate}
+                    latitude={mainPoint.latitude}
+                    longitude={mainPoint.longitude}
+                    approximate={mainPoint.approximate}
                     label={
-                      profile.location.approximate
+                      mainPoint.approximate
                         ? `Mapa con la zona de ${profile.name}`
                         : `Mapa con la ubicación de ${profile.name}`
                     }
                   />
                 </Suspense>
-                {profile.location.approximate && (
+                {mainPoint.approximate && (
                   <Text size="sm" c="dimmed" mt="xs">
                     El mapa marca solo la zona: la entidad no publica su dirección exacta.
                   </Text>

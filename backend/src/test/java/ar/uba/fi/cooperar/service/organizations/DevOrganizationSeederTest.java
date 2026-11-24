@@ -43,11 +43,11 @@ class DevOrganizationSeederTest {
         verify(organizations, times(3)).save(any(Organization.class));
         verify(organizations)
                 .save(argThat(organization -> organization.getSlug().equals("cooperativa-ejemplo-textil")
-                        && organization.getLocation().getY() == -34.617608
-                        && organization.getLocation().getX() == -58.368443));
+                        && organization.getMainAddress().getLocation().getY() == -34.617608
+                        && organization.getMainAddress().getLocation().getX() == -58.368443));
         verify(organizations)
                 .save(argThat(organization -> organization.getSlug().equals("cooperativa-ejemplo-grafica")
-                        && organization.getLocation() == null));
+                        && organization.getMainAddress().getLocation() == null));
     }
 
     @Test

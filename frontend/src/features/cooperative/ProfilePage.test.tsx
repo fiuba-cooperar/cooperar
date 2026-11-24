@@ -50,6 +50,21 @@ const ACCOUNT = {
   registrationRequests: [],
 };
 
+const MAIN_ADDRESS = {
+  id: 'm1',
+  type: 'MAIN',
+  name: null,
+  address: {
+    province: 'SANTA_FE',
+    district: 'Rosario',
+    locality: 'Centro',
+    street: 'Rivadavia 100',
+    additionalReferences: null,
+  },
+  streetVisibility: 'PUBLIC',
+  point: null,
+};
+
 const PROFILE = {
   id: 'c1',
   slug: 'la-litoralena',
@@ -68,18 +83,7 @@ const PROFILE = {
     workerCount: null,
     workerCountVisibility: 'PUBLIC',
   },
-  location: {
-    address: {
-      province: 'SANTA_FE',
-      district: 'Rosario',
-      locality: 'Centro',
-      street: 'Rivadavia 100',
-      additionalReferences: null,
-    },
-    streetVisibility: 'PUBLIC',
-    point: null,
-    otherAddresses: [],
-  },
+  location: { addresses: [MAIN_ADDRESS] },
   contact: {
     phone: '(0341) 000-0000',
     phoneVisibility: 'PUBLIC',
@@ -587,7 +591,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
     };
     const fetchMock = signedIn({
       [`PUT ${PROFILE_URL}/location`]: {
-        body: { ...PROFILE, location: { ...PROFILE.location, otherAddresses: [saved] } },
+        body: { ...PROFILE, location: { addresses: [MAIN_ADDRESS, saved] } },
       },
     });
 
@@ -625,7 +629,8 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
       ),
     ).toBeVisible();
     expect(sentBody(fetchMock, 'PUT', `${PROFILE_URL}/location`)).toMatchObject({
-      otherAddresses: [
+      addresses: [
+        { type: 'MAIN', address: { street: 'Rivadavia 100' } },
         {
           type: 'SECONDARY',
           name: 'Depósito',
@@ -658,7 +663,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
     };
     signedIn({
       [`GET ${PROFILE_URL}`]: {
-        body: { ...PROFILE, location: { ...PROFILE.location, otherAddresses: [other] } },
+        body: { ...PROFILE, location: { addresses: [MAIN_ADDRESS, other] } },
       },
     });
 
@@ -700,7 +705,7 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
 
     await waitFor(() => {
       expect(sentBody(fetchMock, 'PUT', `${PROFILE_URL}/location`)).toMatchObject({
-        otherAddresses: [],
+        addresses: [{ type: 'MAIN' }],
       });
     });
   });
@@ -711,10 +716,14 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
         body: {
           ...PROFILE,
           location: {
-            ...PROFILE.location,
-            address: { ...PROFILE.location.address, street: 'Mitre 500' },
-            streetVisibility: 'PRIVATE',
-            point: { latitude: -32.95, longitude: -60.64 },
+            addresses: [
+              {
+                ...MAIN_ADDRESS,
+                address: { ...MAIN_ADDRESS.address, street: 'Mitre 500' },
+                streetVisibility: 'PRIVATE',
+                point: { latitude: -32.95, longitude: -60.64 },
+              },
+            ],
           },
         },
       },
@@ -743,14 +752,19 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
       ),
     ).toBeVisible();
     expect(sentBody(fetchMock, 'PUT', `${PROFILE_URL}/location`)).toEqual({
-      address: {
-        province: 'SANTA_FE',
-        district: 'Rosario',
-        locality: 'Centro',
-        street: 'Mitre 500',
-      },
-      streetVisibility: 'PRIVATE',
-      otherAddresses: [],
+      addresses: [
+        {
+          id: 'm1',
+          type: 'MAIN',
+          address: {
+            province: 'SANTA_FE',
+            district: 'Rosario',
+            locality: 'Centro',
+            street: 'Mitre 500',
+          },
+          streetVisibility: 'PRIVATE',
+        },
+      ],
     });
     expect(within(sectionNav()).getByRole('button', { name: /Ubicación/ })).toHaveTextContent(
       'Punto en el mapa: completo',
@@ -1029,12 +1043,12 @@ describe('ProfilePage', { timeout: FORM_TIMEOUT }, () => {
         body: {
           ...PROFILE,
           location: {
-            ...PROFILE.location,
-            otherAddresses: [
+            addresses: [
+              MAIN_ADDRESS,
               {
                 id: 'a1',
                 type: 'SECONDARY',
-                address: PROFILE.location.address,
+                address: MAIN_ADDRESS.address,
                 streetVisibility: 'PUBLIC',
               },
             ],

@@ -1,4 +1,5 @@
 import type { CooperativeOrganizationProfileResponse } from '@/api/generated/model';
+import { mainAddress } from '@/features/organizations/addresses';
 
 export type ProfileSectionKey = 'identification' | 'activity' | 'photos' | 'location' | 'contact';
 
@@ -58,7 +59,9 @@ export function sectionStatus(
       ]);
     }
     case 'location':
-      return status([{ label: 'Punto en el mapa', done: !!profile.location.point }]);
+      return status([
+        { label: 'Punto en el mapa', done: !!mainAddress(profile.location.addresses)?.point },
+      ]);
     case 'contact': {
       const { phone, whatsapp, email, website, socialMedia, openingHours, responseTime } =
         profile.contact;

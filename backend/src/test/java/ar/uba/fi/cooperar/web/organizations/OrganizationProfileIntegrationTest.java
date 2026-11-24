@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import ar.uba.fi.cooperar.IntegrationTest;
 import ar.uba.fi.cooperar.domain.organizations.ActivityType;
 import ar.uba.fi.cooperar.domain.organizations.Address;
+import ar.uba.fi.cooperar.domain.organizations.AddressDetails;
+import ar.uba.fi.cooperar.domain.organizations.AddressType;
 import ar.uba.fi.cooperar.domain.organizations.OpeningDay;
 import ar.uba.fi.cooperar.domain.organizations.OpeningPeriod;
 import ar.uba.fi.cooperar.domain.organizations.Organization;
@@ -69,8 +71,13 @@ class OrganizationProfileIntegrationTest {
                         12,
                         Visibility.PUBLIC),
                 2026);
-        organization.updateLocation(
-                organization.getAddress(), Visibility.PUBLIC, WGS84.createPoint(new Coordinate(-58.42, -34.6)));
+        organization.replaceAddresses(List.of(new AddressDetails(
+                null,
+                AddressType.MAIN,
+                null,
+                organization.getMainAddress().getAddress(),
+                Visibility.PUBLIC,
+                WGS84.createPoint(new Coordinate(-58.42, -34.6)))));
         organization.updateContact(new ProfileContact(
                 "11 1234-5678",
                 Visibility.PUBLIC,
@@ -95,12 +102,6 @@ class OrganizationProfileIntegrationTest {
                           "legalName": null,
                           "sectors": ["FOOD", "SERVICES"],
                           "activityTypes": ["PRODUCT"],
-                          "province": "CITY_OF_BUENOS_AIRES",
-                          "district": "Comuna 5",
-                          "locality": "Almagro",
-                          "addressName": null,
-                          "street": "Gascón 1234",
-                          "additionalReferences": "Portón verde",
                           "description": "Panificados",
                           "startYear": 2003,
                           "workerCount": 12,
@@ -111,8 +112,18 @@ class OrganizationProfileIntegrationTest {
                           "socialMedia": "@lacacerola",
                           "openingHours": [{"day": "MONDAY", "opensAt": "08:00", "closesAt": "17:00"}],
                           "responseTime": "ONE_DAY",
-                          "location": {"latitude": -34.6, "longitude": -58.42, "approximate": false},
-                          "otherAddresses": [],
+                          "addresses": [
+                            {
+                              "type": "MAIN",
+                              "name": null,
+                              "province": "CITY_OF_BUENOS_AIRES",
+                              "district": "Comuna 5",
+                              "locality": "Almagro",
+                              "street": "Gascón 1234",
+                              "additionalReferences": "Portón verde",
+                              "location": {"latitude": -34.6, "longitude": -58.42, "approximate": false}
+                            }
+                          ],
                           "photos": {"logoUrl": null, "coverUrl": null, "gallery": []}
                         }
                         """);
@@ -127,10 +138,13 @@ class OrganizationProfileIntegrationTest {
                 new ProfileActivity(
                         Set.of(Sector.FOOD), Set.of(ActivityType.PRODUCT), null, null, 12, Visibility.PRIVATE),
                 2026);
-        organization.updateLocation(
-                organization.getAddress(),
+        organization.replaceAddresses(List.of(new AddressDetails(
+                null,
+                AddressType.MAIN,
+                null,
+                organization.getMainAddress().getAddress(),
                 Visibility.PRIVATE,
-                WGS84.createPoint(new Coordinate(-58.368443, -34.617608)));
+                WGS84.createPoint(new Coordinate(-58.368443, -34.617608)))));
         organization.updateContact(new ProfileContact(
                 "11 1234-5678",
                 Visibility.PRIVATE,
@@ -156,9 +170,9 @@ class OrganizationProfileIntegrationTest {
                 .doesNotContain("Reservada Ltda.", "11 1234-5678", "11 8765-4321", "contacto@example.org")
                 .doesNotContain("Gascón", "Portón", "30712345671", "-34.617608", "-58.368443");
         assertThat(mvc.get().uri("/api/organizations/reservada")).bodyJson().isLenientlyEqualTo("""
-                {"legalName": null, "workerCount": null, "street": null, "additionalReferences": null,
-                 "phone": null, "whatsapp": null, "email": null,
-                 "location": {"latitude": -34.62, "longitude": -58.37, "approximate": true}}
+                {"legalName": null, "workerCount": null, "phone": null, "whatsapp": null, "email": null,
+                 "addresses": [{"street": null, "additionalReferences": null,
+                                "location": {"latitude": -34.62, "longitude": -58.37, "approximate": true}}]}
                 """);
     }
 
@@ -177,12 +191,6 @@ class OrganizationProfileIntegrationTest {
                         "legalName",
                         "sectors",
                         "activityTypes",
-                        "province",
-                        "district",
-                        "locality",
-                        "addressName",
-                        "street",
-                        "additionalReferences",
                         "description",
                         "startYear",
                         "workerCount",
@@ -193,8 +201,7 @@ class OrganizationProfileIntegrationTest {
                         "socialMedia",
                         "openingHours",
                         "responseTime",
-                        "location",
-                        "otherAddresses",
+                        "addresses",
                         "photos");
     }
 

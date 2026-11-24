@@ -12,11 +12,6 @@ const fullProfile = {
   legalName: 'Cooperativa de Trabajo La Cacerola Ltda.',
   sectors: ['FOOD'],
   activityTypes: ['PRODUCT', 'SERVICE'],
-  province: 'CITY_OF_BUENOS_AIRES',
-  district: 'Comuna 5',
-  locality: 'Almagro',
-  street: 'Gascón 1234',
-  additionalReferences: 'Portón verde',
   description: 'Panificados para comercios y particulares.',
   startYear: 2003,
   workerCount: 45,
@@ -35,8 +30,17 @@ const fullProfile = {
     { day: 'SATURDAY', opensAt: '15:00', closesAt: '18:00' },
   ],
   responseTime: 'TWO_DAYS',
-  location: { latitude: -34.6, longitude: -58.42, approximate: false },
-  otherAddresses: [],
+  addresses: [
+    {
+      type: 'MAIN',
+      province: 'CITY_OF_BUENOS_AIRES',
+      district: 'Comuna 5',
+      locality: 'Almagro',
+      street: 'Gascón 1234',
+      additionalReferences: 'Portón verde',
+      location: { latitude: -34.6, longitude: -58.42, approximate: false },
+    },
+  ],
   photos: { logoUrl: null, coverUrl: null, gallery: [] },
 };
 
@@ -47,11 +51,6 @@ const minimalProfile = {
   legalName: null,
   sectors: ['OTHER'],
   activityTypes: ['WORK'],
-  province: 'SANTA_FE',
-  district: 'Rosario',
-  locality: 'Centro',
-  street: null,
-  additionalReferences: null,
   description: null,
   startYear: null,
   workerCount: null,
@@ -62,8 +61,17 @@ const minimalProfile = {
   socialMedia: null,
   openingHours: [],
   responseTime: null,
-  location: null,
-  otherAddresses: [],
+  addresses: [
+    {
+      type: 'MAIN',
+      province: 'SANTA_FE',
+      district: 'Rosario',
+      locality: 'Centro',
+      street: null,
+      additionalReferences: null,
+      location: null,
+    },
+  ],
   photos: { logoUrl: null, coverUrl: null, gallery: [] },
 };
 
@@ -134,7 +142,8 @@ describe('OrganizationProfilePage', () => {
   it('lists the other addresses, without the street the organization keeps private', async () => {
     stubProfile('la-cacerola', {
       ...fullProfile,
-      otherAddresses: [
+      addresses: [
+        ...fullProfile.addresses,
         {
           type: 'SECONDARY',
           province: 'BUENOS_AIRES',
@@ -165,6 +174,20 @@ describe('OrganizationProfilePage', () => {
     expect(within(contact).getByText(/Belgrano 10, Bernal, Quilmes, Buenos Aires/)).toBeVisible();
     expect(within(contact).getByText('Galpón azul')).toBeVisible();
     expect(within(contact).getByText('Alberdi, Capital, Córdoba')).toBeVisible();
+  });
+
+  it('titles the main address with its name when it has one', async () => {
+    stubProfile('la-cacerola', {
+      ...fullProfile,
+      addresses: [{ ...fullProfile.addresses[0], name: 'Planta' }],
+    });
+
+    renderRoute('/organizations/la-cacerola');
+
+    const contact = await screen.findByRole('region', { name: 'Datos de contacto' });
+    expect(within(contact).getByText('Planta')).toBeVisible();
+    expect(within(contact).queryByText('Dirección')).not.toBeInTheDocument();
+    expect(within(contact).getByText('Gascón 1234, Almagro, Comuna 5')).toBeVisible();
   });
 
   it('leaves the photos section out when the gallery is empty', async () => {
@@ -341,7 +364,12 @@ describe('OrganizationProfilePage', () => {
   it('marks only the area on the map when the street is private', async () => {
     stubProfile('sin-datos', {
       ...minimalProfile,
-      location: { latitude: -32.95, longitude: -60.64, approximate: true },
+      addresses: [
+        {
+          ...minimalProfile.addresses[0],
+          location: { latitude: -32.95, longitude: -60.64, approximate: true },
+        },
+      ],
     });
 
     renderRoute('/organizations/sin-datos');

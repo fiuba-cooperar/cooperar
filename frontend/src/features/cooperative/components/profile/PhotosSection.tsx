@@ -1,6 +1,7 @@
 import { Badge, Button, Group, Input, Stack, Text, Title } from '@mantine/core';
 import { useState } from 'react';
 import { Visibility } from '@/api/generated/model';
+import { mainAddress } from '@/features/organizations/addresses';
 import { useProfilePhotos, type SinglePhoto } from '../../api/useProfilePhotos';
 import {
   ORGANIZATION_TYPE_LABELS,
@@ -27,6 +28,7 @@ export function PhotosSection({
     profile.id,
   );
   const { photos } = profile;
+  const main = mainAddress(profile.location.addresses);
   // The files being uploaded, shown as previews until the server answers.
   const [uploading, setUploading] = useState<File[]>([]);
   const [galleryError, setGalleryError] = useState<string>();
@@ -132,10 +134,11 @@ export function PhotosSection({
                     {SECTOR_LABELS[sector]}
                   </Badge>
                 ))}
-                <Text c="dimmed">
-                  {profile.location.address.locality},{' '}
-                  {PROVINCE_LABELS[profile.location.address.province]}
-                </Text>
+                {main && (
+                  <Text c="dimmed">
+                    {main.address.locality}, {PROVINCE_LABELS[main.address.province]}
+                  </Text>
+                )}
               </Group>
             </Stack>
           </div>

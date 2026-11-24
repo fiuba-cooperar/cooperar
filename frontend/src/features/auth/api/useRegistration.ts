@@ -4,9 +4,9 @@ import type { RegistrationRequest, RegistrationResponse } from '@/api/generated/
 
 export type RegistrationConflict = 'EMAIL';
 
-/** Why a registration failed: data already taken, rejected by the server, or no usable answer. */
+/** Why a registration failed: data already taken, rejected by the server, too many tries, or no usable answer. */
 export class RegistrationError extends Error {
-  readonly reason: 'conflict' | 'invalid' | 'unavailable';
+  readonly reason: 'conflict' | 'invalid' | 'rate-limited' | 'unavailable';
   readonly conflicts: readonly RegistrationConflict[];
 
   constructor(
@@ -38,6 +38,7 @@ async function submitRegistration(data: RegistrationRequest): Promise<Registrati
   if (httpStatus === 201) return response.data;
   if (httpStatus === 409) throw new RegistrationError('conflict', conflictsOf(response.data));
   if (httpStatus === 400) throw new RegistrationError('invalid');
+  if (httpStatus === 429) throw new RegistrationError('rate-limited');
   throw new RegistrationError('unavailable');
 }
 

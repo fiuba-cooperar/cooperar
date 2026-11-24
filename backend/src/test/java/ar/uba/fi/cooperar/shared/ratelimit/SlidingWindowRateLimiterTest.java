@@ -1,4 +1,4 @@
-package ar.uba.fi.cooperar.service.inquiries;
+package ar.uba.fi.cooperar.shared.ratelimit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -10,11 +10,10 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import org.junit.jupiter.api.Test;
 
-class InquiryRateLimiterTest {
+class SlidingWindowRateLimiterTest {
 
     private final MutableClock clock = new MutableClock();
-    private final InquiryRateLimiter limiter =
-            new InquiryRateLimiter(new InquiryProperties(2, Duration.ofMinutes(10)), clock);
+    private final SlidingWindowRateLimiter limiter = new SlidingWindowRateLimiter(2, Duration.ofMinutes(10), clock);
 
     @Test
     void blocksASenderThatPassesTheMaximumInTheWindow() {
@@ -22,8 +21,8 @@ class InquiryRateLimiterTest {
         limiter.acquire("1.1.1.1");
 
         assertThatThrownBy(() -> limiter.acquire("1.1.1.1"))
-                .isInstanceOf(TooManyInquiriesException.class)
-                .satisfies(error -> assertThat(((TooManyInquiriesException) error).getRetryAfter())
+                .isInstanceOf(TooManyRequestsException.class)
+                .satisfies(error -> assertThat(((TooManyRequestsException) error).getRetryAfter())
                         .isEqualTo(Duration.ofMinutes(10)));
     }
 
@@ -42,7 +41,7 @@ class InquiryRateLimiterTest {
         limiter.acquire("1.1.1.1");
 
         assertThatThrownBy(() -> limiter.acquire("1.1.1.1"))
-                .satisfies(error -> assertThat(((TooManyInquiriesException) error).getRetryAfter())
+                .satisfies(error -> assertThat(((TooManyRequestsException) error).getRetryAfter())
                         .isEqualTo(Duration.ofMinutes(6)));
         clock.advance(Duration.ofMinutes(6));
 
@@ -59,7 +58,7 @@ class InquiryRateLimiterTest {
         limiter.acquire("new-sender");
         limiter.acquire("new-sender");
 
-        assertThatThrownBy(() -> limiter.acquire("new-sender")).isInstanceOf(TooManyInquiriesException.class);
+        assertThatThrownBy(() -> limiter.acquire("new-sender")).isInstanceOf(TooManyRequestsException.class);
         assertThatCode(() -> limiter.acquire("sender-0")).doesNotThrowAnyException();
     }
 

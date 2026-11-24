@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.AdditionalAnswers.returnsFirstArg;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -12,7 +13,9 @@ import static org.mockito.Mockito.when;
 import ar.uba.fi.cooperar.domain.user.Role;
 import ar.uba.fi.cooperar.domain.user.UserAccount;
 import ar.uba.fi.cooperar.repository.user.UserAccountRepository;
+import ar.uba.fi.cooperar.shared.ratelimit.TooManyRequestsException;
 import java.sql.SQLException;
+import java.time.Duration;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,12 +25,14 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 class RegistrationServiceTest {
 
+    private static final String SENDER = "203.0.113.7";
     private static final NewAccount ACCOUNT = new NewAccount(" Ana ", " Pérez ", " Ana@Coop.Local ", "secret-password");
 
     private final UserAccountRepository users = mock(UserAccountRepository.class);
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
     private final EmailVerificationService emailVerification = mock(EmailVerificationService.class);
-    private final RegistrationService service = new RegistrationService(users, encoder, emailVerification);
+    private final RegistrationRateLimiter rateLimiter = mock(RegistrationRateLimiter.class);
+    private final RegistrationService service = new RegistrationService(users, encoder, emailVerification, rateLimiter);
 
     @BeforeEach
     void saveReturnsTheEntity() {
@@ -36,7 +41,7 @@ class RegistrationServiceTest {
 
     @Test
     void createsACooperativeAccountWithoutOrganizationsAndSendsTheConfirmationLink() {
-        UUID accountId = service.register(ACCOUNT);
+        UUID accountId = service.register(ACCOUNT, SENDER);
 
         ArgumentCaptor<UserAccount> account = ArgumentCaptor.forClass(UserAccount.class);
         verify(users).saveAndFlush(account.capture());
@@ -55,7 +60,7 @@ class RegistrationServiceTest {
     void rejectsAnEmailThatIsAlreadyRegistered() {
         when(users.existsByEmail("ana@coop.local")).thenReturn(true);
 
-        assertThatThrownBy(() -> service.register(ACCOUNT))
+        assertThatThrownBy(() -> service.register(ACCOUNT, SENDER))
                 .isInstanceOf(EmailAlreadyRegisteredException.class)
                 .hasMessage("The email is already registered");
         verify(users, never()).saveAndFlush(any());
@@ -66,7 +71,18 @@ class RegistrationServiceTest {
     void translatesAUniqueViolationFromAConcurrentRegistration() {
         when(users.saveAndFlush(any())).thenThrow(uniqueViolation("users_email_key"));
 
-        assertThatThrownBy(() -> service.register(ACCOUNT)).isInstanceOf(EmailAlreadyRegisteredException.class);
+        assertThatThrownBy(() -> service.register(ACCOUNT, SENDER)).isInstanceOf(EmailAlreadyRegisteredException.class);
+        verify(emailVerification, never()).sendLink(any());
+    }
+
+    @Test
+    void createsNothingWhenTheAddressWentOverItsLimit() {
+        doThrow(new TooManyRequestsException(Duration.ofMinutes(5)))
+                .when(rateLimiter)
+                .acquire(SENDER);
+
+        assertThatThrownBy(() -> service.register(ACCOUNT, SENDER)).isInstanceOf(TooManyRequestsException.class);
+        verify(users, never()).saveAndFlush(any());
         verify(emailVerification, never()).sendLink(any());
     }
 
@@ -75,7 +91,7 @@ class RegistrationServiceTest {
         DataIntegrityViolationException violation = uniqueViolation("some_other_constraint");
         when(users.saveAndFlush(any())).thenThrow(violation);
 
-        assertThatThrownBy(() -> service.register(ACCOUNT)).isSameAs(violation);
+        assertThatThrownBy(() -> service.register(ACCOUNT, SENDER)).isSameAs(violation);
     }
 
     @Test
@@ -83,7 +99,7 @@ class RegistrationServiceTest {
         // 72 characters, but 73 bytes in UTF-8.
         NewAccount account = new NewAccount("Ana", "Pérez", "ana@coop.local", "ñ" + "a".repeat(71));
 
-        assertThatThrownBy(() -> service.register(account))
+        assertThatThrownBy(() -> service.register(account, SENDER))
                 .isInstanceOf(PasswordTooLongException.class)
                 .hasMessage("The password must be at most 72 bytes long");
     }

@@ -6,6 +6,7 @@ import ar.uba.fi.cooperar.domain.inquiries.InquiryContent;
 import ar.uba.fi.cooperar.repository.inquiries.InquiryRepository;
 import ar.uba.fi.cooperar.repository.organizations.OrganizationRepository;
 import ar.uba.fi.cooperar.service.catalog.ProductService;
+import ar.uba.fi.cooperar.shared.ratelimit.TooManyRequestsException;
 import java.time.Clock;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -43,7 +44,7 @@ public class InquiryService {
      * the organization cannot ask about its own product.
      *
      * @throws OwnProductInquiryException if the account manages the organization that offers the product
-     * @throws TooManyInquiriesException if `sender` already sent the maximum for the period
+     * @throws TooManyRequestsException if `sender` already sent the maximum for the period
      */
     @Transactional
     public Inquiry send(UUID productId, InquiryContent content, String sender, UUID accountId) {

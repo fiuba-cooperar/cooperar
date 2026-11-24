@@ -202,6 +202,16 @@ describe('registration', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(/problema de conexión/);
   });
 
+  it('tells the visitor when too many accounts were created from the connection', async () => {
+    stubFetchRoutes({ 'POST /api/auth/register': { status: 429, body: { status: 429 } } });
+
+    renderRoute('/register');
+    await fillAccount();
+    await submit();
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/límite de registros/);
+  });
+
   it('sends people who are already signed in to their section', async () => {
     saveTokens(TOKENS);
     stubFetchRoutes({ 'GET /api/me': { body: NEW_ACCOUNT } });

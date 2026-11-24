@@ -3,6 +3,7 @@ package ar.uba.fi.cooperar.web.user;
 import ar.uba.fi.cooperar.service.user.RegistrationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -29,8 +30,9 @@ public class RegistrationController {
             operationId = "register",
             summary = "Create an account, which needs no approval",
             description = "Organizations are added afterwards, from the panel, with a registration request the "
-                    + "observatory reviews. Answers 409 with `conflicts: [\"EMAIL\"]` when the email is taken.")
-    public RegistrationResponse register(@Valid @RequestBody RegistrationRequest request) {
-        return new RegistrationResponse(registrationService.register(request.toNewAccount()));
+                    + "observatory reviews. Answers 409 with `conflicts: [\"EMAIL\"]` when the email is taken, and 429 "
+                    + "with `Retry-After` when the address created too many accounts in the last hour.")
+    public RegistrationResponse register(@Valid @RequestBody RegistrationRequest request, HttpServletRequest http) {
+        return new RegistrationResponse(registrationService.register(request.toNewAccount(), http.getRemoteAddr()));
     }
 }

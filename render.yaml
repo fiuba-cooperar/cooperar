@@ -63,9 +63,11 @@ services:
       - key: IMAGE_CLOUD_API_SECRET
         sync: false
       # Behind Render's proxies the address of each visitor may not reach the backend, in which case all of them would
-      # share the anti-spam limit of the inquiries (20 per hour by default) and the stakeholders would get blocked. The
+      # share the anti-spam limits of the inquiries (20 per hour by default) and of the sign-ups (10) and the stakeholders would get blocked. The
       # demo only has made-up data, so its limit is raised instead.
       - key: COOPERAR_INQUIRIES_RATELIMIT_MAXPERWINDOW
+        value: "200"
+      - key: COOPERAR_REGISTRATION_RATELIMIT_MAXPERWINDOW
         value: "200"
       # URL of the frontend service below; the links in the emails point here.
       - key: PUBLIC_URL

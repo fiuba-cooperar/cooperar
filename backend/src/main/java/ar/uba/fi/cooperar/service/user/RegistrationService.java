@@ -3,6 +3,7 @@ package ar.uba.fi.cooperar.service.user;
 import ar.uba.fi.cooperar.domain.user.Role;
 import ar.uba.fi.cooperar.domain.user.UserAccount;
 import ar.uba.fi.cooperar.repository.user.UserAccountRepository;
+import ar.uba.fi.cooperar.shared.ratelimit.TooManyRequestsException;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -27,17 +28,28 @@ public class RegistrationService {
     private final UserAccountRepository users;
     private final PasswordEncoder passwordEncoder;
     private final EmailVerificationService emailVerification;
+    private final RegistrationRateLimiter rateLimiter;
 
     public RegistrationService(
-            UserAccountRepository users, PasswordEncoder passwordEncoder, EmailVerificationService emailVerification) {
+            UserAccountRepository users,
+            PasswordEncoder passwordEncoder,
+            EmailVerificationService emailVerification,
+            RegistrationRateLimiter rateLimiter) {
         this.users = users;
         this.passwordEncoder = passwordEncoder;
         this.emailVerification = emailVerification;
+        this.rateLimiter = rateLimiter;
     }
 
-    /** Returns the id of the new account. */
+    /**
+     * Returns the id of the new account.
+     *
+     * @param sender the address the request came from, which only counts toward the limit and is never kept
+     * @throws TooManyRequestsException if `sender` already created the maximum for the period
+     */
     @Transactional
-    public UUID register(NewAccount newAccount) {
+    public UUID register(NewAccount newAccount, String sender) {
+        rateLimiter.acquire(sender);
         String email = UserAccount.normalizeEmail(newAccount.email());
         if (newAccount.password().getBytes(StandardCharsets.UTF_8).length > MAX_PASSWORD_BYTES) {
             throw new PasswordTooLongException();

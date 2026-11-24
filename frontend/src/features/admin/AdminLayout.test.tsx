@@ -56,7 +56,14 @@ describe('admin panel', () => {
       within(menu)
         .getAllByRole('link')
         .map((link) => link.textContent),
-    ).toEqual(['Inicio', 'Solicitudes', 'Entidades', 'Categorías', 'Ver el sitio público']);
+    ).toEqual([
+      'Inicio',
+      'Solicitudes',
+      'Entidades',
+      'Usuarios',
+      'Categorías',
+      'Ver el sitio público',
+    ]);
     expect(within(menu).getByRole('link', { name: 'Inicio' })).toHaveAttribute(
       'aria-current',
       'page',

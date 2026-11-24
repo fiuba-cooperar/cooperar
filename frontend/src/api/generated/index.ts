@@ -2,6 +2,7 @@ export * from './account-registration-requests/account-registration-requests';
 export * from './admin-organizations/admin-organizations';
 export * from './admin-product-categories/admin-product-categories';
 export * from './admin-registration-requests/admin-registration-requests';
+export * from './admin-users/admin-users';
 export * from './auth/auth';
 export * from './cooperative-organization-profile/cooperative-organization-profile';
 export * from './cooperative-products/cooperative-products';

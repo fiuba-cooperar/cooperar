@@ -55,7 +55,8 @@ public class ProductSearchService {
                 OrganizationSearchService.toTsQuery(criteria.query()),
                 criteria.categoryId(),
                 criteria.province(),
-                criteria.organizationSlug(),
+                criteria.organizationSlugs(),
+                criteria.types(),
                 sort);
 
         List<ProductSearchHit> hits =

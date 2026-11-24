@@ -6,6 +6,7 @@ import ar.uba.fi.cooperar.IntegrationTest;
 import ar.uba.fi.cooperar.domain.catalog.Product;
 import ar.uba.fi.cooperar.domain.catalog.ProductCategory;
 import ar.uba.fi.cooperar.domain.catalog.ProductDetails;
+import ar.uba.fi.cooperar.domain.catalog.ProductType;
 import ar.uba.fi.cooperar.domain.catalog.SaleMode;
 import ar.uba.fi.cooperar.domain.organizations.ActivityType;
 import ar.uba.fi.cooperar.domain.organizations.Address;
@@ -139,7 +140,9 @@ class ProductCategoryIntegrationTest {
         ProductCategory empty = categories.save(new ProductCategory("Vacía", Instant.now()));
         ProductCategory used = categories.save(new ProductCategory("Usada", Instant.now()));
         products.save(new Product(
-                organization(), new ProductDetails("Algo", used, Set.of(SaleMode.RETAIL), null, null), Instant.now()));
+                organization(),
+                new ProductDetails("Algo", ProductType.PRODUCT, used, Set.of(SaleMode.RETAIL), null, null),
+                Instant.now()));
 
         assertThat(send(HttpMethod.GET, "/api/admin/product-categories", token, null))
                 .bodyJson()

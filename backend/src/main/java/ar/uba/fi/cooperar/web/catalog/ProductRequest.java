@@ -1,5 +1,6 @@
 package ar.uba.fi.cooperar.web.catalog;
 
+import ar.uba.fi.cooperar.domain.catalog.ProductType;
 import ar.uba.fi.cooperar.domain.catalog.SaleMode;
 import ar.uba.fi.cooperar.service.catalog.ProductDraft;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -15,6 +16,7 @@ import java.util.UUID;
 
 public record ProductRequest(
         @NotBlank @Size(max = 120) String name,
+        @NotNull ProductType type,
 
         @NotNull @Schema(description = "Id of one of the product categories")
         UUID categoryId,
@@ -34,6 +36,6 @@ public record ProductRequest(
 
     ProductDraft toDraft() {
         return new ProductDraft(
-                name, categoryId, saleModes, description, indicativePrice, Boolean.TRUE.equals(publish));
+                name, type, categoryId, saleModes, description, indicativePrice, Boolean.TRUE.equals(publish));
     }
 }

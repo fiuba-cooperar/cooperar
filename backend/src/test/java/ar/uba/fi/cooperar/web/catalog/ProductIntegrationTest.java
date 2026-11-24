@@ -43,7 +43,7 @@ class ProductIntegrationTest {
     private static final Address ADDRESS =
             new Address(Province.CITY_OF_BUENOS_AIRES, "Comuna 5", "Almagro", "Gascón 1234", null);
     private static final String SHIRT = """
-            {"name": "Remera de algodón", "categoryId": "<category>", "saleModes": ["RETAIL", "WHOLESALE"],
+            {"name": "Remera de algodón", "type": "PRODUCT", "categoryId": "<category>", "saleModes": ["RETAIL", "WHOLESALE"],
              "description": "Talles del S al XXL", "indicativePrice": 8500, "publish": true}
             """;
 
@@ -107,11 +107,35 @@ class ProductIntegrationTest {
     }
 
     @Test
+    void aProductIsEitherAProductOrAServiceAndThePublicListShowsWhich() {
+        String token = token("coop@test.local");
+
+        assertThat(send(HttpMethod.POST, products(), token, """
+                {"name": "Capacitación", "type": "SERVICE", "categoryId": "<category>",
+                 "saleModes": ["WHOLESALE"], "publish": true}
+                """))
+                .hasStatus(HttpStatus.CREATED)
+                .bodyJson()
+                .isLenientlyEqualTo("{\"type\": \"SERVICE\"}");
+        assertThat(mvc.get().uri("/api/organizations/la-cacerola/products"))
+                .bodyJson()
+                .isLenientlyEqualTo("[{\"name\": \"Capacitación\", \"type\": \"SERVICE\"}]");
+    }
+
+    @Test
+    void rejectsAProductWithoutItsType() {
+        assertThat(send(HttpMethod.POST, products(), token("coop@test.local"), """
+                {"name": "Remera", "categoryId": "<category>", "saleModes": ["RETAIL"]}
+                """))
+                .hasStatus(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     void aProductSavedWithoutPublishingIsUnpublishedAndOnlyTheOrganizationSeesIt() {
         String token = token("coop@test.local");
 
         MvcTestResult created = send(HttpMethod.POST, products(), token, """
-                {"name": "Remera", "categoryId": "<category>", "saleModes": ["RETAIL"]}
+                {"name": "Remera", "type": "PRODUCT", "categoryId": "<category>", "saleModes": ["RETAIL"]}
                 """);
 
         assertThat(created)
@@ -133,16 +157,16 @@ class ProductIntegrationTest {
     void savingAnEditWithPublishShowsTheProductAndSavingWithoutItKeepsTheStatus() {
         String token = token("coop@test.local");
         String id = JsonPath.read(body(send(HttpMethod.POST, products(), token, """
-                {"name": "Remera", "categoryId": "<category>", "saleModes": ["RETAIL"]}
+                {"name": "Remera", "type": "PRODUCT", "categoryId": "<category>", "saleModes": ["RETAIL"]}
                 """)), "$.id");
 
         assertThat(send(HttpMethod.PUT, products() + "/" + id, token, """
-                        {"name": "Remera lisa", "categoryId": "<category>", "saleModes": ["RETAIL"]}
+                        {"name": "Remera lisa", "type": "PRODUCT", "categoryId": "<category>", "saleModes": ["RETAIL"]}
                         """))
                 .bodyJson()
                 .isLenientlyEqualTo("{\"name\": \"Remera lisa\", \"status\": \"UNPUBLISHED\"}");
         assertThat(send(HttpMethod.PUT, products() + "/" + id, token, """
-                        {"name": "Remera lisa", "categoryId": "<category>", "saleModes": ["RETAIL"], "publish": true}
+                        {"name": "Remera lisa", "type": "PRODUCT", "categoryId": "<category>", "saleModes": ["RETAIL"], "publish": true}
                         """))
                 .bodyJson()
                 .isLenientlyEqualTo("{\"status\": \"PUBLISHED\"}");
@@ -156,7 +180,7 @@ class ProductIntegrationTest {
     void publishAndUnpublishHaveTheirOwnEndpoints() {
         String token = token("coop@test.local");
         String id = JsonPath.read(body(send(HttpMethod.POST, products(), token, """
-                {"name": "Remera", "categoryId": "<category>", "saleModes": ["RETAIL"]}
+                {"name": "Remera", "type": "PRODUCT", "categoryId": "<category>", "saleModes": ["RETAIL"]}
                 """)), "$.id");
 
         assertThat(send(HttpMethod.POST, products() + "/" + id + "/unpublish", token, null))
@@ -179,7 +203,7 @@ class ProductIntegrationTest {
     @Test
     void thePriceIsOptional() {
         assertThat(send(HttpMethod.POST, products(), token("coop@test.local"), """
-                        {"name": "Estampado de prendas", "categoryId": "<category>", "saleModes": ["WHOLESALE"]}
+                        {"name": "Estampado de prendas", "type": "PRODUCT", "categoryId": "<category>", "saleModes": ["WHOLESALE"]}
                         """))
                 .hasStatus(HttpStatus.CREATED)
                 .bodyJson()
@@ -192,16 +216,16 @@ class ProductIntegrationTest {
     void rejectsAnInvalidProduct() {
         String token = token("coop@test.local");
         assertThat(send(HttpMethod.POST, products(), token, """
-                        {"name": " ", "categoryId": "<category>", "saleModes": ["RETAIL"]}
+                        {"name": " ", "type": "PRODUCT", "categoryId": "<category>", "saleModes": ["RETAIL"]}
                         """)).hasStatus(HttpStatus.BAD_REQUEST);
         assertThat(send(HttpMethod.POST, products(), token, """
                         {"name": "Remera", "saleModes": ["RETAIL"]}
                         """)).hasStatus(HttpStatus.BAD_REQUEST);
         assertThat(send(HttpMethod.POST, products(), token, """
-                        {"name": "Remera", "categoryId": "<category>", "saleModes": []}
+                        {"name": "Remera", "type": "PRODUCT", "categoryId": "<category>", "saleModes": []}
                         """)).hasStatus(HttpStatus.BAD_REQUEST);
         assertThat(send(HttpMethod.POST, products(), token, """
-                        {"name": "Remera", "categoryId": "<category>", "saleModes": ["RETAIL"], "indicativePrice": -1}
+                        {"name": "Remera", "type": "PRODUCT", "categoryId": "<category>", "saleModes": ["RETAIL"], "indicativePrice": -1}
                         """)).hasStatus(HttpStatus.BAD_REQUEST);
     }
 
@@ -244,7 +268,7 @@ class ProductIntegrationTest {
         send(HttpMethod.POST, products() + "/" + hidden + "/unpublish", token, null);
         create(token, "Remera visible");
         send(HttpMethod.POST, products(), token, """
-                {"name": "Pan", "categoryId": "%s", "saleModes": ["WHOLESALE"], "publish": true}
+                {"name": "Pan", "type": "PRODUCT", "categoryId": "%s", "saleModes": ["WHOLESALE"], "publish": true}
                 """.formatted(food.getId()));
 
         assertThat(names(token, "?status=UNPUBLISHED")).containsExactly("Remera oculta");
@@ -341,7 +365,8 @@ class ProductIntegrationTest {
                 StandardCharsets.UTF_8);
 
         assertThat(JsonPath.<java.util.Map<String, Object>>read(json, "$[0]"))
-                .containsOnlyKeys("id", "name", "category", "saleModes", "description", "indicativePrice", "photos");
+                .containsOnlyKeys(
+                        "id", "name", "type", "category", "saleModes", "description", "indicativePrice", "photos");
     }
 
     @Test
@@ -559,7 +584,7 @@ class ProductIntegrationTest {
 
     private String create(String token, String name) {
         MvcTestResult created = send(HttpMethod.POST, products(), token, """
-                {"name": "%s", "categoryId": "<category>", "saleModes": ["RETAIL"], "publish": true}
+                {"name": "%s", "type": "PRODUCT", "categoryId": "<category>", "saleModes": ["RETAIL"], "publish": true}
                 """.formatted(name));
         return JsonPath.read(body(created), "$.id");
     }

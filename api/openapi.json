@@ -2101,15 +2101,33 @@
             "$ref" : "#/components/schemas/Province"
           }
         }, {
-          "description" : "Only products of the organization with this slug",
+          "description" : "Only products of any of the organizations with these slugs",
           "in" : "query",
           "name" : "organization",
           "required" : false,
           "schema" : {
-            "type" : "string",
-            "description" : "Only products of the organization with this slug",
-            "maxLength" : 200,
-            "minLength" : 0
+            "type" : "array",
+            "description" : "Only products of any of the organizations with these slugs",
+            "items" : {
+              "type" : "string",
+              "description" : "Only products of any of the organizations with these slugs",
+              "maxLength" : 200,
+              "minLength" : 0
+            },
+            "uniqueItems" : true
+          }
+        }, {
+          "description" : "Only products, or only services",
+          "in" : "query",
+          "name" : "type",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "description" : "Only products, or only services",
+            "items" : {
+              "$ref" : "#/components/schemas/ProductType"
+            },
+            "uniqueItems" : true
           }
         }, {
           "description" : "RELEVANCE by default",
@@ -2185,6 +2203,45 @@
         },
         "summary" : "A published product or service, with the organization that offers it",
         "tags" : [ "products" ]
+      }
+    },
+    "/api/products/{productId}/inquiries" : {
+      "post" : {
+        "description" : "Each address can send a limited number per hour; past it the answer is 429 with `Retry-After`. The contact data is only shown to the organization that receives it. An account that manages the organization cannot ask about its own products (409).",
+        "operationId" : "sendInquiry",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "productId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/InquiryRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/InquiryReceiptResponse"
+                }
+              }
+            },
+            "description" : "Created"
+          }
+        },
+        "summary" : "Ask the organization that offers a published product, without an account",
+        "tags" : [ "inquiries" ]
       }
     }
   },
@@ -2569,9 +2626,12 @@
               "$ref" : "#/components/schemas/SaleMode"
             },
             "uniqueItems" : true
+          },
+          "type" : {
+            "$ref" : "#/components/schemas/ProductType"
           }
         },
-        "required" : [ "category", "id", "name", "organization", "photos", "saleModes" ]
+        "required" : [ "category", "id", "name", "organization", "photos", "saleModes", "type" ]
       },
       "CooperativeOrganizationProfileResponse" : {
         "type" : "object",
@@ -2765,6 +2825,55 @@
       "HealthStatus" : {
         "type" : "string",
         "enum" : [ "UP", "DOWN" ]
+      },
+      "InquiryReceiptResponse" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "sentAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }
+      },
+      "InquiryRequest" : {
+        "type" : "object",
+        "properties" : {
+          "message" : {
+            "type" : "string",
+            "maxLength" : 2000,
+            "minLength" : 0
+          },
+          "quantity" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "How many units, if it applies",
+            "maximum" : 1000000,
+            "minimum" : 1
+          },
+          "senderEmail" : {
+            "type" : "string",
+            "format" : "email",
+            "description" : "Needed if there is no phone",
+            "maxLength" : 200,
+            "minLength" : 0
+          },
+          "senderName" : {
+            "type" : "string",
+            "maxLength" : 100,
+            "minLength" : 0
+          },
+          "senderPhone" : {
+            "type" : "string",
+            "description" : "Needed if there is no email",
+            "maxLength" : 50,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "message", "senderName" ]
       },
       "LocalityResponse" : {
         "type" : "object",
@@ -3283,9 +3392,12 @@
             },
             "minItems" : 1,
             "uniqueItems" : true
+          },
+          "type" : {
+            "$ref" : "#/components/schemas/ProductType"
           }
         },
-        "required" : [ "categoryId", "name", "saleModes" ]
+        "required" : [ "categoryId", "name", "saleModes", "type" ]
       },
       "ProductResponse" : {
         "type" : "object",
@@ -3323,9 +3435,12 @@
           },
           "status" : {
             "$ref" : "#/components/schemas/ProductStatus"
+          },
+          "type" : {
+            "$ref" : "#/components/schemas/ProductType"
           }
         },
-        "required" : [ "category", "id", "name", "photos", "saleModes", "status" ]
+        "required" : [ "category", "id", "name", "photos", "saleModes", "status", "type" ]
       },
       "ProductSearchResponse" : {
         "type" : "object",
@@ -3367,6 +3482,10 @@
       "ProductStatus" : {
         "type" : "string",
         "enum" : [ "PUBLISHED", "UNPUBLISHED" ]
+      },
+      "ProductType" : {
+        "type" : "string",
+        "enum" : [ "PRODUCT", "SERVICE" ]
       },
       "ProfileActivityRequest" : {
         "type" : "object",
@@ -3713,9 +3832,12 @@
               "$ref" : "#/components/schemas/SaleMode"
             },
             "uniqueItems" : true
+          },
+          "type" : {
+            "$ref" : "#/components/schemas/ProductType"
           }
         },
-        "required" : [ "category", "id", "name", "photos", "saleModes" ]
+        "required" : [ "category", "id", "name", "photos", "saleModes", "type" ]
       },
       "RefreshTokenRequest" : {
         "type" : "object",

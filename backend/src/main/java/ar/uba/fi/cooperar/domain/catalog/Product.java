@@ -43,6 +43,10 @@ public class Product {
     @Column(nullable = false)
     private String name;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ProductType type;
+
     @ManyToOne(optional = false, fetch = FetchType.EAGER)
     @JoinColumn(name = "category_id", nullable = false)
     private ProductCategory category;
@@ -144,6 +148,7 @@ public class Product {
             throw new IllegalArgumentException("A product needs at least one sale mode");
         }
         this.name = details.name().trim();
+        this.type = details.type();
         this.category = details.category();
         this.saleModes.clear();
         this.saleModes.addAll(details.saleModes());
@@ -186,6 +191,10 @@ public class Product {
 
     public List<ProductPhoto> getPhotos() {
         return List.copyOf(photos);
+    }
+
+    public ProductType getType() {
+        return type;
     }
 
     public ProductStatus getStatus() {

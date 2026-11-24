@@ -2,6 +2,7 @@ package ar.uba.fi.cooperar.web.catalog;
 
 import ar.uba.fi.cooperar.domain.catalog.Product;
 import ar.uba.fi.cooperar.domain.catalog.ProductStatus;
+import ar.uba.fi.cooperar.domain.catalog.ProductType;
 import ar.uba.fi.cooperar.domain.catalog.SaleMode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
@@ -13,6 +14,7 @@ import java.util.UUID;
 public record ProductResponse(
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) UUID id,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String name,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) ProductType type,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) ProductCategoryResponse category,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Set<SaleMode> saleModes,
         String description,
@@ -29,6 +31,7 @@ public record ProductResponse(
         return new ProductResponse(
                 product.getId(),
                 product.getName(),
+                product.getType(),
                 ProductCategoryResponse.from(product.getCategory()),
                 product.getSaleModes(),
                 product.getDescription(),

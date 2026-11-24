@@ -6,6 +6,7 @@ import java.util.Set;
 /** What the organization fills in for a product; the price, when present, is only indicative. */
 public record ProductDetails(
         String name,
+        ProductType type,
         ProductCategory category,
         Set<SaleMode> saleModes,
         String description,

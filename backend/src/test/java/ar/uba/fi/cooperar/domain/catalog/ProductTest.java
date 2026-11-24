@@ -16,7 +16,7 @@ class ProductTest {
     private static final ProductCategory CLOTHING = new ProductCategory("Indumentaria", CREATED);
 
     private static ProductDetails details(String name, Set<SaleMode> modes, String description, BigDecimal price) {
-        return new ProductDetails(name, CLOTHING, modes, description, price);
+        return new ProductDetails(name, ProductType.PRODUCT, CLOTHING, modes, description, price);
     }
 
     @Test

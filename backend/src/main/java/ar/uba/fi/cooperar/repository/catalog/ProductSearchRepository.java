@@ -1,6 +1,7 @@
 package ar.uba.fi.cooperar.repository.catalog;
 
 import ar.uba.fi.cooperar.domain.catalog.ProductSearchSort;
+import ar.uba.fi.cooperar.domain.catalog.ProductType;
 import ar.uba.fi.cooperar.domain.catalog.SaleMode;
 import ar.uba.fi.cooperar.domain.organizations.Province;
 import java.sql.Array;
@@ -28,11 +29,16 @@ public class ProductSearchRepository {
 
     /**
      * The published products whose text matches {@code tsQuery} (a {@code to_tsquery} expression; null matches every
-     * one) in the given category, province and organization slug (null for any), in the given order. A query made only of stop words
+     * one) in the given category and province (null for any) and any of the given organization slugs and of the given types (none for any), in the given order. A query made only of stop words
      * matches every product instead of none.
      */
     public List<ProductSearchHit> match(
-            String tsQuery, UUID categoryId, Province province, String organizationSlug, ProductSearchSort sort) {
+            String tsQuery,
+            UUID categoryId,
+            Province province,
+            Set<String> organizationSlugs,
+            Set<ProductType> types,
+            ProductSearchSort sort) {
         return jdbcClient
                 .sql("""
                         WITH q AS (SELECT to_tsquery('spanish_unaccent', coalesce(:query, '')) AS query),
@@ -56,7 +62,8 @@ public class ProductSearchRepository {
                               AND (numnode(q.query) = 0 OR doc.vector @@ q.query)
                               AND (cast(:category AS uuid) IS NULL OR p.category_id = :category)
                               AND (cast(:province AS text) IS NULL OR main.province = :province)
-                              AND (cast(:organization AS text) IS NULL OR o.slug = :organization))
+                              AND (:anyOrganization OR o.slug IN (:organizations))
+                              AND (:anyType OR p.type IN (:types)))
                         SELECT m.id,
                                array(SELECT s.sale_mode FROM product_sale_modes s WHERE s.product_id = m.id)
                                    AS sale_modes
@@ -69,7 +76,15 @@ public class ProductSearchRepository {
                 .param("query", tsQuery)
                 .param("category", categoryId)
                 .param("province", province == null ? null : province.name())
-                .param("organization", organizationSlug)
+                .param("anyOrganization", organizationSlugs.isEmpty())
+                // An empty list does not expand to valid SQL, so the placeholder stands in while the filter is off.
+                .param("organizations", organizationSlugs.isEmpty() ? List.of("") : List.copyOf(organizationSlugs))
+                .param("anyType", types.isEmpty())
+                .param(
+                        "types",
+                        types.isEmpty()
+                                ? List.of("")
+                                : types.stream().map(Enum::name).toList())
                 .param("sort", sort.name())
                 .query((row, number) ->
                         new ProductSearchHit(row.getObject("id", UUID.class), saleModes(row.getArray("sale_modes"))))

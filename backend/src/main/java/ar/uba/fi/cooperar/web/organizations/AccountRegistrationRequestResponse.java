@@ -17,7 +17,7 @@ import java.util.UUID;
  * A registration request as the account that sent it sees it: the same as the observatory, but without who in the
  * observatory made each decision.
  */
-public record CooperativeRegistrationRequestResponse(
+public record AccountRegistrationRequestResponse(
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) UUID id,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String name,
 
@@ -69,8 +69,8 @@ public record CooperativeRegistrationRequestResponse(
         }
     }
 
-    static CooperativeRegistrationRequestResponse from(RegistrationRequest request) {
-        return new CooperativeRegistrationRequestResponse(
+    static AccountRegistrationRequestResponse from(RegistrationRequest request) {
+        return new AccountRegistrationRequestResponse(
                 request.getId(),
                 request.getName(),
                 request.getLegalName(),

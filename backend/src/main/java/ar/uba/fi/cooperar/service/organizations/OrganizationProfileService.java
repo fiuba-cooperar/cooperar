@@ -122,6 +122,13 @@ public class OrganizationProfileService {
         return organization;
     }
 
+    @Transactional
+    public Organization dismissOnboarding(UUID organizationId, UUID accountId) {
+        Organization organization = managed(organizationId, accountId);
+        organization.dismissOnboarding();
+        return organization;
+    }
+
     private Organization managed(UUID organizationId, UUID accountId) {
         return organizations.findManagedBy(organizationId, accountId).orElseThrow(OrganizationNotFoundException::new);
     }

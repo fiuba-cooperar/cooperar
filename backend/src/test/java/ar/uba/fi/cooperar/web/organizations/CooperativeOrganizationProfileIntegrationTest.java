@@ -26,6 +26,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.Year;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -144,6 +145,30 @@ class CooperativeOrganizationProfileIntegrationTest {
     }
 
     @Test
+    void rejectsANameLongerThanFiftyCharacters() {
+        String body = """
+                {"name": "%s", "legalName": "La Cacerola Ltda.", "legalNameVisibility": "PUBLIC"}
+                """;
+
+        assertThat(put("/identification", token("coop@test.local"), body.formatted("x".repeat(51))))
+                .hasStatus(HttpStatus.BAD_REQUEST);
+        assertThat(put("/identification", token("coop@test.local"), body.formatted("x".repeat(50))))
+                .hasStatusOk();
+    }
+
+    @Test
+    void rejectsALegalNameLongerThanOneHundredTwentyCharacters() {
+        String body = """
+                {"name": "La Cacerola", "legalName": "%s", "legalNameVisibility": "PUBLIC"}
+                """;
+
+        assertThat(put("/identification", token("coop@test.local"), body.formatted("x".repeat(121))))
+                .hasStatus(HttpStatus.BAD_REQUEST);
+        assertThat(put("/identification", token("coop@test.local"), body.formatted("x".repeat(120))))
+                .hasStatusOk();
+    }
+
+    @Test
     void savesTheActivity() {
         assertThat(put("/activity", token("coop@test.local"), """
                         {"sectors": ["TEXTILE", "SERVICES"], "activityTypes": ["PRODUCT", "SERVICE"],
@@ -183,6 +208,14 @@ class CooperativeOrganizationProfileIntegrationTest {
                         {"sectors": ["FOOD"], "activityTypes": ["PRODUCT"], "workerCount": 0,
                          "workerCountVisibility": "PUBLIC"}
                         """)).hasStatus(HttpStatus.BAD_REQUEST);
+        assertThat(put("/activity", token("coop@test.local"), """
+                        {"sectors": ["FOOD"], "activityTypes": ["PRODUCT"], "workerCount": 100000,
+                         "workerCountVisibility": "PUBLIC"}
+                        """)).hasStatus(HttpStatus.BAD_REQUEST);
+        assertThat(put("/activity", token("coop@test.local"), """
+                        {"sectors": ["FOOD"], "activityTypes": ["PRODUCT"], "workerCount": 99999,
+                         "workerCountVisibility": "PUBLIC"}
+                        """)).hasStatusOk();
     }
 
     @Test
@@ -256,7 +289,10 @@ class CooperativeOrganizationProfileIntegrationTest {
                          "whatsapp": "11 8765-4321", "whatsappVisibility": "PUBLIC",
                          "email": "contacto@example.org", "emailVisibility": "PRIVATE",
                          "website": "https://lacacerola.example.org", "socialMedia": "@lacacerola",
-                         "openingHours": "Lunes a viernes de 8 a 17", "responseTime": "TWO_DAYS"}
+                         "openingHours": [{"day": "TUESDAY", "opensAt": "14:00", "closesAt": "18:00"},
+                                         {"day": "HOLIDAY", "opensAt": "09:00", "closesAt": "13:00"},
+                                         {"day": "MONDAY", "opensAt": "08:00", "closesAt": "12:30"}],
+                         "responseTime": "TWO_DAYS"}
                         """))
                 .hasStatusOk()
                 .bodyJson()
@@ -267,8 +303,83 @@ class CooperativeOrganizationProfileIntegrationTest {
         assertThat(mvc.get().uri("/api/organizations/la-cacerola")).bodyJson().isLenientlyEqualTo("""
                 {"phone": null, "email": null, "whatsapp": "11 8765-4321",
                  "website": "https://lacacerola.example.org", "socialMedia": "@lacacerola",
-                 "openingHours": "Lunes a viernes de 8 a 17", "responseTime": "TWO_DAYS"}
+                 "openingHours": [{"day": "MONDAY", "opensAt": "08:00", "closesAt": "12:30"},
+                                 {"day": "TUESDAY", "opensAt": "14:00", "closesAt": "18:00"},
+                                 {"day": "HOLIDAY", "opensAt": "09:00", "closesAt": "13:00"}],
+                 "responseTime": "TWO_DAYS"}
                 """);
+    }
+
+    @Test
+    void closesTheGettingStartedCardForGood() {
+        assertThat(mvc.get()
+                        .uri(profile())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token("coop@test.local"))
+                        .exchange())
+                .bodyJson()
+                .isLenientlyEqualTo("{\"onboardingDismissed\": false}");
+
+        assertThat(put("/onboarding-dismissal", token("coop@test.local"), ""))
+                .hasStatusOk()
+                .bodyJson()
+                .isLenientlyEqualTo("{\"onboardingDismissed\": true}");
+        assertThat(mvc.get()
+                        .uri(profile())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token("coop@test.local"))
+                        .exchange())
+                .bodyJson()
+                .isLenientlyEqualTo("{\"onboardingDismissed\": true}");
+    }
+
+    @Test
+    void doesNotLetAnotherAccountCloseTheGettingStartedCard() {
+        assertThat(put("/onboarding-dismissal", token("other@test.local"), "")).hasStatus(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    void rejectsInvalidOpeningHours() {
+        String closesBeforeOpening = """
+                {"phoneVisibility": "PUBLIC", "whatsappVisibility": "PUBLIC", "emailVisibility": "PUBLIC",
+                 "openingHours": [{"day": "MONDAY", "opensAt": "17:00", "closesAt": "08:00"}]}
+                """;
+        String overlapping = """
+                {"phoneVisibility": "PUBLIC", "whatsappVisibility": "PUBLIC", "emailVisibility": "PUBLIC",
+                 "openingHours": [{"day": "MONDAY", "opensAt": "08:00", "closesAt": "13:00"},
+                                  {"day": "MONDAY", "opensAt": "12:00", "closesAt": "18:00"}]}
+                """;
+        String notAnHour = """
+                {"phoneVisibility": "PUBLIC", "whatsappVisibility": "PUBLIC", "emailVisibility": "PUBLIC",
+                 "openingHours": [{"day": "MONDAY", "opensAt": "8 de la mañana", "closesAt": "17:00"}]}
+                """;
+        String offTheQuarterHour = """
+                {"phoneVisibility": "PUBLIC", "whatsappVisibility": "PUBLIC", "emailVisibility": "PUBLIC",
+                 "openingHours": [{"day": "MONDAY", "opensAt": "08:10", "closesAt": "17:00"}]}
+                """;
+        String missingDay = """
+                {"phoneVisibility": "PUBLIC", "whatsappVisibility": "PUBLIC", "emailVisibility": "PUBLIC",
+                 "openingHours": [{"opensAt": "08:00", "closesAt": "17:00"}]}
+                """;
+
+        for (String body : List.of(closesBeforeOpening, overlapping, notAnHour, offTheQuarterHour, missingDay)) {
+            assertThat(put("/contact", token("coop@test.local"), body)).hasStatus(HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @Test
+    void clearsTheOpeningHoursWhenNoneAreSent() {
+        put("/contact", token("coop@test.local"), """
+                {"phoneVisibility": "PUBLIC", "whatsappVisibility": "PUBLIC", "emailVisibility": "PUBLIC",
+                 "openingHours": [{"day": "MONDAY", "opensAt": "08:00", "closesAt": "17:00"}]}
+                """);
+
+        assertThat(put("/contact", token("coop@test.local"), """
+                        {"phoneVisibility": "PUBLIC", "whatsappVisibility": "PUBLIC", "emailVisibility": "PUBLIC"}
+                        """))
+                .hasStatusOk()
+                .bodyJson()
+                .isLenientlyEqualTo("""
+                        {"contact": {"openingHours": []}}
+                        """);
     }
 
     @Test

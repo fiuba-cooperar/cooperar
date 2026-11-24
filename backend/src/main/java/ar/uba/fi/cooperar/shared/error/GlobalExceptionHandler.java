@@ -4,6 +4,7 @@ import ar.uba.fi.cooperar.domain.catalog.TooManyPhotosException;
 import ar.uba.fi.cooperar.domain.organizations.ChangesNotRequestedException;
 import ar.uba.fi.cooperar.domain.organizations.GalleryFullException;
 import ar.uba.fi.cooperar.domain.organizations.InvalidCuitException;
+import ar.uba.fi.cooperar.domain.organizations.InvalidOpeningHoursException;
 import ar.uba.fi.cooperar.domain.organizations.InvalidStartYearException;
 import ar.uba.fi.cooperar.domain.organizations.RegistrationNotAwaitingReviewException;
 import ar.uba.fi.cooperar.domain.organizations.TooManyAddressesException;
@@ -17,17 +18,18 @@ import ar.uba.fi.cooperar.service.catalog.ProductPhotoNotFoundException;
 import ar.uba.fi.cooperar.service.images.ImageStorageException;
 import ar.uba.fi.cooperar.service.images.InvalidImageException;
 import ar.uba.fi.cooperar.service.organizations.CuitAlreadyRegisteredException;
+import ar.uba.fi.cooperar.service.organizations.EmailNotVerifiedException;
 import ar.uba.fi.cooperar.service.organizations.InvalidGalleryOrderException;
 import ar.uba.fi.cooperar.service.organizations.OrganizationNotFoundException;
 import ar.uba.fi.cooperar.service.organizations.ProfilePhotoNotFoundException;
 import ar.uba.fi.cooperar.service.organizations.RegistrationRequestNotFoundException;
 import ar.uba.fi.cooperar.service.user.AccountNotFoundException;
+import ar.uba.fi.cooperar.service.user.EmailAlreadyRegisteredException;
 import ar.uba.fi.cooperar.service.user.EmailAlreadyVerifiedException;
 import ar.uba.fi.cooperar.service.user.InvalidCredentialsException;
 import ar.uba.fi.cooperar.service.user.InvalidRefreshTokenException;
 import ar.uba.fi.cooperar.service.user.InvalidVerificationTokenException;
 import ar.uba.fi.cooperar.service.user.PasswordTooLongException;
-import ar.uba.fi.cooperar.service.user.RegistrationConflictException;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,6 +60,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler({
         InvalidCuitException.class,
         InvalidStartYearException.class,
+        InvalidOpeningHoursException.class,
         TooManyAddressesException.class,
         InvalidProductCategoryException.class,
         InvalidImageException.class,
@@ -95,22 +98,26 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
     }
 
-    /** Lists the conflicting fields so the client can point at them. */
-    @ExceptionHandler(RegistrationConflictException.class)
-    public ProblemDetail handleRegistrationConflict(RegistrationConflictException exception) {
+    /** Same shape as the CUIT conflict, so the client points at the email field. */
+    @ExceptionHandler(EmailAlreadyRegisteredException.class)
+    public ProblemDetail handleEmailConflict(EmailAlreadyRegisteredException exception) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
-        problem.setProperty(
-                "conflicts",
-                exception.getFields().stream().map(Enum::name).sorted().toList());
+        problem.setProperty("conflicts", List.of("EMAIL"));
         return problem;
     }
 
-    /** Same shape as a registration conflict, so the client points at the CUIT field in both forms. */
+    /** Names the conflicting field so the client can point at it. */
     @ExceptionHandler(CuitAlreadyRegisteredException.class)
     public ProblemDetail handleCuitConflict(CuitAlreadyRegisteredException exception) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
         problem.setProperty("conflicts", List.of("CUIT"));
         return problem;
+    }
+
+    /** The account is signed in but not allowed yet: the client asks it to confirm the email. */
+    @ExceptionHandler(EmailNotVerifiedException.class)
+    public ProblemDetail handleEmailNotVerified(EmailNotVerifiedException exception) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, exception.getMessage());
     }
 
     /** The image storage is down or refused the image: not the client's fault, and worth retrying later. */

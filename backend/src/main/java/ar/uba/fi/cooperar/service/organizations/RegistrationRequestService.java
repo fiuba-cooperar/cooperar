@@ -44,15 +44,18 @@ public class RegistrationRequestService {
     }
 
     /**
-     * Sends a request to add another organization. Like the one sent on sign-up, it reaches the review once the
-     * account has confirmed its email.
+     * Sends a request to add an organization, the only way to get one. The account has to have confirmed its
+     * email.
      */
     @Transactional
     public RegistrationRequest create(UUID accountId, OrganizationDetails details) {
+        UserAccount account = users.getReferenceById(accountId);
+        if (!account.isEmailVerified()) {
+            throw new EmailNotVerifiedException();
+        }
         if (cuits.isTaken(Cuit.parse(details.cuit()))) {
             throw new CuitAlreadyRegisteredException();
         }
-        UserAccount account = users.getReferenceById(accountId);
         RegistrationRequest request = new RegistrationRequest(details, account, clock.instant());
         try {
             requests.saveAndFlush(request);

@@ -110,6 +110,16 @@ class RegistrationRequestServiceTest {
     }
 
     @Test
+    void doesNotCreateARequestUntilTheEmailIsConfirmed() {
+        UserAccount unverified = new UserAccount("Beto", "Gómez", "beto@coop.local", "hash", Role.COOPERATIVE);
+        when(users.getReferenceById(unverified.getId())).thenReturn(unverified);
+
+        assertThatThrownBy(() -> service.create(unverified.getId(), DETAILS))
+                .isInstanceOf(EmailNotVerifiedException.class);
+        verify(requests, never()).saveAndFlush(any());
+    }
+
+    @Test
     void doesNotCreateARequestForATakenCuit() {
         when(requests.existsOpenWithCuit(any(), any())).thenReturn(true);
 

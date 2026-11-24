@@ -33,7 +33,12 @@ public record CooperativeOrganizationProfileResponse(
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) ProfileActivityResponse activity,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) ProfileLocationResponse location,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) ProfileContactResponse contact,
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) ProfilePhotosResponse photos) {
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) ProfilePhotosResponse photos,
+
+        @Schema(
+                requiredMode = Schema.RequiredMode.REQUIRED,
+                description = "Whether the getting-started card of the panel was closed for good")
+        boolean onboardingDismissed) {
 
     public record ProfileIdentificationResponse(
             @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
@@ -93,7 +98,10 @@ public record CooperativeOrganizationProfileResponse(
 
             String website,
             String socialMedia,
-            String openingHours,
+
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+            List<OpeningPeriodResponse> openingHours,
+
             ResponseTime responseTime) {}
 
     static CooperativeOrganizationProfileResponse from(Organization organization) {
@@ -128,8 +136,11 @@ public record CooperativeOrganizationProfileResponse(
                         organization.getEmailVisibility(),
                         organization.getWebsite(),
                         organization.getSocialMedia(),
-                        organization.getOpeningHours(),
+                        organization.getOpeningHours().stream()
+                                .map(OpeningPeriodResponse::from)
+                                .toList(),
                         organization.getResponseTime()),
-                ProfilePhotosResponse.from(organization));
+                ProfilePhotosResponse.from(organization),
+                organization.isOnboardingDismissed());
     }
 }

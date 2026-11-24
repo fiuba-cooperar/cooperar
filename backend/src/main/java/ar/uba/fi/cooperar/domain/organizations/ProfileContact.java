@@ -1,5 +1,7 @@
 package ar.uba.fi.cooperar.domain.organizations;
 
+import java.util.List;
+
 /** How the public and other organizations can reach an organization. Every field is optional. */
 public record ProfileContact(
         String phone,
@@ -10,5 +12,10 @@ public record ProfileContact(
         Visibility emailVisibility,
         String website,
         String socialMedia,
-        String openingHours,
-        ResponseTime responseTime) {}
+        List<OpeningPeriod> openingHours,
+        ResponseTime responseTime) {
+
+    public ProfileContact {
+        openingHours = openingHours == null ? List.of() : List.copyOf(openingHours);
+    }
+}

@@ -20,21 +20,21 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/cooperative/registration-requests")
-@Tag(name = "cooperative-registration-requests")
-public class CooperativeRegistrationRequestController {
+@RequestMapping("/api/me/registration-requests")
+@Tag(name = "account-registration-requests")
+public class AccountRegistrationRequestController {
 
     private final RegistrationRequestService requestService;
 
-    public CooperativeRegistrationRequestController(RegistrationRequestService requestService) {
+    public AccountRegistrationRequestController(RegistrationRequestService requestService) {
         this.requestService = requestService;
     }
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(operationId = "listRegistrationRequestsSent", summary = "Every request the account sent, newest first")
-    public List<CooperativeRegistrationRequestResponse> list(@AuthenticationPrincipal Jwt jwt) {
+    public List<AccountRegistrationRequestResponse> list(@AuthenticationPrincipal Jwt jwt) {
         return requestService.list(UUID.fromString(jwt.getSubject())).stream()
-                .map(CooperativeRegistrationRequestResponse::from)
+                .map(AccountRegistrationRequestResponse::from)
                 .toList();
     }
 
@@ -43,11 +43,11 @@ public class CooperativeRegistrationRequestController {
     @Operation(
             operationId = "createRegistrationRequest",
             summary = "Send a request to add another organization",
-            description = "It reaches the review once the account has confirmed its email. Answers 409 with a"
+            description = "Answers 403 until the account has confirmed its email, and 409 with a"
                     + " `conflicts` list (`CUIT`) when another organization or request under review has that CUIT.")
-    public CooperativeRegistrationRequestResponse create(
+    public AccountRegistrationRequestResponse create(
             @Valid @RequestBody RegistrationOrganizationRequest request, @AuthenticationPrincipal Jwt jwt) {
-        return CooperativeRegistrationRequestResponse.from(
+        return AccountRegistrationRequestResponse.from(
                 requestService.create(UUID.fromString(jwt.getSubject()), request.toDetails()));
     }
 
@@ -56,8 +56,8 @@ public class CooperativeRegistrationRequestController {
             operationId = "getRegistrationRequest",
             summary = "A registration request that the account sent",
             description = "Answers 404 when the request does not exist or another account sent it.")
-    public CooperativeRegistrationRequestResponse get(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
-        return CooperativeRegistrationRequestResponse.from(requestService.get(id, UUID.fromString(jwt.getSubject())));
+    public AccountRegistrationRequestResponse get(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
+        return AccountRegistrationRequestResponse.from(requestService.get(id, UUID.fromString(jwt.getSubject())));
     }
 
     @PutMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -66,11 +66,11 @@ public class CooperativeRegistrationRequestController {
             summary = "Correct the request as the observatory asked and send it back to the review",
             description = "Answers 409 when the observatory did not ask for changes, or with a `conflicts` list"
                     + " (`CUIT`) when another organization or request under review has that CUIT.")
-    public CooperativeRegistrationRequestResponse resubmit(
+    public AccountRegistrationRequestResponse resubmit(
             @PathVariable UUID id,
             @Valid @RequestBody RegistrationOrganizationRequest request,
             @AuthenticationPrincipal Jwt jwt) {
-        return CooperativeRegistrationRequestResponse.from(
+        return AccountRegistrationRequestResponse.from(
                 requestService.resubmit(id, UUID.fromString(jwt.getSubject()), request.toDetails()));
     }
 }

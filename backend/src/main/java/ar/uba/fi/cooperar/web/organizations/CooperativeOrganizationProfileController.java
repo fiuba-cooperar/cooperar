@@ -92,6 +92,13 @@ public class CooperativeOrganizationProfileController {
                 profileService.updateContact(id, accountId(jwt), request.toContact()));
     }
 
+    @PutMapping("/onboarding-dismissal")
+    @Operation(operationId = "dismissOnboarding", summary = "Close the getting-started card of the panel for good")
+    public CooperativeOrganizationProfileResponse dismissOnboarding(
+            @PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
+        return CooperativeOrganizationProfileResponse.from(profileService.dismissOnboarding(id, accountId(jwt)));
+    }
+
     private static UUID accountId(Jwt jwt) {
         return UUID.fromString(jwt.getSubject());
     }

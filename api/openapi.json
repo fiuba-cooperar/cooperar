@@ -1544,6 +1544,92 @@
         "tags" : [ "auth" ]
       }
     },
+    "/api/me/notifications" : {
+      "get" : {
+        "operationId" : "listNotifications",
+        "parameters" : [ {
+          "description" : "Only the unread ones",
+          "in" : "query",
+          "name" : "unread",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean",
+            "default" : false
+          }
+        }, {
+          "description" : "From 0; 0 by default",
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0,
+            "minimum" : 0
+          }
+        }, {
+          "description" : "20 by default",
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 20,
+            "maximum" : 50,
+            "minimum" : 1
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/NotificationPageResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "The notifications of the account, newest first, with how many it has unread",
+        "tags" : [ "notifications" ]
+      }
+    },
+    "/api/me/notifications/read-all" : {
+      "post" : {
+        "operationId" : "markAllNotificationsRead",
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        },
+        "summary" : "Mark every notification of the account as read",
+        "tags" : [ "notifications" ]
+      }
+    },
+    "/api/me/notifications/{id}/read" : {
+      "post" : {
+        "description" : "Marking one that is already read changes nothing. Answers 404 when it does not exist or belongs to another account.",
+        "operationId" : "markNotificationRead",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        },
+        "summary" : "Mark a notification as read",
+        "tags" : [ "notifications" ]
+      }
+    },
     "/api/me/registration-requests" : {
       "get" : {
         "operationId" : "listRegistrationRequestsSent",
@@ -2601,6 +2687,78 @@
           }
         },
         "required" : [ "items", "page", "size", "total" ]
+      },
+      "NotificationPageResponse" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/NotificationResponse"
+            }
+          },
+          "page" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "size" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "total" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Notifications found, on every page"
+          },
+          "unread" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Unread notifications of the account, whatever the filter"
+          }
+        }
+      },
+      "NotificationResponse" : {
+        "type" : "object",
+        "properties" : {
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "message" : {
+            "type" : "string",
+            "description" : "What the observatory said, for the types that carry it"
+          },
+          "organizationId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "The organization an approval created, to link to its panel"
+          },
+          "readAt" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "Missing while it is unread"
+          },
+          "registrationRequestId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "The registration request it is about, to link to it"
+          },
+          "subject" : {
+            "type" : "string",
+            "description" : "The name of what it is about, like the organization of a registration request"
+          },
+          "type" : {
+            "$ref" : "#/components/schemas/NotificationType"
+          }
+        }
+      },
+      "NotificationType" : {
+        "type" : "string",
+        "enum" : [ "REGISTRATION_APPROVED", "REGISTRATION_REJECTED", "REGISTRATION_CHANGES_REQUESTED" ]
       },
       "OpeningDay" : {
         "type" : "string",

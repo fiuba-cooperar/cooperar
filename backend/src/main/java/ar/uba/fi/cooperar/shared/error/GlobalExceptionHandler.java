@@ -18,6 +18,7 @@ import ar.uba.fi.cooperar.service.catalog.ProductNotFoundException;
 import ar.uba.fi.cooperar.service.catalog.ProductPhotoNotFoundException;
 import ar.uba.fi.cooperar.service.images.ImageStorageException;
 import ar.uba.fi.cooperar.service.images.InvalidImageException;
+import ar.uba.fi.cooperar.service.notifications.NotificationNotFoundException;
 import ar.uba.fi.cooperar.service.organizations.CuitAlreadyRegisteredException;
 import ar.uba.fi.cooperar.service.organizations.EmailNotVerifiedException;
 import ar.uba.fi.cooperar.service.organizations.InvalidGalleryOrderException;
@@ -77,6 +78,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler({
         OrganizationNotFoundException.class,
+        NotificationNotFoundException.class,
         RegistrationRequestNotFoundException.class,
         ProductNotFoundException.class,
         ProductCategoryNotFoundException.class,

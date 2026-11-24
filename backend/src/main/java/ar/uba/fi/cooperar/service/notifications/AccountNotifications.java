@@ -3,6 +3,7 @@ package ar.uba.fi.cooperar.service.notifications;
 import ar.uba.fi.cooperar.service.organizations.RegistrationReviewed;
 import ar.uba.fi.cooperar.service.user.EmailVerificationService;
 import ar.uba.fi.cooperar.service.user.VerificationEmailRequested;
+import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,67 +32,105 @@ public class AccountNotifications {
 
     @TransactionalEventListener
     public void onVerificationEmailRequested(VerificationEmailRequested event) {
-        String link = UriComponentsBuilder.fromUri(properties.publicUrl())
-                .path("/verify-email")
-                .queryParam("token", event.token())
-                .toUriString();
-        String body = """
-                %s
-
-                Gracias por registrarte en CooperAR. Para confirmar tu email, entrá a este enlace:
-
-                %s
-
-                El enlace vence en %d horas. Una vez que tengas tu cuenta, podés dar de alta tu organización \
-                desde tu panel: el observatorio la va a revisar cuando hayas confirmado tu email y te vamos a \
-                avisar por este medio.
-
-                Si no te registraste en CooperAR, ignorá este mensaje.
-                """.formatted(greeting(event.firstName()), link, EmailVerificationService.TOKEN_TTL.toHours());
-        send(event.accountId(), "verification", new EmailMessage(event.email(), "Confirmá tu email en CooperAR", body));
+        String link = link("/verify-email", "token", event.token());
+        send(
+                event.accountId(),
+                "verification",
+                compose(
+                        event.email(),
+                        "Confirmá tu email en CooperAR",
+                        greeting(event.firstName()),
+                        List.of(
+                                "Gracias por registrarte en CooperAR. Para confirmar tu email, hacé clic en «Confirmar mi email», acá abajo.",
+                                "El enlace vence en %d horas. Una vez creada tu cuenta, vas a poder dar de alta entidades desde tu panel."
+                                        .formatted(EmailVerificationService.TOKEN_TTL.toHours())),
+                        null,
+                        "Confirmar mi email",
+                        link,
+                        "Si no te registraste en CooperAR, ignorá este mensaje."));
     }
 
+    /** Each outcome leads to the place where the account acts on it, and signs in first when it has no session. */
     @TransactionalEventListener
     public void onRegistrationReviewed(RegistrationReviewed event) {
-        String panel = UriComponentsBuilder.fromUri(properties.publicUrl())
-                .path("/login")
-                .toUriString();
         String greeting = greeting(event.firstName());
         String name = event.organizationName();
+        String requests = "/account/registration-requests";
         EmailMessage message = switch (event.outcome()) {
             case APPROVED ->
-                new EmailMessage(event.email(), "Aprobamos el alta de " + name, """
-                            %s
-
-                            El observatorio aprobó el alta de %s, que desde ahora es visible para el público en \
-                            CooperAR.
-
-                            Ingresá a tu panel para completar su ficha: %s
-                            """.formatted(greeting, name, panel));
+                compose(
+                        event.email(),
+                        "Aprobamos el alta de " + name,
+                        greeting,
+                        List.of(
+                                "El observatorio aprobó el alta de %s, que desde ahora es visible para el público en CooperAR."
+                                        .formatted(name),
+                                "Ingresá a tu panel para completar su ficha."),
+                        null,
+                        "Ir a mis entidades",
+                        link("/account"),
+                        null);
             case REJECTED ->
-                new EmailMessage(event.email(), "Revisamos el alta de " + name, """
-                            %s
-
-                            El observatorio no aprobó el alta de %s por este motivo:
-
-                            %s
-
-                            Podés ver el estado de tu solicitud desde tu panel: %s
-                            """.formatted(
-                                greeting, name, event.message(), panel));
+                compose(
+                        event.email(),
+                        "Revisamos el alta de " + name,
+                        greeting,
+                        List.of("El observatorio no aprobó el alta de %s por este motivo:".formatted(name)),
+                        event.message(),
+                        "Ver mis solicitudes",
+                        link(requests),
+                        null);
             case CHANGES_REQUESTED ->
-                new EmailMessage(event.email(), "Necesitamos más información sobre el alta de " + name, """
-                            %s
-
-                            Para aprobar el alta de %s, el observatorio necesita que revises estos datos:
-
-                            %s
-
-                            Ingresá a tu panel, corregí la solicitud y reenviala: %s
-                            """.formatted(
-                                greeting, name, event.message(), panel));
+                compose(
+                        event.email(),
+                        "Necesitamos más información sobre el alta de " + name,
+                        greeting,
+                        List.of("Para aprobar el alta de %s, el observatorio necesita que revises estos datos:"
+                                .formatted(name)),
+                        event.message(),
+                        "Corregir la solicitud",
+                        link(requests + "/" + event.requestId()),
+                        null);
         };
         send(event.accountId(), "review", message);
+    }
+
+    private String link(String path) {
+        return UriComponentsBuilder.fromUri(properties.publicUrl()).path(path).toUriString();
+    }
+
+    private String link(String path, String parameter, String value) {
+        return UriComponentsBuilder.fromUri(properties.publicUrl())
+                .path(path)
+                .queryParam(parameter, value)
+                .toUriString();
+    }
+
+    /** The same content as plain text and as HTML. */
+    private EmailMessage compose(
+            String to,
+            String subject,
+            String greeting,
+            List<String> paragraphs,
+            String quote,
+            String buttonLabel,
+            String url,
+            String footer) {
+        StringBuilder text = new StringBuilder(greeting).append("\n\n");
+        paragraphs.forEach(paragraph -> text.append(paragraph).append("\n\n"));
+        if (quote != null) {
+            text.append(quote).append("\n\n");
+        }
+        text.append(buttonLabel).append(": ").append(url).append('\n');
+        if (footer != null) {
+            text.append('\n').append(footer).append('\n');
+        }
+        return new EmailMessage(
+                to,
+                subject,
+                text.toString(),
+                EmailLayout.html(
+                        link("/brand/symbol-mocks.png"), greeting, paragraphs, quote, buttonLabel, url, footer));
     }
 
     private void send(UUID accountId, String kind, EmailMessage message) {

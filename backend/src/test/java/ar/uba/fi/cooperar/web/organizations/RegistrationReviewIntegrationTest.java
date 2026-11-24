@@ -29,6 +29,7 @@ class RegistrationReviewIntegrationTest {
 
     private static final String ADMIN_REQUESTS = "/api/admin/registration-requests";
     private static final String PENDING = ADMIN_REQUESTS + "?status=PENDING";
+    private static final String NOTIFICATIONS = "/api/me/notifications";
     private static final Pattern TOKEN = Pattern.compile("/verify-email\\?token=([\\w-]+)");
 
     @Autowired
@@ -370,6 +371,87 @@ class RegistrationReviewIntegrationTest {
         assertThat(post("/api/me/email-verification", null, null)).hasStatus(HttpStatus.UNAUTHORIZED);
     }
 
+    @Test
+    void leavesAnUnreadNotificationOfEachDecisionThatTheAccountCanRead() {
+        String approved = registerAndVerify("ana@coop.local", "30-12345678-1", "La Litoraleña");
+        String coop = accessToken("ana@coop.local", "secret-password");
+        assertThat(get(NOTIFICATIONS, coop)).hasStatusOk().bodyJson().isLenientlyEqualTo("""
+                {"items": [], "total": 0, "unread": 0}
+                """);
+
+        post(requestChanges(approved), admin(), "{\"message\": \"Falta la razón social\"}");
+        put("/api/me/registration-requests/" + approved, coop, correction("30-12345678-1"));
+        post(approve(approved), admin(), null);
+
+        var list = get(NOTIFICATIONS, coop);
+        assertThat(list).hasStatusOk().bodyJson().isLenientlyEqualTo("""
+                {"total": 2, "unread": 2, "page": 0, "size": 20,
+                 "items": [
+                   {"type": "REGISTRATION_APPROVED", "subject": "La Litoraleña Coop",
+                    "registrationRequestId": "%1$s", "readAt": null},
+                   {"type": "REGISTRATION_CHANGES_REQUESTED", "subject": "La Litoraleña",
+                    "message": "Falta la razón social", "organizationId": null, "readAt": null}
+                 ]}
+                """.formatted(approved));
+        assertThat(list).bodyJson().extractingPath("$.items[0].organizationId").isNotNull();
+    }
+
+    @Test
+    void marksNotificationsAsReadOneByOneAndAllAtOnce() {
+        String first = registerAndVerify("ana@coop.local", "30-12345678-1", "Primera");
+        String second = registerAndVerify("ana@coop.local", "20-12345678-6", "Segunda");
+        String coop = accessToken("ana@coop.local", "secret-password");
+        post(approve(first), admin(), null);
+        post(approve(second), admin(), null);
+        String newest = JsonPath.read(body(get(NOTIFICATIONS, coop)), "$.items[0].id");
+
+        assertThat(post(NOTIFICATIONS + "/" + newest + "/read", coop, null)).hasStatus(HttpStatus.NO_CONTENT);
+        assertThat(post(NOTIFICATIONS + "/" + newest + "/read", coop, null)).hasStatus(HttpStatus.NO_CONTENT);
+
+        assertThat(get(NOTIFICATIONS + "?unread=true", coop)).bodyJson().isLenientlyEqualTo("""
+                {"total": 1, "unread": 1, "items": [{"subject": "Primera"}]}
+                """);
+        // The unread one goes first even though the read one is newer.
+        assertThat(get(NOTIFICATIONS, coop))
+                .bodyJson()
+                .extractingPath("$.items[*].subject")
+                .isEqualTo(List.of("Primera", "Segunda"));
+        assertThat(get(NOTIFICATIONS, coop)).bodyJson().isLenientlyEqualTo("""
+                {"total": 2, "unread": 1}
+                """);
+
+        assertThat(post(NOTIFICATIONS + "/read-all", coop, null)).hasStatus(HttpStatus.NO_CONTENT);
+
+        assertThat(get(NOTIFICATIONS + "?unread=true", coop)).bodyJson().isLenientlyEqualTo("""
+                {"total": 0, "unread": 0, "items": []}
+                """);
+        assertThat(get(NOTIFICATIONS, coop)).bodyJson().isLenientlyEqualTo("""
+                {"total": 2, "unread": 0}
+                """);
+    }
+
+    @Test
+    void anAccountOnlySeesAndMarksItsOwnNotifications() {
+        String requestId = registerAndVerify("ana@coop.local", "30-12345678-1", "La Litoraleña");
+        registerAndVerify("beto@coop.local", "20-12345678-6", "Otra");
+        String ana = accessToken("ana@coop.local", "secret-password");
+        String beto = accessToken("beto@coop.local", "secret-password");
+        post(approve(requestId), admin(), null);
+        String anasNotification = JsonPath.read(body(get(NOTIFICATIONS, ana)), "$.items[0].id");
+
+        assertThat(get(NOTIFICATIONS, beto)).bodyJson().isLenientlyEqualTo("""
+                {"total": 0, "unread": 0}
+                """);
+        assertThat(post(NOTIFICATIONS + "/" + anasNotification + "/read", beto, null))
+                .hasStatus(HttpStatus.NOT_FOUND);
+        assertThat(post(NOTIFICATIONS + "/read-all", beto, null)).hasStatus(HttpStatus.NO_CONTENT);
+        assertThat(get(NOTIFICATIONS, ana)).bodyJson().isLenientlyEqualTo("""
+                {"total": 1, "unread": 1}
+                """);
+        assertThat(mvc.get().uri(NOTIFICATIONS)).hasStatus(HttpStatus.UNAUTHORIZED);
+        assertThat(get(NOTIFICATIONS + "?size=51", ana)).hasStatus(HttpStatus.BAD_REQUEST);
+    }
+
     private String registerAndVerify(String email, String cuit, String name) {
         return register(email, cuit, name);
     }
@@ -491,6 +573,10 @@ class RegistrationReviewIntegrationTest {
             request = request.contentType(MediaType.APPLICATION_JSON).content(body);
         }
         return request.exchange();
+    }
+
+    private static String body(MvcTestResult result) {
+        return new String(result.getResponse().getContentAsByteArray(), StandardCharsets.UTF_8);
     }
 
     private static String field(MvcTestResult result, String name) {

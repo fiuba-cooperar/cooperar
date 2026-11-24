@@ -74,7 +74,14 @@ class RegistrationReviewServiceTest {
         assertThat(account.getOrganizations()).containsExactly(organization);
         verify(events)
                 .publishEvent(new RegistrationReviewed(
-                        account.getId(), "ana@coop.local", "Ana", "La Litoraleña", ReviewOutcome.APPROVED, null));
+                        account.getId(),
+                        "ana@coop.local",
+                        "Ana",
+                        request.getId(),
+                        "La Litoraleña",
+                        organization.getId(),
+                        ReviewOutcome.APPROVED,
+                        null));
     }
 
     @Test
@@ -100,7 +107,9 @@ class RegistrationReviewServiceTest {
                         account.getId(),
                         "ana@coop.local",
                         "Ana",
+                        request.getId(),
                         "La Litoraleña",
+                        null,
                         ReviewOutcome.REJECTED,
                         "Duplicated"));
     }
@@ -117,7 +126,9 @@ class RegistrationReviewServiceTest {
                         account.getId(),
                         "ana@coop.local",
                         "Ana",
+                        request.getId(),
                         "La Litoraleña",
+                        null,
                         ReviewOutcome.CHANGES_REQUESTED,
                         "Check the CUIT"));
     }

@@ -22,6 +22,8 @@ import { useAuth } from './useAuth';
 
 const ERROR_MESSAGES: Record<LoginError['reason'], string> = {
   'invalid-credentials': 'El email o la contraseña no son correctos. Revisalos e intentá de nuevo.',
+  'rate-limited':
+    'Se alcanzó el límite de intentos de ingreso. Podrá intentarse nuevamente más tarde.',
   unavailable:
     'No pudimos iniciar sesión por un problema de conexión. Intentá de nuevo en unos minutos.',
 };

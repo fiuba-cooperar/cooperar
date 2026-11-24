@@ -104,6 +104,16 @@ describe('authentication', () => {
     expect(getAccessToken()).toBeNull();
   });
 
+  it('tells the visitor when there were too many sign-in attempts', async () => {
+    stubFetchRoutes({ 'POST /api/auth/login': { status: 429, body: { status: 429 } } });
+
+    renderRoute('/login');
+    await fillAndSubmit('admin@test.local', 'wrong');
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/límite de intentos/);
+    expect(getAccessToken()).toBeNull();
+  });
+
   it('asks for the missing fields without calling the server', async () => {
     const fetchMock = stubFetchRoutes({});
 

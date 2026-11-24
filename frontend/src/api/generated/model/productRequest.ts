@@ -5,6 +5,7 @@
  * Open observatory of worker-recovered companies and worker cooperatives
  * OpenAPI spec version: v1
  */
+import type { ProductType } from './productType';
 import type { SaleMode } from './saleMode';
 
 export interface ProductRequest {
@@ -30,4 +31,5 @@ export interface ProductRequest {
   publish?: boolean;
   /** @minItems 1 */
   saleModes: SaleMode[];
+  type: ProductType;
 }

@@ -11,11 +11,12 @@ import {
   Stack,
   Text,
   Title,
+  Tooltip,
 } from '@mantine/core';
 import { IconCheck, IconLink, IconMapPin, IconMessage } from '@tabler/icons-react';
 import { useState } from 'react';
-import { Link, useParams } from 'react-router';
-import type { CatalogProductResponse } from '@/api/generated/model';
+import { Link, useLocation, useParams } from 'react-router';
+import { ProductType, type CatalogProductResponse } from '@/api/generated/model';
 import { NotFoundPage } from '@/features/errors/NotFoundPage';
 import {
   ORGANIZATION_TYPE_LABELS,
@@ -24,9 +25,11 @@ import {
 } from '@/features/organizations/labels';
 import { initials } from '@/features/organizations/initials';
 import { useProduct } from './api/useProduct';
+import { InquiryForm } from './components/InquiryForm';
 import { ProductGrid } from './components/ProductGrid';
-import { placeLabel, priceLines, SALE_MODE_LABELS } from './labels';
+import { ownItemLabel, placeLabel, priceLines, SALE_MODE_LABELS } from './labels';
 import { CATALOG_PATH } from './productSearch';
+import { useManagesOrganization } from './useManagesOrganization';
 import styles from './ProductDetailPage.module.css';
 
 const SECTION = { size: 1276, px: { base: 'md', sm: 48 } } as const;
@@ -78,10 +81,21 @@ function Product({
   more: CatalogProductResponse[];
 }) {
   const { organization } = product;
+  const isOwn = useManagesOrganization(organization.slug);
   const organizationPath = `/organizations/${organization.slug}`;
+  // The catalog cards link here with #inquiry to open the form right away.
+  const [inquiryOpen, setInquiryOpen] = useState(useLocation().hash === '#inquiry');
   const price = priceLines(product.indicativePrice);
   return (
     <Container {...SECTION} pt={28} pb={56}>
+      <InquiryForm
+        productId={product.id}
+        isService={product.type === ProductType.SERVICE}
+        opened={inquiryOpen && !isOwn}
+        onClose={() => {
+          setInquiryOpen(false);
+        }}
+      />
       <title>{`${product.name} · CooperAR`}</title>
       <Stack gap={28}>
         <Group justify="space-between" gap={12}>
@@ -148,16 +162,21 @@ function Product({
                     </Badge>
                   ))}
                 </Group>
-                <Button
-                  component={Link}
-                  to={organizationPath}
-                  fullWidth
-                  h={52}
-                  fz={16}
-                  leftSection={<IconMessage size={20} stroke={2} aria-hidden />}
-                >
-                  Pedir presupuesto
-                </Button>
+                <Tooltip label={ownItemLabel(product.type)} disabled={!isOwn} withArrow>
+                  <Button
+                    // Kept focusable and not `disabled`, so the tooltip also shows with the keyboard.
+                    {...(isOwn && { 'data-disabled': true, 'aria-disabled': true })}
+                    onClick={() => {
+                      if (!isOwn) setInquiryOpen(true);
+                    }}
+                    fullWidth
+                    h={52}
+                    fz={16}
+                    leftSection={<IconMessage size={20} stroke={2} aria-hidden />}
+                  >
+                    Pedir presupuesto
+                  </Button>
+                </Tooltip>
                 <Text fz={13} c="dimmed" lh={1.5}>
                   Solicitá un presupuesto a la cooperativa. Ellos te informarán el precio final y
                   las condiciones. Tené en cuenta que los pagos se realizan directamente con la

@@ -30,14 +30,8 @@ import { RequireRole } from '@/features/auth/RequireRole';
 import { VERIFY_EMAIL_PATH, VerifyEmailPage } from '@/features/auth/VerifyEmailPage';
 import { CooperativeHomePage } from '@/features/cooperative/CooperativeHomePage';
 import { CooperativeLayout } from '@/features/cooperative/CooperativeLayout';
-import {
-  COOPERATIVE_HOME_PATH,
-  COOPERATIVE_PRODUCT_PATH,
-  COOPERATIVE_PRODUCTS_PATH,
-  COOPERATIVE_PROFILE_PATH,
-  COOPERATIVE_SECTIONS,
-  NEW_PRODUCT_PATH,
-} from '@/features/cooperative/cooperativeSections';
+import { COOPERATIVE_PATH, COOPERATIVE_SECTIONS } from '@/features/cooperative/cooperativeSections';
+import { CooperativeEntry } from '@/features/cooperative/CooperativeEntry';
 import { ProductFormPage } from '@/features/cooperative/ProductFormPage';
 import { ProductsPage } from '@/features/cooperative/ProductsPage';
 import { ProfilePage } from '@/features/cooperative/ProfilePage';
@@ -98,23 +92,22 @@ export const routes: RouteObject[] = [
     // The cooperative panel has its own header and side menu instead of the public ones.
     element: <RequireRole role={Role.COOPERATIVE} />,
     children: [
+      { path: COOPERATIVE_PATH, element: <CooperativeEntry /> },
       {
-        path: COOPERATIVE_HOME_PATH,
+        // The organization is part of the address, so reloading keeps showing the same one.
+        path: `${COOPERATIVE_PATH}/:organizationSlug`,
         element: <CooperativeLayout />,
         children: [
           { index: true, element: <CooperativeHomePage /> },
-          { path: COOPERATIVE_PROFILE_PATH, element: <ProfilePage /> },
-          { path: COOPERATIVE_PRODUCTS_PATH, element: <ProductsPage /> },
-          { path: NEW_PRODUCT_PATH, element: <ProductFormPage /> },
-          { path: COOPERATIVE_PRODUCT_PATH, element: <ProductFormPage /> },
+          { path: 'profile', element: <ProfilePage /> },
+          { path: 'products', element: <ProductsPage /> },
+          { path: 'products/new', element: <ProductFormPage /> },
+          { path: 'products/:id', element: <ProductFormPage /> },
           ...COOPERATIVE_SECTIONS.filter(
-            ({ path }) =>
-              path !== COOPERATIVE_HOME_PATH &&
-              path !== COOPERATIVE_PROFILE_PATH &&
-              path !== COOPERATIVE_PRODUCTS_PATH,
-          ).map(({ path, label }) => ({
-            path,
-            element: <ComingSoonPage title={label} homePath={COOPERATIVE_HOME_PATH} />,
+            ({ segment }) => !['', 'profile', 'products'].includes(segment),
+          ).map(({ segment, label }) => ({
+            path: segment,
+            element: <ComingSoonPage title={label} homePath=".." />,
           })),
         ],
       },

@@ -8,6 +8,7 @@ import ar.uba.fi.cooperar.domain.catalog.ProductCategory;
 import ar.uba.fi.cooperar.domain.catalog.ProductDetails;
 import ar.uba.fi.cooperar.domain.catalog.ProductSearchCriteria;
 import ar.uba.fi.cooperar.domain.catalog.ProductSearchSort;
+import ar.uba.fi.cooperar.domain.catalog.ProductType;
 import ar.uba.fi.cooperar.domain.catalog.SaleMode;
 import ar.uba.fi.cooperar.domain.organizations.ActivityType;
 import ar.uba.fi.cooperar.domain.organizations.Address;
@@ -85,20 +86,21 @@ class ProductSearchServiceIntegrationTest {
                 Instant.now()));
         Product product = new Product(
                 organization,
-                new ProductDetails(PRODUCT, category, Set.of(SaleMode.RETAIL), null, null),
+                new ProductDetails(PRODUCT, ProductType.PRODUCT, category, Set.of(SaleMode.RETAIL), null, null),
                 Instant.now());
         product.publish(Instant.now());
         products.save(product);
         Product other = new Product(
                 organization,
-                new ProductDetails(OTHER_PRODUCT, category, Set.of(SaleMode.WHOLESALE), null, null),
+                new ProductDetails(
+                        OTHER_PRODUCT, ProductType.PRODUCT, category, Set.of(SaleMode.WHOLESALE), null, null),
                 Instant.now());
         other.publish(Instant.now());
         products.save(other);
 
         Product found = searchService
                 .search(
-                        new ProductSearchCriteria(null, category.getId(), null, null, null),
+                        new ProductSearchCriteria(null, category.getId(), null, null, null, null),
                         ProductSearchSort.NAME,
                         0,
                         20)

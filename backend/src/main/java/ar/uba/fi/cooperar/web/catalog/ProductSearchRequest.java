@@ -2,6 +2,7 @@ package ar.uba.fi.cooperar.web.catalog;
 
 import ar.uba.fi.cooperar.domain.catalog.ProductSearchCriteria;
 import ar.uba.fi.cooperar.domain.catalog.ProductSearchSort;
+import ar.uba.fi.cooperar.domain.catalog.ProductType;
 import ar.uba.fi.cooperar.domain.catalog.SaleMode;
 import ar.uba.fi.cooperar.domain.organizations.Province;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -11,7 +12,7 @@ import jakarta.validation.constraints.Size;
 import java.util.Set;
 import java.util.UUID;
 
-/** The query string of the public catalog. The sale mode repeats its parameter to take more than one value. */
+/** The query string of the public catalog. The sale mode, the type and the organization repeat their parameter to take more than one value. */
 public record ProductSearchRequest(
         @Schema(
                 description =
@@ -25,8 +26,11 @@ public record ProductSearchRequest(
         @Schema(description = "Only organizations of this province")
         Province province,
 
-        @Schema(description = "Only products of the organization with this slug") @Size(max = 200)
-        String organization,
+        @Schema(description = "Only products of any of the organizations with these slugs")
+        Set<@Size(max = 200) String> organization,
+
+        @Schema(description = "Only products, or only services")
+        Set<ProductType> type,
 
         @Schema(description = "RELEVANCE by default") ProductSearchSort sort,
 
@@ -40,7 +44,7 @@ public record ProductSearchRequest(
     private static final int DEFAULT_SIZE = 20;
 
     ProductSearchCriteria criteria() {
-        return new ProductSearchCriteria(q, category, saleMode, province, organization);
+        return new ProductSearchCriteria(q, category, saleMode, province, organization, type);
     }
 
     ProductSearchSort sortOrDefault() {

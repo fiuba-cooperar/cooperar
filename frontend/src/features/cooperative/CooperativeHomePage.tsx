@@ -23,7 +23,8 @@ import type {
   OrganizationSummary,
 } from '@/api/generated/model';
 import { useDismissOnboarding, useManagedProfile } from './api/useManagedProfile';
-import { COOPERATIVE_PRODUCTS_PATH, COOPERATIVE_PROFILE_PATH } from './cooperativeSections';
+import { useProducts } from './api/useProducts';
+import { cooperativePanel } from './cooperativeSections';
 import { useActiveOrganization } from './useActiveOrganization';
 import styles from './CooperativeHomePage.module.css';
 
@@ -50,25 +51,27 @@ function hasTheEssentials(profile: CooperativeOrganizationProfileResponse): bool
 
 function Steps({ organization }: { organization: OrganizationSummary }) {
   const { data: profile } = useManagedProfile(organization.id);
+  // Only the total matters, so a page of one is enough; unpublished products count too.
+  const { data: products } = useProducts(organization.id, { size: 1 });
   const dismiss = useDismissOnboarding(organization.id);
   const [confirming, setConfirming] = useState(false);
+  const panel = cooperativePanel(organization.slug);
   const allSteps: Step[] = [
     { key: 'basics', title: 'Datos básicos de la entidad', done: true },
     {
       key: 'profile',
       title: 'Completá tu ficha',
       description: 'Agregá información sobre quiénes son, dónde trabajan y cómo contactarlos.',
-      action: { label: 'Completar ficha', path: COOPERATIVE_PROFILE_PATH, filled: false },
+      action: { label: 'Completar ficha', path: panel.profile, filled: false },
       done: profile ? hasTheEssentials(profile) : false,
     },
     {
-      // TODO(#19): mark it done once the organization has products.
       key: 'products',
       title: 'Cargá tus primeros productos o servicios',
       description:
         'Contá qué productos o servicios ofrecés para que puedan encontrarte y solicitar un presupuesto.',
-      action: { label: 'Agregar producto', path: COOPERATIVE_PRODUCTS_PATH, filled: true },
-      done: false,
+      action: { label: 'Agregar producto', path: panel.products, filled: true },
+      done: (products?.total ?? 0) > 0,
     },
   ];
   const steps = allSteps;

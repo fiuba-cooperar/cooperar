@@ -37,7 +37,10 @@ spring:
 
 server:
   shutdown: graceful
-  forward-headers-strategy: framework
+  # Tomcat reads X-Forwarded-For from the right, skipping the proxies it trusts (the private ranges by default,
+  # server.tomcat.remoteip.internal-proxies), so a visitor cannot choose the address the request is seen to come from.
+  # The framework strategy would take the first entry, which anyone can write.
+  forward-headers-strategy: native
   # gzip for clients that accept it, whatever proxy sits in front (nginx at the Faculty, Render's rewrite in the demo).
   # Spring's default MIME types include JSON; responses under 2 KB are sent as they are.
   compression:

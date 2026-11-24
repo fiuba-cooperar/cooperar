@@ -3,9 +3,9 @@ import type { CurrentUserResponse } from '@/api/generated/model';
 
 export type AuthStatus = 'loading' | 'authenticated' | 'anonymous';
 
-/** Why a sign-in attempt failed: wrong credentials, or the server could not be reached or answered badly. */
+/** Why a sign-in attempt failed: wrong credentials, too many tries, or the server could not be reached or answered badly. */
 export class LoginError extends Error {
-  readonly reason: 'invalid-credentials' | 'unavailable';
+  readonly reason: 'invalid-credentials' | 'rate-limited' | 'unavailable';
 
   constructor(reason: LoginError['reason']) {
     super(reason);

@@ -18,6 +18,7 @@ import ar.uba.fi.cooperar.service.catalog.ProductNotFoundException;
 import ar.uba.fi.cooperar.service.catalog.ProductPhotoNotFoundException;
 import ar.uba.fi.cooperar.service.images.ImageStorageException;
 import ar.uba.fi.cooperar.service.images.InvalidImageException;
+import ar.uba.fi.cooperar.service.inquiries.OwnProductInquiryException;
 import ar.uba.fi.cooperar.service.notifications.NotificationNotFoundException;
 import ar.uba.fi.cooperar.service.organizations.CuitAlreadyRegisteredException;
 import ar.uba.fi.cooperar.service.organizations.EmailNotVerifiedException;
@@ -32,11 +33,14 @@ import ar.uba.fi.cooperar.service.user.InvalidCredentialsException;
 import ar.uba.fi.cooperar.service.user.InvalidRefreshTokenException;
 import ar.uba.fi.cooperar.service.user.InvalidVerificationTokenException;
 import ar.uba.fi.cooperar.service.user.PasswordTooLongException;
+import ar.uba.fi.cooperar.shared.ratelimit.TooManyRequestsException;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
@@ -96,7 +100,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         ProductCategoryNameTakenException.class,
         ProductCategoryInUseException.class,
         TooManyPhotosException.class,
-        GalleryFullException.class
+        GalleryFullException.class,
+        OwnProductInquiryException.class
     })
     public ProblemDetail handleStateConflict(RuntimeException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
@@ -116,6 +121,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
         problem.setProperty("conflicts", List.of("CUIT"));
         return problem;
+    }
+
+    /** Anti-spam: tells the sender how long to wait, in seconds, rounded up. */
+    @ExceptionHandler(TooManyRequestsException.class)
+    public ResponseEntity<ProblemDetail> handleTooManyRequests(TooManyRequestsException exception) {
+        long seconds = Math.max(1, exception.getRetryAfter().plusSeconds(1).toSeconds());
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header(HttpHeaders.RETRY_AFTER, String.valueOf(seconds))
+                .body(ProblemDetail.forStatusAndDetail(HttpStatus.TOO_MANY_REQUESTS, exception.getMessage()));
     }
 
     /** The account is signed in but not allowed yet: the client asks it to confirm the email. */

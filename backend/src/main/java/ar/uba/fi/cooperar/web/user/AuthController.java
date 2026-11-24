@@ -3,6 +3,7 @@ package ar.uba.fi.cooperar.web.user;
 import ar.uba.fi.cooperar.service.user.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -23,9 +24,13 @@ public class AuthController {
     }
 
     @PostMapping(value = "/login", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(operationId = "login", summary = "Sign in with email and password")
-    public TokenResponse login(@Valid @RequestBody LoginRequest request) {
-        return TokenResponse.from(authService.login(request.email(), request.password()));
+    @Operation(
+            operationId = "login",
+            summary = "Sign in with email and password",
+            description = "Each address and each email can fail a limited number of times per quarter of an hour; past"
+                    + " it the answer is 429 with `Retry-After`.")
+    public TokenResponse login(@Valid @RequestBody LoginRequest request, HttpServletRequest http) {
+        return TokenResponse.from(authService.login(request.email(), request.password(), http.getRemoteAddr()));
     }
 
     @PostMapping(value = "/refresh", produces = MediaType.APPLICATION_JSON_VALUE)

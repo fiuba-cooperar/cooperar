@@ -22,3 +22,16 @@ cooperar:
   # Nothing reaches GeoRef: the address fields get no suggestions.
   geography:
     provider: none
+
+  # The tests register many accounts from the same address; the limit has its own test with a low value.
+  registration:
+    rate-limit:
+      max-per-window: 100000
+  # The tests sign in and search many times from the same address; the limits have their own test with low values.
+  login:
+    rate-limit:
+      max-per-address: 100000
+      max-per-email: 100000
+  search:
+    rate-limit:
+      max-per-window: 100000

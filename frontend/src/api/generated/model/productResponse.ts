@@ -8,6 +8,7 @@
 import type { ProductCategoryResponse } from './productCategoryResponse';
 import type { ProductPhotoResponse } from './productPhotoResponse';
 import type { ProductStatus } from './productStatus';
+import type { ProductType } from './productType';
 import type { SaleMode } from './saleMode';
 
 export interface ProductResponse {
@@ -21,4 +22,5 @@ export interface ProductResponse {
   photos: ProductPhotoResponse[];
   saleModes: SaleMode[];
   status: ProductStatus;
+  type: ProductType;
 }

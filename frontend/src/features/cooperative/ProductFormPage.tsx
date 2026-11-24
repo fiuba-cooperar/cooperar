@@ -17,6 +17,7 @@ import { useState, type SyntheticEvent } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router';
 import {
   ProductStatus,
+  ProductType,
   SaleMode,
   type OrganizationSummary,
   type ProductRequest,
@@ -28,8 +29,7 @@ import { useProductCategories } from '@/features/catalog/api/useProductCategorie
 import { ProductSaveError, useProduct, useProductPhotos, useSaveProduct } from './api/useProducts';
 import { PhotosField } from './components/PhotosField';
 import { MAX_PHOTOS, PHOTOS_HINT, photoProblem } from './components/photoRules';
-import { COOPERATIVE_PRODUCTS_PATH, editProductPath } from './cooperativeSections';
-import { useActiveOrganization } from './useActiveOrganization';
+import { useActiveOrganization, usePanelPaths } from './useActiveOrganization';
 import styles from './ProductFormPage.module.css';
 
 const MODES: { value: SaleMode; title: string; description: string }[] = [
@@ -45,6 +45,16 @@ const MODES: { value: SaleMode; title: string; description: string }[] = [
   },
 ];
 
+const TYPE_DESCRIPTIONS: Record<ProductType, string> = {
+  [ProductType.PRODUCT]: 'Un bien que se fabrica o se vende',
+  [ProductType.SERVICE]: 'Un trabajo o una prestación a pedido',
+};
+
+const TYPE_LABELS: Record<ProductType, string> = {
+  [ProductType.PRODUCT]: 'Producto',
+  [ProductType.SERVICE]: 'Servicio',
+};
+
 const NAME_MAX = 120;
 const DESCRIPTION_MAX = 2000;
 const PRICE_HINT = 'Es opcional. En la ficha pública se muestra como "precio orientativo".';
@@ -57,6 +67,7 @@ const SAVE_ERRORS: Record<ProductSaveError['reason'], string> = {
 
 interface Form {
   name: string;
+  type: ProductType;
   /** Id of the chosen category. */
   categoryId: string | null;
   saleModes: SaleMode[];
@@ -70,6 +81,7 @@ type Errors = Partial<Record<'name' | 'categoryId' | 'saleModes' | 'price', stri
 
 const EMPTY_FORM: Form = {
   name: '',
+  type: ProductType.PRODUCT,
   categoryId: null,
   saleModes: [SaleMode.RETAIL],
   description: '',
@@ -80,6 +92,7 @@ const EMPTY_FORM: Form = {
 function fromProduct(product: ProductResponse): Form {
   return {
     name: product.name,
+    type: product.type,
     categoryId: product.category.id,
     saleModes: product.saleModes,
     description: product.description ?? '',
@@ -105,6 +118,7 @@ function toRequest(form: Form, publish: boolean): ProductRequest | null {
   const description = form.description.trim();
   return {
     name: form.name.trim(),
+    type: form.type,
     categoryId: form.categoryId,
     saleModes: MODES.map(({ value }) => value).filter((mode) => form.saleModes.includes(mode)),
     ...(description && { description }),
@@ -175,6 +189,7 @@ function ProductForm({
   organization: OrganizationSummary;
   product?: ProductResponse;
 }) {
+  const paths = usePanelPaths();
   const navigate = useNavigate();
   const { data: categories, isError: categoriesError } = useProductCategories();
   const categoryOptions = (categories ?? []).map(({ id, name }) => ({ value: id, label: name }));
@@ -237,13 +252,13 @@ function ProductForm({
       const failed = await upload(saved.id, files);
       if (failed > 0) {
         setFiles([]);
-        await navigate(editProductPath(saved.id), {
+        await navigate(paths.product(saved.id), {
           state: { failedPhotos: failed },
           replace: true,
         });
         return;
       }
-      await navigate(COOPERATIVE_PRODUCTS_PATH);
+      await navigate(paths.products);
     } catch (caught) {
       setFailure(caught instanceof ProductSaveError ? caught.reason : 'unavailable');
     } finally {
@@ -254,7 +269,7 @@ function ProductForm({
   return (
     <Stack gap={24}>
       <Stack gap={6}>
-        <Link to={COOPERATIVE_PRODUCTS_PATH} className={styles.back}>
+        <Link to={paths.products} className={styles.back}>
           <IconChevronLeft size={16} stroke={2.4} aria-hidden />
           Volver al listado
         </Link>
@@ -287,6 +302,37 @@ function ProductForm({
               }}
             />
             <CharCount value={form.name} max={NAME_MAX} />
+          </div>
+          <div role="radiogroup" aria-labelledby="product-type" className={styles.fieldset}>
+            <div id="product-type" className={styles.legend}>
+              Tipo
+            </div>
+            <div className={styles.modes}>
+              {Object.values(ProductType).map((type) => {
+                const on = form.type === type;
+                return (
+                  <button
+                    key={type}
+                    type="button"
+                    role="radio"
+                    aria-checked={on}
+                    aria-label={TYPE_LABELS[type]}
+                    className={styles.mode}
+                    onClick={() => {
+                      update('type', type);
+                    }}
+                  >
+                    <span className={styles.modeText}>
+                      <strong>{TYPE_LABELS[type]}</strong>
+                      <span className={styles.modeDescription}>{TYPE_DESCRIPTIONS[type]}</span>
+                    </span>
+                    <span className={styles.modeBox} aria-hidden>
+                      {on && <IconCheck size={14} stroke={3.2} />}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
           <Select
             label="Categoría"
@@ -449,13 +495,7 @@ function ProductForm({
             >
               Guardar
             </Button>
-            <Button
-              component={Link}
-              to={COOPERATIVE_PRODUCTS_PATH}
-              variant="default"
-              h={48}
-              px={24}
-            >
+            <Button component={Link} to={paths.products} variant="default" h={48} px={24}>
               Cancelar
             </Button>
           </Group>

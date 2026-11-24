@@ -3,12 +3,13 @@ import { IconCircleCheck, IconExternalLink } from '@tabler/icons-react';
 import { Link } from 'react-router';
 import type { OrganizationSummary } from '@/api/generated/model';
 import { useManagedProfile } from '../api/useManagedProfile';
-import { COOPERATIVE_PROFILE_PATH } from '../cooperativeSections';
+import { cooperativePanel } from '../cooperativeSections';
 import { PROFILE_SECTIONS, sectionStatus } from './profile/profileStatus';
 import styles from './ProfileStatus.module.css';
 
 /** How complete the profile is, what is missing in each section (with a link to it), and the link to the public one. */
 export function ProfileStatus({ organization }: { organization: OrganizationSummary }) {
+  const profilePath = cooperativePanel(organization.slug).profile;
   const { data: profile } = useManagedProfile(organization.id);
   const sections = profile
     ? PROFILE_SECTIONS.map(({ key, label }) => ({ key, label, ...sectionStatus(profile, key) }))
@@ -48,7 +49,7 @@ export function ProfileStatus({ organization }: { organization: OrganizationSumm
               <Stack component="ul" gap={8} className={styles.missing}>
                 {pending.map(({ key, label, items: sectionItems }) => (
                   <li key={key}>
-                    <Link to={`${COOPERATIVE_PROFILE_PATH}?section=${key}`} className={styles.link}>
+                    <Link to={`${profilePath}?section=${key}`} className={styles.link}>
                       <span className={styles.linkTitle}>{label}</span>
                       <span className={styles.linkMissing}>
                         Podés sumar:{' '}

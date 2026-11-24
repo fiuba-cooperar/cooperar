@@ -58,7 +58,8 @@
   text-align: left;
   cursor: pointer;
 
-  &[aria-pressed='true'] {
+  &[aria-pressed='true'],
+  &[aria-checked='true'] {
     border-color: var(--mantine-color-brand-6);
     background: var(--mantine-color-brand-light);
   }
@@ -87,7 +88,8 @@
   border-radius: 50%;
   color: var(--mantine-color-white);
 
-  [aria-pressed='true'] > & {
+  [aria-pressed='true'] > &,
+  [aria-checked='true'] > & {
     border-color: var(--mantine-color-brand-6);
     background: var(--mantine-color-brand-6);
   }

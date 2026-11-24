@@ -6,6 +6,7 @@ import ar.uba.fi.cooperar.IntegrationTest;
 import ar.uba.fi.cooperar.domain.catalog.Product;
 import ar.uba.fi.cooperar.domain.catalog.ProductCategory;
 import ar.uba.fi.cooperar.domain.catalog.ProductDetails;
+import ar.uba.fi.cooperar.domain.catalog.ProductType;
 import ar.uba.fi.cooperar.domain.catalog.SaleMode;
 import ar.uba.fi.cooperar.domain.organizations.ActivityType;
 import ar.uba.fi.cooperar.domain.organizations.Address;
@@ -72,7 +73,7 @@ class ProductSearchIntegrationTest {
                 organization("Panadería La Unión", "30-70000000-8", Province.SANTA_FE, "Rosario", Sector.FOOD));
         shirt = product(
                 textile, "Remera de algodón", clothing, Set.of(SaleMode.RETAIL, SaleMode.WHOLESALE), "8500", true);
-        product(textile, "Estampado de prendas", clothing, Set.of(SaleMode.WHOLESALE), null, true);
+        product(textile, ProductType.SERVICE, "Estampado de prendas", clothing, Set.of(SaleMode.WHOLESALE), null, true);
         product(textile, "Buzo canguro", clothing, Set.of(SaleMode.RETAIL), "21000", true);
         hidden = product(textile, "Gorra oculta", clothing, Set.of(SaleMode.RETAIL), "100", false);
         product(bakery, "Pan de campo", food, Set.of(SaleMode.RETAIL), "1800", true);
@@ -137,6 +138,17 @@ class ProductSearchIntegrationTest {
         assertThat(names(SEARCH + "?organization=panaderia-la-unión&category=" + clothing.getId()))
                 .isEmpty();
         assertThat(names(SEARCH + "?organization=no-existe")).isEmpty();
+        assertThat(names(SEARCH + "?organization=panaderia-la-unión&organization=textil-sur"))
+                .containsExactlyInAnyOrder("Buzo canguro", "Estampado de prendas", "Remera de algodón", "Pan de campo");
+    }
+
+    @Test
+    void filtersByProductOrServiceType() {
+        assertThat(names(SEARCH + "?type=SERVICE")).containsExactly("Estampado de prendas");
+        assertThat(names(SEARCH + "?type=PRODUCT"))
+                .containsExactly("Buzo canguro", "Pan de campo", "Remera de algodón");
+        assertThat(names(SEARCH + "?type=PRODUCT&type=SERVICE")).hasSize(4);
+        assertThat(names(SEARCH + "?type=SERVICE&saleMode=RETAIL")).isEmpty();
     }
 
     @Test
@@ -219,10 +231,26 @@ class ProductSearchIntegrationTest {
             Set<SaleMode> modes,
             String price,
             boolean published) {
+        return product(organization, ProductType.PRODUCT, name, category, modes, price, published);
+    }
+
+    private Product product(
+            Organization organization,
+            ProductType type,
+            String name,
+            ProductCategory category,
+            Set<SaleMode> modes,
+            String price,
+            boolean published) {
         Product product = new Product(
                 organization,
                 new ProductDetails(
-                        name, category, modes, "Descripción de " + name, price == null ? null : new BigDecimal(price)),
+                        name,
+                        type,
+                        category,
+                        modes,
+                        "Descripción de " + name,
+                        price == null ? null : new BigDecimal(price)),
                 Instant.now());
         if (published) {
             product.publish(Instant.now());

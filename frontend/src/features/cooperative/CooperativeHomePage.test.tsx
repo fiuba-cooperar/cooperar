@@ -116,7 +116,7 @@ describe('cooperative panel', () => {
     expect(await within(status).findByText(/% de datos cargados/)).toBeInTheDocument();
     expect(within(status).getByRole('link', { name: /Contacto/ })).toHaveAttribute(
       'href',
-      '/cooperative/profile?section=contact',
+      '/cooperative/la-litoralena/profile?section=contact',
     );
     expect(within(status).getByRole('link', { name: 'Ver ficha pública' })).toHaveAttribute(
       'href',
@@ -152,6 +152,45 @@ describe('cooperative panel', () => {
         name: 'Ver ficha pública',
       }),
     ).toHaveAttribute('href', '/organizations/textil-sur');
+  });
+
+  it('keeps the organization in the address, so reloading the page shows the same one', async () => {
+    signedIn();
+
+    renderRoute('/cooperative/textil-sur');
+
+    expect(await screen.findByText(/Estás administrando/)).toHaveTextContent('Textil Sur');
+    const menu = screen.getByRole('navigation', { name: 'Panel de la cooperativa' });
+    expect(within(menu).getByRole('link', { name: 'Ficha' })).toHaveAttribute(
+      'href',
+      '/cooperative/textil-sur/profile',
+    );
+  });
+
+  it('opens the first organization from the entry and one of its own when the address is not the account', async () => {
+    signedIn();
+
+    renderRoute('/cooperative/de-otra-cuenta/profile');
+
+    expect(await screen.findByText(/Estás administrando/)).toHaveTextContent('La Litoraleña');
+  });
+
+  it('keeps the section when switching to another organization', async () => {
+    signedIn();
+
+    const { container } = renderRoute('/cooperative/la-litoralena/products/p1');
+    await userEvent.click(await screen.findByRole('button', { name: /La Litoraleña/ }));
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Textil Sur' }));
+
+    await waitFor(() => {
+      expect(
+        within(screen.getByRole('navigation', { name: 'Panel de la cooperativa' })).getByRole(
+          'link',
+          { name: 'Productos y servicios' },
+        ),
+      ).toHaveAttribute('href', '/cooperative/textil-sur/products');
+    });
+    expect(container).toHaveTextContent('Textil Sur');
   });
 
   it('leads from the switcher to a new registration request', async () => {
@@ -240,11 +279,11 @@ describe('cooperative panel', () => {
     expect(within(steps).getByText(/Datos básicos de la entidad/)).toHaveTextContent('(listo)');
     expect(within(steps).getByRole('link', { name: 'Completar ficha' })).toHaveAttribute(
       'href',
-      '/cooperative/profile',
+      '/cooperative/la-litoralena/profile',
     );
     expect(within(steps).getByRole('link', { name: 'Agregar producto' })).toHaveAttribute(
       'href',
-      '/cooperative/products',
+      '/cooperative/la-litoralena/products',
     );
   });
 
@@ -324,6 +363,42 @@ describe('cooperative panel', () => {
     expect(await within(steps).findByText('2 de 3 pasos')).toBeInTheDocument();
   });
 
+  it('counts the products step as done once the organization has a product', async () => {
+    signedIn(ACCOUNT, {
+      'GET /api/cooperative/organizations/c1/profile': { body: managedProfile() },
+      'GET /api/cooperative/organizations/c1/products': {
+        body: { items: [], total: 1, page: 0, size: 1 },
+      },
+    });
+
+    renderRoute('/cooperative');
+
+    const steps = await screen.findByRole('region', {
+      name: 'Completá tu presencia en el observatorio',
+    });
+    expect(await within(steps).findByText('2 de 3 pasos')).toBeInTheDocument();
+    expect(within(steps).queryByRole('link', { name: 'Agregar producto' })).not.toBeInTheDocument();
+    expect(within(steps).getByRole('link', { name: 'Completar ficha' })).toBeInTheDocument();
+  });
+
+  it('hides the card when the profile and the products are done', async () => {
+    signedIn(ACCOUNT, {
+      'GET /api/cooperative/organizations/c1/profile': { body: managedProfile({ complete: true }) },
+      'GET /api/cooperative/organizations/c1/products': {
+        body: { items: [], total: 3, page: 0, size: 1 },
+      },
+    });
+
+    renderRoute('/cooperative');
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Hola, Ana' })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        screen.queryByRole('region', { name: 'Completá tu presencia en el observatorio' }),
+      ).not.toBeInTheDocument();
+    });
+  });
+
   it('counts the profile as done once every section is complete', async () => {
     signedIn(ACCOUNT, {
       'GET /api/cooperative/organizations/c1/profile': { body: managedProfile({ complete: true }) },
@@ -351,7 +426,7 @@ describe('cooperative panel', () => {
   });
 
   it('shows a coming soon page for the team inside the panel', async () => {
-    const path = '/cooperative/team';
+    const path = '/cooperative/la-litoralena/team';
     const title = 'Usuarios';
     signedIn();
 
@@ -361,7 +436,7 @@ describe('cooperative panel', () => {
     expect(screen.getByText('Próximamente')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Volver al inicio' })).toHaveAttribute(
       'href',
-      '/cooperative',
+      '/cooperative/la-litoralena',
     );
     expect(
       within(screen.getByRole('navigation', { name: 'Panel de la cooperativa' })).getByRole(

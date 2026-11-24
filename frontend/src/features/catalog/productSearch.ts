@@ -1,5 +1,6 @@
 import {
   ProductSearchSort,
+  ProductType,
   Province,
   SaleMode,
   type SearchProductsParams,
@@ -19,15 +20,16 @@ export function pageSizeFor(columns: number): number {
 
 /**
  * What the catalog shows, as it is kept in the address so a search can be shared and survives going back:
- * `/catalog?q=pan&category=<id>&saleMode=retail&province=cordoba&sort=price_asc&page=2`. Values go in lower case (but
+ * `/catalog?q=pan&category=<id>&saleMode=retail&type=service&province=cordoba&organization=<slug>&sort=price_asc&page=2`. Values go in lower case (but
  * the category, an id) and the page starts at 1; anything unknown is ignored.
  */
 export interface ProductSearch {
   query: string;
   categoryId: string | null;
   saleModes: SaleMode[];
+  types: ProductType[];
   province: Province | null;
-  organizationSlug: string | null;
+  organizationSlugs: string[];
   sort: ProductSearchSort;
   page: number;
 }
@@ -36,6 +38,7 @@ const PARAMS = {
   query: 'q',
   category: 'category',
   saleModes: 'saleMode',
+  types: 'type',
   province: 'province',
   organization: 'organization',
   sort: 'sort',
@@ -52,8 +55,9 @@ export const NO_FILTERS = {
   query: '',
   categoryId: null,
   saleModes: [],
+  types: [],
   province: null,
-  organizationSlug: null,
+  organizationSlugs: [],
 } as const satisfies Partial<ProductSearch>;
 
 export function readSearch(params: URLSearchParams): ProductSearch {
@@ -62,12 +66,17 @@ export function readSearch(params: URLSearchParams): ProductSearch {
     .getAll(PARAMS.saleModes)
     .map((slug) => fromSlug(SaleMode, slug))
     .filter((mode) => mode !== null);
+  const types = params
+    .getAll(PARAMS.types)
+    .map((slug) => fromSlug(ProductType, slug))
+    .filter((type) => type !== null);
   return {
     query: params.get(PARAMS.query)?.trim() ?? '',
     categoryId: params.get(PARAMS.category) ?? null,
     saleModes: [...new Set(saleModes)],
+    types: [...new Set(types)],
     province: fromSlug(Province, params.get(PARAMS.province)),
-    organizationSlug: params.get(PARAMS.organization) ?? null,
+    organizationSlugs: [...new Set(params.getAll(PARAMS.organization))],
     sort: fromSlug(ProductSearchSort, params.get(PARAMS.sort)) ?? ProductSearchSort.RELEVANCE,
     page: Number.isInteger(page) && page > 1 ? page : 1,
   };
@@ -80,8 +89,13 @@ export function writeSearch(search: ProductSearch): URLSearchParams {
   search.saleModes.forEach((mode) => {
     params.append(PARAMS.saleModes, mode.toLowerCase());
   });
+  search.types.forEach((type) => {
+    params.append(PARAMS.types, type.toLowerCase());
+  });
   if (search.province) params.set(PARAMS.province, search.province.toLowerCase());
-  if (search.organizationSlug) params.set(PARAMS.organization, search.organizationSlug);
+  search.organizationSlugs.forEach((slug) => {
+    params.append(PARAMS.organization, slug);
+  });
   if (search.sort !== ProductSearchSort.RELEVANCE) {
     params.set(PARAMS.sort, search.sort.toLowerCase());
   }
@@ -94,8 +108,9 @@ export function hasFilters(search: ProductSearch): boolean {
     search.query !== '' ||
     search.categoryId !== null ||
     search.saleModes.length > 0 ||
+    search.types.length > 0 ||
     search.province !== null ||
-    search.organizationSlug !== null
+    search.organizationSlugs.length > 0
   );
 }
 
@@ -104,8 +119,9 @@ export function toApiParams(search: ProductSearch, size: number): SearchProducts
     ...(search.query && { q: search.query }),
     ...(search.categoryId && { category: search.categoryId }),
     ...(search.saleModes.length > 0 && { saleMode: search.saleModes }),
+    ...(search.types.length > 0 && { type: search.types }),
     ...(search.province && { province: search.province }),
-    ...(search.organizationSlug && { organization: search.organizationSlug }),
+    ...(search.organizationSlugs.length > 0 && { organization: search.organizationSlugs }),
     ...(search.sort !== ProductSearchSort.RELEVANCE && { sort: search.sort }),
     ...(search.page > 1 && { page: search.page - 1 }),
     size,

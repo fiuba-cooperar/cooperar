@@ -1,8 +1,7 @@
 import { AppShell, Box, Burger, Group, Stack, Text, Tooltip, UnstyledButton } from '@mantine/core';
 import { useDisclosure, useLocalStorage } from '@mantine/hooks';
 import { IconLayoutSidebarLeftCollapse, IconLayoutSidebarLeftExpand } from '@tabler/icons-react';
-import { useState } from 'react';
-import { Navigate, NavLink, Outlet, useLocation } from 'react-router';
+import { Navigate, NavLink, Outlet, useLocation, useNavigate, useParams } from 'react-router';
 import { Brand } from '@/components/layout/Brand';
 import { SkipLink } from '@/components/layout/SkipLink';
 import { useAuth } from '@/features/auth/useAuth';
@@ -10,14 +9,9 @@ import { ACCOUNT_HOME_PATH } from '@/features/account/accountSections';
 import { AccountMenu } from '@/features/account/components/AccountMenu';
 import { AccountNav } from '@/features/account/components/AccountNav';
 import { OrganizationSwitcher } from './components/OrganizationSwitcher';
-import { COOPERATIVE_HOME_PATH, COOPERATIVE_SECTIONS } from './cooperativeSections';
+import { COOPERATIVE_PATH, COOPERATIVE_SECTIONS, cooperativePanel } from './cooperativeSections';
 import type { CooperativePanelContext } from './useActiveOrganization';
 import styles from './CooperativeLayout.module.css';
-
-function chosenOrganizationId(state: unknown): string | undefined {
-  if (typeof state !== 'object' || state === null || !('organizationId' in state)) return undefined;
-  return typeof state.organizationId === 'string' ? state.organizationId : undefined;
-}
 
 /** Shell of the cooperative panel: header with the organization switcher and the account, and a side menu. */
 export function CooperativeLayout() {
@@ -28,14 +22,17 @@ export function CooperativeLayout() {
     key: 'cooperative-menu-collapsed',
     defaultValue: false,
   });
-  // The account home sends the organization chosen in its header along with the navigation.
-  const location = useLocation();
-  const [activeId, setActiveId] = useState(() => chosenOrganizationId(location.state));
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const { organizationSlug } = useParams();
 
   const organizations = user?.organizations ?? [];
-  const organization = organizations.find(({ id }) => id === activeId) ?? organizations[0];
-  // The panel manages an organization, so accounts without one go to their home, where they ask for it.
-  if (!organization) return <Navigate to={ACCOUNT_HOME_PATH} replace />;
+  const organization = organizations.find(({ slug }) => slug === organizationSlug);
+  // The panel manages an organization, so accounts without one go to their home, where they ask for it, and an
+  // address of one that is not the account's goes to the entry, which picks one of its own.
+  if (organizations.length === 0) return <Navigate to={ACCOUNT_HOME_PATH} replace />;
+  if (!organization) return <Navigate to={COOPERATIVE_PATH} replace />;
+  const panel = cooperativePanel(organization.slug);
   const context: CooperativePanelContext = { organization };
 
   return (
@@ -80,7 +77,11 @@ export function CooperativeLayout() {
             organizations={organizations}
             active={organization}
             compact={collapsed}
-            onChange={setActiveId}
+            onChange={(slug) => {
+              // Same section of the other organization: what is open in this one (a product) is not in the other.
+              const section = pathname.slice(panel.home.length).split('/')[1] ?? '';
+              void navigate([cooperativePanel(slug).home, section].filter(Boolean).join('/'));
+            }}
           />
           <div role="group" aria-labelledby="menu-organization">
             <Text id="menu-organization" className={styles.groupTitle}>
@@ -88,12 +89,12 @@ export function CooperativeLayout() {
             </Text>
             {/* Each tooltip goes on a wrapper: it merges its className into its child, and NavLink takes a function. */}
             <Stack gap={4}>
-              {COOPERATIVE_SECTIONS.map(({ path, label, icon: Icon }) => (
-                <Tooltip key={path} label={label} position="right" disabled={!collapsed}>
+              {COOPERATIVE_SECTIONS.map(({ segment, label, icon: Icon }) => (
+                <Tooltip key={label} label={label} position="right" disabled={!collapsed}>
                   <div>
                     <NavLink
-                      to={path}
-                      end={path === COOPERATIVE_HOME_PATH}
+                      to={[panel.home, segment].filter(Boolean).join('/')}
+                      end={segment === ''}
                       className={() => styles.navLink}
                       onClick={menu.close}
                     >

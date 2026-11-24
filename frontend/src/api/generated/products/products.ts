@@ -341,7 +341,7 @@ export const getSearchProductsUrl = (params?: SearchProductsParams) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    const explodeParameters = ['saleMode'];
+    const explodeParameters = ['saleMode', 'organization', 'type'];
 
     if (Array.isArray(value) && explodeParameters.includes(key)) {
       value.forEach((v) => {

@@ -1,15 +1,26 @@
-import { Anchor, Badge, Button, Group, Paper, Stack, Text, Title } from '@mantine/core';
+import { Anchor, Badge, Button, Group, Paper, Stack, Text, Title, Tooltip } from '@mantine/core';
 import { IconArrowRight, IconMapPin } from '@tabler/icons-react';
 import { Link } from 'react-router';
 import type { CatalogProductResponse } from '@/api/generated/model';
-import { placeLabel, priceLines, SALE_MODE_LABELS } from '../labels';
+import { ownItemLabel, placeLabel, priceLines, SALE_MODE_LABELS } from '../labels';
 import { productPath } from '../productSearch';
+import { useManagesOrganization } from '../useManagesOrganization';
 import styles from './ProductCard.module.css';
 
 /** A product or service of the public catalog, with the way to its page and to ask its organization for a quote. */
 export function ProductCard({ product }: { product: CatalogProductResponse }) {
+  const isOwn = useManagesOrganization(product.organization.slug);
   const headingId = `product-${product.id}`;
   const organizationPath = `/organizations/${product.organization.slug}`;
+  const quoteButton = {
+    variant: 'light',
+    mih: 44,
+    h: 'auto',
+    py: 8,
+    styles: { label: { whiteSpace: 'normal', textAlign: 'center' } },
+    rightSection: <IconArrowRight size={18} stroke={2} aria-hidden />,
+    'aria-label': `Pedir presupuesto de ${product.name}`,
+  } as const;
   const cover = product.photos[0];
   const price = priceLines(product.indicativePrice);
   return (
@@ -63,19 +74,18 @@ export function ProductCard({ product }: { product: CatalogProductResponse }) {
             {price.amount}
           </Text>
         </Stack>
-        <Button
-          component={Link}
-          to={organizationPath}
-          variant="light"
-          mih={44}
-          h="auto"
-          py={8}
-          styles={{ label: { whiteSpace: 'normal', textAlign: 'center' } }}
-          rightSection={<IconArrowRight size={18} stroke={2} aria-hidden />}
-          aria-label={`Pedir presupuesto de ${product.name}`}
-        >
-          Pedir presupuesto
-        </Button>
+        {isOwn ? (
+          <Tooltip label={ownItemLabel(product.type)} withArrow>
+            {/* Kept focusable and not `disabled`, so the tooltip also shows with the keyboard. */}
+            <Button {...quoteButton} data-disabled aria-disabled>
+              Pedir presupuesto
+            </Button>
+          </Tooltip>
+        ) : (
+          <Button {...quoteButton} component={Link} to={`/catalog/${product.id}#inquiry`}>
+            Pedir presupuesto
+          </Button>
+        )}
       </div>
     </Paper>
   );

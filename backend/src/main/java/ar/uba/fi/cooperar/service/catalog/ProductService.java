@@ -153,6 +153,7 @@ public class ProductService {
     private ProductDetails details(ProductDraft draft) {
         return new ProductDetails(
                 draft.name(),
+                draft.type(),
                 categories.findById(draft.categoryId()).orElseThrow(InvalidProductCategoryException::new),
                 draft.saleModes(),
                 draft.description(),

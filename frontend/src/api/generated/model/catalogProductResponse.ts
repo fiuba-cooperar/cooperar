@@ -8,6 +8,7 @@
 import type { CatalogOrganizationResponse } from './catalogOrganizationResponse';
 import type { ProductCategoryResponse } from './productCategoryResponse';
 import type { ProductPhotoResponse } from './productPhotoResponse';
+import type { ProductType } from './productType';
 import type { SaleMode } from './saleMode';
 
 export interface CatalogProductResponse {
@@ -21,4 +22,5 @@ export interface CatalogProductResponse {
   /** The first one is the cover */
   photos: ProductPhotoResponse[];
   saleModes: SaleMode[];
+  type: ProductType;
 }

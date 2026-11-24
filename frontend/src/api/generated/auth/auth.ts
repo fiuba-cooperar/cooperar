@@ -65,6 +65,7 @@ export const getLoginUrl = () => {
 };
 
 /**
+ * Each address and each email can fail a limited number of times per quarter of an hour; past it the answer is 429 with `Retry-After`.
  * @summary Sign in with email and password
  */
 export const login = async (
@@ -394,7 +395,7 @@ export const getRegisterUrl = () => {
 };
 
 /**
- * Organizations are added afterwards, from the panel, with a registration request the observatory reviews. Answers 409 with `conflicts: ["EMAIL"]` when the email is taken.
+ * Organizations are added afterwards, from the panel, with a registration request the observatory reviews. Answers 409 with `conflicts: ["EMAIL"]` when the email is taken, and 429 with `Retry-After` when the address created too many accounts in the last hour.
  * @summary Create an account, which needs no approval
  */
 export const register = async (

@@ -52,6 +52,8 @@ const EMAIL_TAKEN = 'Ya hay una cuenta con este email. Si es tuya, ingresá desd
 const FORM_ERRORS: Record<RegistrationError['reason'], string> = {
   conflict: 'Algunos datos ya están registrados. Revisalos e intentá de nuevo.',
   invalid: 'Algunos datos no son válidos. Revisalos e intentá de nuevo.',
+  'rate-limited':
+    'Se alcanzó el límite de registros desde esta conexión. Podrá intentarse nuevamente más tarde.',
   unavailable:
     'No pudimos completar el registro por un problema de conexión. Intentá de nuevo en unos minutos.',
 };

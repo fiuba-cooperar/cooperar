@@ -13,8 +13,14 @@
   overflow: hidden;
 }
 
-/* Every card has the same frame, and the whole photo fits in it, without cropping or stretching. */
+/*
+ * Every card has the same frame, whatever the photo or the rest of the card: it does not grow or shrink with the card
+ * or with the photo's own size. The whole photo fits in it, without cropping or stretching.
+ */
 .photo {
+  position: relative;
+  flex: none;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -24,6 +30,8 @@
 }
 
 .photo img {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;

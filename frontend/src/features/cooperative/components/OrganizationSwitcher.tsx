@@ -26,7 +26,8 @@ export function OrganizationSwitcher({
   active: OrganizationSummary;
   /** Just the initials, when the side menu is collapsed. */
   compact?: boolean;
-  onChange: (id: string) => void;
+  /** Gets the slug of the organization chosen. */
+  onChange: (slug: string) => void;
 }) {
   return (
     <Menu
@@ -74,7 +75,7 @@ export function OrganizationSwitcher({
               data-selected={selected || undefined}
               rightSection={selected ? <IconCheck size={18} stroke={2.4} aria-hidden /> : undefined}
               onClick={() => {
-                onChange(organization.id);
+                onChange(organization.slug);
               }}
             >
               {organization.name}

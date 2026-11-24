@@ -4,6 +4,7 @@ import ar.uba.fi.cooperar.domain.user.RefreshToken;
 import ar.uba.fi.cooperar.domain.user.UserAccount;
 import ar.uba.fi.cooperar.repository.user.RefreshTokenRepository;
 import ar.uba.fi.cooperar.repository.user.UserAccountRepository;
+import ar.uba.fi.cooperar.shared.ratelimit.TooManyRequestsException;
 import ar.uba.fi.cooperar.shared.security.SecurityConfig;
 import ar.uba.fi.cooperar.shared.security.SessionProperties;
 import java.time.Clock;
@@ -32,6 +33,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtEncoder jwtEncoder;
     private final SessionProperties sessionProperties;
+    private final LoginRateLimiter loginRateLimiter;
     private final Clock clock;
     // Verified against when the email is unknown, so both failures cost the same time.
     private final String decoyHash;
@@ -42,22 +44,30 @@ public class AuthService {
             PasswordEncoder passwordEncoder,
             JwtEncoder jwtEncoder,
             SessionProperties sessionProperties,
+            LoginRateLimiter loginRateLimiter,
             Clock clock) {
         this.users = users;
         this.refreshTokens = refreshTokens;
         this.passwordEncoder = passwordEncoder;
         this.jwtEncoder = jwtEncoder;
         this.sessionProperties = sessionProperties;
+        this.loginRateLimiter = loginRateLimiter;
         this.clock = clock;
         this.decoyHash = passwordEncoder.encode(UUID.randomUUID().toString());
     }
 
+    /**
+     * @param sender the address the request came from, which only counts toward the limit and is never kept
+     * @throws TooManyRequestsException if `sender` or `email` already failed too many times in the period
+     */
     @Transactional
-    public AuthTokens login(String email, String password) {
+    public AuthTokens login(String email, String password, String sender) {
+        loginRateLimiter.check(sender, email);
         UserAccount user = users.findByEmail(UserAccount.normalizeEmail(email)).orElse(null);
         String hash = user != null ? user.getPasswordHash() : decoyHash;
         boolean matches = passwordEncoder.matches(password, hash);
         if (user == null || !matches) {
+            loginRateLimiter.recordFailure(sender, email);
             throw new InvalidCredentialsException();
         }
         log.info("User {} logged in", user.getId());

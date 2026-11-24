@@ -22,8 +22,8 @@ import {
   type WeekErrors,
   type WeekHours,
 } from './openingHoursForm';
-import { joinPhone, phoneProblem, splitPhone, type PhoneParts } from './phone';
-import { PhoneField } from './PhoneField';
+import { joinPhone, phoneProblem, splitPhone, type PhoneParts } from '@/components/form/phone';
+import { PhoneField } from '@/components/form/PhoneField';
 import styles from './ProfileSections.module.css';
 import { SectionForm } from './SectionForm';
 import { differs, hasErrors, type Errors, type SectionProps } from './sectionProps';

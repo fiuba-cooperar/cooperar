@@ -6,6 +6,7 @@
  * OpenAPI spec version: v1
  */
 import type { ProductSearchSort } from './productSearchSort';
+import type { ProductType } from './productType';
 import type { Province } from './province';
 import type { SaleMode } from './saleMode';
 
@@ -29,11 +30,15 @@ export type SearchProductsParams = {
    */
   province?: Province;
   /**
-   * Only products of the organization with this slug
-   * @minLength 0
-   * @maxLength 200
+   * Only products of any of the organizations with these slugs
+   * @items.minLength 0
+   * @items.maxLength 200
    */
-  organization?: string;
+  organization?: string[];
+  /**
+   * Only products, or only services
+   */
+  type?: ProductType[];
   /**
    * RELEVANCE by default
    */

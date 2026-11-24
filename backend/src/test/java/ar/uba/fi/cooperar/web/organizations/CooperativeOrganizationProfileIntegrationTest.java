@@ -264,6 +264,43 @@ class CooperativeOrganizationProfileIntegrationTest {
     }
 
     @Test
+    void locatesAnAddressWithoutSavingIt() {
+        given(geocoder.locate(any())).willReturn(Optional.of(WGS84.createPoint(new Coordinate(-58.37, -34.66))));
+
+        assertThat(post("/location/geocode", token("coop@test.local"), ADDRESS_BODY))
+                .hasStatusOk()
+                .bodyJson()
+                .isLenientlyEqualTo("""
+                        {"point": {"latitude": -34.66, "longitude": -58.37}}
+                        """);
+        verify(geocoder).locate(new Address(Province.BUENOS_AIRES, "Avellaneda", "Sarandí", "Mitre 500", null));
+        assertThat(get(profile(), token("coop@test.local"))).bodyJson().isLenientlyEqualTo("""
+                        {"location": {"addresses": [{"type": "MAIN", "address": {"street": "Gascón 1234"}, "point": null}]}}
+                        """);
+    }
+
+    @Test
+    void answersWithoutAPointWhenTheAddressCannotBeLocated() {
+        given(geocoder.locate(any())).willReturn(Optional.empty());
+
+        assertThat(post("/location/geocode", token("coop@test.local"), ADDRESS_BODY))
+                .hasStatusOk()
+                .bodyJson()
+                .extractingPath("$.point")
+                .isNull();
+    }
+
+    @Test
+    void locatesOnlyValidAddressesOfAManagedOrganization() {
+        assertThat(post("/location/geocode", token("other@test.local"), ADDRESS_BODY))
+                .hasStatus(HttpStatus.NOT_FOUND);
+        assertThat(post("/location/geocode", token("coop@test.local"), """
+                        {"province": "BUENOS_AIRES", "district": "", "locality": "Sarandí", "street": "Mitre 500"}
+                        """)).hasStatus(HttpStatus.BAD_REQUEST);
+        verify(geocoder, never()).locate(any());
+    }
+
+    @Test
     void aPrivateStreetHidesTheReferencesAndShowsOnlyTheAreaInPublic() {
         put(
                 "/location",
@@ -580,6 +617,10 @@ class CooperativeOrganizationProfileIntegrationTest {
                 """.formatted(id, street, streetVisibility, point);
     }
 
+    private static final String ADDRESS_BODY = """
+            {"province": "BUENOS_AIRES", "district": "Avellaneda", "locality": "Sarandí", "street": "Mitre 500"}
+            """;
+
     private String profile() {
         return "/api/cooperative/organizations/" + organization.getId() + "/profile";
     }
@@ -614,6 +655,15 @@ class CooperativeOrganizationProfileIntegrationTest {
 
     private MvcTestResult put(String section, String accessToken, String body) {
         return mvc.put()
+                .uri(profile() + section)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body)
+                .exchange();
+    }
+
+    private MvcTestResult post(String section, String accessToken, String body) {
+        return mvc.post()
                 .uri(profile() + section)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
                 .contentType(MediaType.APPLICATION_JSON)

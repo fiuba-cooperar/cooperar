@@ -208,6 +208,7 @@ export function LocationSection({
           }}
         >
           <AddressFields
+            organizationId={profile.id}
             idPrefix="profile"
             draft={main}
             onChange={setMain}
@@ -255,6 +256,7 @@ export function LocationSection({
                   }}
                 />
                 <AddressFields
+                  organizationId={profile.id}
                   idPrefix={`other-${draft.key}`}
                   draft={draft}
                   onChange={(changed) => {

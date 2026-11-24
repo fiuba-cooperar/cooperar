@@ -1,4 +1,4 @@
-import type { RouteObject } from 'react-router';
+import { Navigate, type RouteObject } from 'react-router';
 import { Role } from '@/api/generated/model';
 import { AccountHomePage } from '@/features/account/AccountHomePage';
 import { AccountLayout } from '@/features/account/AccountLayout';
@@ -65,6 +65,8 @@ export const routes: RouteObject[] = [
       { path: ORGANIZATIONS_PATH, element: <OrganizationSearchPage /> },
       { path: CATALOG_PATH, element: <CatalogPage /> },
       { path: `${CATALOG_PATH}/:id`, element: <ProductDetailPage /> },
+      // The map used to be its own section; it is now a view of the directory.
+      { path: 'map', element: <Navigate to={`${ORGANIZATIONS_PATH}?view=map`} replace /> },
       ...PUBLIC_SECTIONS.filter(
         ({ path }) => path !== ORGANIZATIONS_PATH && path !== CATALOG_PATH,
       ).map(({ path, label }) => ({

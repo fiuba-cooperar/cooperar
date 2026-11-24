@@ -9,7 +9,6 @@ import { renderRoute } from '@/test/render';
 const MENU = [
   ['Entidades', '/organizations'],
   ['Catálogo', '/catalog'],
-  ['Mapa', '/map'],
   ['Ferias', '/fairs'],
   ['Historia del sector', '/history'],
 ] as const;
@@ -107,7 +106,14 @@ describe('public site', () => {
     renderRoute('/');
 
     const hrefs = screen.getAllByRole('link').map((link) => link.getAttribute('href'));
-    for (const href of ['/organizations', '/catalog', '/map', '/fairs', '/history', '/register']) {
+    for (const href of [
+      '/organizations',
+      '/catalog',
+      '/organizations?view=map',
+      '/fairs',
+      '/history',
+      '/register',
+    ]) {
       expect(hrefs).toContain(href);
     }
   });
@@ -135,12 +141,59 @@ describe('public site', () => {
 
     await userEvent.click(
       within(screen.getByRole('navigation', { name: 'Principal' })).getByRole('link', {
-        name: 'Mapa',
+        name: 'Ferias',
       }),
     );
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Mapa' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Ferias' })).toBeInTheDocument();
     expect(screen.getByText('Próximamente')).toBeInTheDocument();
+  });
+
+  it('shows the organizations nearest to the visitor on the map', async () => {
+    stubFetchRoutes({
+      'GET /api/map/organizations': {
+        // How far south of the visitor each one is, in degrees.
+        body: [
+          { name: 'Lejana', south: 1 },
+          { name: 'Cercana', south: 0.01 },
+          { name: 'Media', south: 0.1 },
+          { name: 'Otra lejana', south: 2 },
+        ].map(({ name, south }) => ({
+          slug: name.toLowerCase().replace(' ', '-'),
+          name,
+          type: 'COOPERATIVE',
+          sectors: ['FOOD'],
+          places: [
+            {
+              type: 'MAIN',
+              province: 'BUENOS_AIRES',
+              district: 'Avellaneda',
+              locality: 'Sarandí',
+              latitude: -34.6 - south,
+              longitude: -58.4,
+              approximate: false,
+            },
+          ],
+        })),
+      },
+    });
+    Object.defineProperty(navigator, 'geolocation', {
+      value: {
+        getCurrentPosition: (ok: PositionCallback) => {
+          ok({ coords: { latitude: -34.6, longitude: -58.4 } } as GeolocationPosition);
+        },
+      },
+      configurable: true,
+    });
+
+    renderRoute('/');
+    await userEvent.click(await screen.findByRole('button', { name: 'Ver las más cercanas a mí' }));
+
+    expect(await screen.findByText('Cerca tuyo')).toBeVisible();
+    const links = screen.getAllByRole('link', { name: /^(Cercana|Media|Lejana|Otra lejana)$/ });
+    expect(links.map((link) => link.textContent)).toEqual(['Cercana', 'Media', 'Lejana']);
+    expect(links[0]).toHaveAttribute('href', '/organizations/cercana');
+    Reflect.deleteProperty(navigator, 'geolocation');
   });
 
   it('takes the register button to its page', async () => {
@@ -168,7 +221,7 @@ describe('public site', () => {
   it('has no accessibility violations on a coming soon page', async () => {
     stubFetchRoutes({});
 
-    const { container } = renderRoute('/map');
+    const { container } = renderRoute('/fairs');
     await screen.findByRole('link', { name: 'Ingresar' });
 
     await expectNoA11yViolations(container);

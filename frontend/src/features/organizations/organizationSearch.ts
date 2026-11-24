@@ -41,7 +41,7 @@ function fromSlug<T extends string>(values: Record<string, T>, slug: string | nu
   return Object.values(values).find((value) => value.toLowerCase() === slug) ?? null;
 }
 
-function allFromSlugs<T extends string>(values: Record<string, T>, slugs: string[]): T[] {
+export function allFromSlugs<T extends string>(values: Record<string, T>, slugs: string[]): T[] {
   const found = slugs.map((slug) => fromSlug(values, slug)).filter((value) => value !== null);
   return [...new Set(found)];
 }

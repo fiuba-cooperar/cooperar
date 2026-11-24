@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { expectNoA11yViolations } from '@/test/axe';
@@ -70,7 +70,103 @@ function names() {
     .map((article) => within(article).getByRole('heading').textContent);
 }
 
+const LOCATED_BAKERY = {
+  slug: 'panaderia-la-union',
+  name: 'Panadería La Unión',
+  type: 'COOPERATIVE',
+  sectors: ['FOOD'],
+  places: [
+    {
+      type: 'MAIN',
+      province: 'SANTA_FE',
+      district: 'Rosario',
+      locality: 'Centro',
+      latitude: -32.95,
+      longitude: -60.64,
+      approximate: false,
+    },
+  ],
+};
+
 describe('public directory of organizations', () => {
+  it('shows the organization of a pin while the mouse is over it', async () => {
+    stubFetchRoutes({
+      [SEARCH]: { body: result([BAKERY, PRINTER]) },
+      'GET /api/map/organizations': { body: [LOCATED_BAKERY] },
+    });
+
+    renderRoute('/organizations?view=map');
+    const pin = await screen.findByTitle('Panadería La Unión', undefined, { timeout: 5000 });
+    await userEvent.hover(pin);
+
+    expect(
+      await screen.findByRole('group', { name: 'Entidad elegida: Panadería La Unión' }),
+    ).toBeVisible();
+    await userEvent.unhover(pin);
+    await waitFor(() => {
+      expect(
+        screen.queryByRole('group', { name: 'Entidad elegida: Panadería La Unión' }),
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  it('has no accessibility violations on the map view', async () => {
+    stubFetchRoutes({
+      [SEARCH]: { body: result([BAKERY, PRINTER]) },
+      'GET /api/map/organizations': { body: [LOCATED_BAKERY] },
+    });
+
+    const { container } = renderRoute('/organizations?view=map');
+    await screen.findByRole(
+      'region',
+      { name: 'Mapa de las entidades encontradas' },
+      { timeout: 5000 },
+    );
+    // userEvent clicks without a position, which Leaflet needs to place the click on the map.
+    fireEvent.click(await screen.findByTitle('Panadería La Unión'));
+
+    await expectNoA11yViolations(container);
+  });
+
+  it('shows the same search on a map in place of the list, and back', async () => {
+    const fetchMock = stubFetchRoutes({
+      [SEARCH]: { body: result([BAKERY, PRINTER]) },
+      'GET /api/map/organizations': { body: [LOCATED_BAKERY] },
+    });
+
+    renderRoute('/organizations?q=pan&sector=food');
+    await screen.findByText(/2 entidades/);
+    await userEvent.click(screen.getByRole('button', { name: 'Ver en el mapa' }));
+
+    expect(
+      await screen.findByRole(
+        'region',
+        { name: 'Mapa de las entidades encontradas' },
+        { timeout: 5000 },
+      ),
+    ).toBeVisible();
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/map/organizations?q=pan&sector=FOOD',
+      expect.anything(),
+    );
+    expect(screen.queryByText(/En el mapa está/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('article', { name: 'Gráfica Norte' })).not.toBeInTheDocument();
+
+    // userEvent clicks without a position, which Leaflet needs to place the click on the map.
+    fireEvent.click(await screen.findByTitle('Panadería La Unión'));
+    expect(
+      screen.getByRole('group', { name: 'Entidad elegida: Panadería La Unión' }),
+    ).toBeVisible();
+    // Two user clicks this close make Leaflet simulate a double click, which jsdom cannot place on the map.
+    fireEvent.click(screen.getByRole('button', { name: 'Close popup' }));
+    expect(
+      screen.queryByRole('group', { name: 'Entidad elegida: Panadería La Unión' }),
+    ).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Ver el listado' }));
+    expect(await screen.findByRole('article', { name: 'Gráfica Norte' })).toBeInTheDocument();
+  });
+
   it('lists the organizations with what they do, where they are and the way to their profile', async () => {
     stubFetchRoutes({ [SEARCH]: { body: result([PRINTER, BAKERY]) } });
 

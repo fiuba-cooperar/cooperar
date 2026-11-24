@@ -14,12 +14,13 @@ import {
   Title,
 } from '@mantine/core';
 import { IconCheck, IconLink } from '@tabler/icons-react';
-import { Fragment, lazy, Suspense } from 'react';
+import { Fragment } from 'react';
 import { useParams } from 'react-router';
 import type { OrganizationProfileResponse } from '@/api/generated/model';
 import { PublicProducts } from '@/features/catalog/components/PublicProducts';
 import { NotFoundPage } from '@/features/errors/NotFoundPage';
 import { mainAddress, otherAddresses } from './addresses';
+import { ProfileLocations } from './components/ProfileLocations';
 import { initials } from './initials';
 import { formatOpeningHours } from './openingHours';
 import { useOrganizationProfile } from './api/useOrganizationProfile';
@@ -32,10 +33,6 @@ import {
   SECTOR_LABELS,
 } from './labels';
 import styles from './OrganizationProfilePage.module.css';
-
-const LocationMap = lazy(() =>
-  import('@/components/map/LocationMap').then((module) => ({ default: module.LocationMap })),
-);
 
 export function OrganizationProfilePage() {
   const { slug = '' } = useParams();
@@ -60,7 +57,6 @@ function phoneHref(phone: string) {
 function Profile({ profile }: { profile: OrganizationProfileResponse }) {
   const main = mainAddress(profile.addresses);
   const others = otherAddresses(profile.addresses);
-  const mainPoint = main?.location;
   const place = main ? `${main.locality}, ${PROVINCE_LABELS[main.province]}` : '';
   const address = main
     ? [main.street, main.locality, main.district].filter(Boolean).join(', ')
@@ -296,30 +292,7 @@ function Profile({ profile }: { profile: OrganizationProfileResponse }) {
                 )}
               </dl>
             </Paper>
-            {mainPoint && (
-              <Paper component="section" withBorder radius="lg" p="lg" aria-labelledby="location">
-                <Title order={2} size="h4" id="location" mb="sm">
-                  Ubicación
-                </Title>
-                <Suspense fallback={<Text c="dimmed">Cargando el mapa…</Text>}>
-                  <LocationMap
-                    latitude={mainPoint.latitude}
-                    longitude={mainPoint.longitude}
-                    approximate={mainPoint.approximate}
-                    label={
-                      mainPoint.approximate
-                        ? `Mapa con la zona de ${profile.name}`
-                        : `Mapa con la ubicación de ${profile.name}`
-                    }
-                  />
-                </Suspense>
-                {mainPoint.approximate && (
-                  <Text size="sm" c="dimmed" mt="xs">
-                    El mapa marca solo la zona: la entidad no publica su dirección exacta.
-                  </Text>
-                )}
-              </Paper>
-            )}
+            <ProfileLocations profile={profile} />
             <Text size="sm" c="dimmed">
               Solo se muestran los datos que la entidad eligió hacer públicos.
             </Text>

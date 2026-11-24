@@ -73,7 +73,8 @@ describe('public catalog', () => {
     renderRoute('/catalog');
 
     expect(screen.getByRole('heading', { level: 1, name: 'Catálogo' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Ver en el mapa' })).toHaveAttribute('href', '/map');
+    expect(screen.queryByRole('button', { name: 'Ver en el mapa' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Ver en el mapa' })).not.toBeInTheDocument();
     expect(await screen.findByText('2 productos y servicios')).toBeInTheDocument();
 
     const shirt = screen.getByRole('article', { name: 'Remera de algodón' });

@@ -19,6 +19,20 @@ window.ResizeObserver = class {
   disconnect = vi.fn();
 };
 
+// jsdom lays nothing out, so every element measures 0. Leaflet would then show no marker, so its map gets a size;
+// every other element keeps measuring 0, as before.
+for (const [property, size] of [
+  ['clientWidth', 800],
+  ['clientHeight', 600],
+] as const) {
+  Object.defineProperty(HTMLElement.prototype, property, {
+    configurable: true,
+    get(this: HTMLElement) {
+      return this.classList.contains('leaflet-container') ? size : 0;
+    },
+  });
+}
+
 // A Select that opens with a value scrolls the selected option into view.
 Element.prototype.scrollIntoView = () => undefined;
 

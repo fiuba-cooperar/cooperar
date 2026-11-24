@@ -1,0 +1,23 @@
+.card {
+  box-shadow: var(--mantine-shadow-lg);
+}
+
+.box {
+  height: 340px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: var(--color-map);
+}
+
+.map {
+  height: 340px;
+  border-radius: 10px;
+}
+
+.nearby {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}

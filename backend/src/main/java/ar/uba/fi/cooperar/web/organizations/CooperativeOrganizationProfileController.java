@@ -10,6 +10,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -72,6 +73,19 @@ public class CooperativeOrganizationProfileController {
             @AuthenticationPrincipal Jwt jwt) {
         return CooperativeOrganizationProfileResponse.from(
                 profileService.updateLocation(id, accountId(jwt), request.toAddresses()));
+    }
+
+    @PostMapping("/location/geocode")
+    @Operation(
+            operationId = "geocodeProfileAddress",
+            summary = "Locate an address on the map without saving it",
+            description = "The `point` is missing when the address cannot be found. If the street is not found, the"
+                    + " point is the one of the locality.")
+    public GeocodingResponse geocode(
+            @PathVariable UUID id,
+            @Valid @RequestBody RegistrationAddressRequest request,
+            @AuthenticationPrincipal Jwt jwt) {
+        return GeocodingResponse.from(profileService.locateAddress(id, accountId(jwt), request.toAddress()));
     }
 
     @PutMapping("/contact")

@@ -700,6 +700,45 @@
         "tags" : [ "cooperative-organization-profile" ]
       }
     },
+    "/api/cooperative/organizations/{id}/profile/location/geocode" : {
+      "post" : {
+        "description" : "The `point` is missing when the address cannot be found. If the street is not found, the point is the one of the locality.",
+        "operationId" : "geocodeProfileAddress",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RegistrationAddressRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/GeocodingResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Locate an address on the map without saving it",
+        "tags" : [ "cooperative-organization-profile" ]
+      }
+    },
     "/api/cooperative/organizations/{id}/profile/logo" : {
       "delete" : {
         "operationId" : "removeProfileLogo",
@@ -1510,6 +1549,87 @@
         },
         "summary" : "Application and database health",
         "tags" : [ "health" ]
+      }
+    },
+    "/api/map/organizations" : {
+      "get" : {
+        "description" : "Each one comes with all its located addresses. All of them in one answer, so the nearest ones are found in the visitor's browser and the visitor's location is never sent. Organizations with no located address are left out.",
+        "operationId" : "getMapOrganizations",
+        "parameters" : [ {
+          "description" : "Words to look for, as in the directory",
+          "in" : "query",
+          "name" : "q",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "description" : "Words to look for, as in the directory",
+            "maxLength" : 200,
+            "minLength" : 0
+          }
+        }, {
+          "description" : "Any of these types",
+          "in" : "query",
+          "name" : "type",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "description" : "Any of these types",
+            "items" : {
+              "$ref" : "#/components/schemas/OrganizationType"
+            },
+            "uniqueItems" : true
+          }
+        }, {
+          "description" : "Any of these sectors",
+          "in" : "query",
+          "name" : "sector",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "description" : "Any of these sectors",
+            "items" : {
+              "$ref" : "#/components/schemas/Sector"
+            },
+            "uniqueItems" : true
+          }
+        }, {
+          "description" : "Any of these activity types",
+          "in" : "query",
+          "name" : "activityType",
+          "required" : false,
+          "schema" : {
+            "type" : "array",
+            "description" : "Any of these activity types",
+            "items" : {
+              "$ref" : "#/components/schemas/ActivityType"
+            },
+            "uniqueItems" : true
+          }
+        }, {
+          "in" : "query",
+          "name" : "province",
+          "required" : false,
+          "schema" : {
+            "$ref" : "#/components/schemas/Province"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/OrganizationMapResponse"
+                  }
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Every organization with an address on the map, by name, with the directory's filters",
+        "tags" : [ "organizations" ]
       }
     },
     "/api/me" : {
@@ -2620,6 +2740,15 @@
         },
         "required" : [ "latitude", "longitude" ]
       },
+      "GeocodingResponse" : {
+        "type" : "object",
+        "properties" : {
+          "point" : {
+            "$ref" : "#/components/schemas/GeoPointResponse",
+            "description" : "Missing when the address cannot be found"
+          }
+        }
+      },
       "HealthResponse" : {
         "type" : "object",
         "description" : "Application health and the state of its dependencies",
@@ -2687,6 +2816,44 @@
           }
         },
         "required" : [ "items", "page", "size", "total" ]
+      },
+      "MapPlaceResponse" : {
+        "type" : "object",
+        "properties" : {
+          "approximate" : {
+            "type" : "boolean",
+            "description" : "True when the point marks only the area, because the street is private"
+          },
+          "district" : {
+            "type" : "string"
+          },
+          "latitude" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "locality" : {
+            "type" : "string"
+          },
+          "longitude" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "name" : {
+            "type" : "string",
+            "description" : "How the organization calls it, like «planta» or «sucursal»"
+          },
+          "province" : {
+            "$ref" : "#/components/schemas/Province"
+          },
+          "street" : {
+            "type" : "string",
+            "description" : "Street and number; missing when the organization keeps it private"
+          },
+          "type" : {
+            "$ref" : "#/components/schemas/AddressType"
+          }
+        },
+        "required" : [ "approximate", "district", "latitude", "locality", "longitude", "province", "type" ]
       },
       "NotificationPageResponse" : {
         "type" : "object",
@@ -2799,6 +2966,40 @@
           }
         },
         "required" : [ "closesAt", "day", "opensAt" ]
+      },
+      "OrganizationMapResponse" : {
+        "type" : "object",
+        "properties" : {
+          "logoUrl" : {
+            "type" : "string",
+            "description" : "Missing until the organization uploads one"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "places" : {
+            "type" : "array",
+            "description" : "Every address with a point, the main one first; never empty",
+            "items" : {
+              "$ref" : "#/components/schemas/MapPlaceResponse"
+            }
+          },
+          "sectors" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Sector"
+            },
+            "uniqueItems" : true
+          },
+          "slug" : {
+            "type" : "string",
+            "description" : "Path segment of its public profile"
+          },
+          "type" : {
+            "$ref" : "#/components/schemas/OrganizationType"
+          }
+        },
+        "required" : [ "name", "places", "sectors", "slug", "type" ]
       },
       "OrganizationProfileResponse" : {
         "type" : "object",

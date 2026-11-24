@@ -1,8 +1,9 @@
 import { Anchor, Badge, Button, Container, Group, Paper, Stack, Text, Title } from '@mantine/core';
-import { IconMapPinFilled, IconSearch } from '@tabler/icons-react';
+import { IconSearch } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
+import { NearbyPreview } from '@/features/map/components/NearbyPreview';
 import { searchPath } from '@/features/organizations/organizationSearch';
 import { REGISTER_PATH } from '@/components/layout/publicSections';
 import styles from './HomePage.module.css';
@@ -90,14 +91,6 @@ const ENTRIES = [
   },
 ];
 
-// Decorative pins of the map preview, as percentages of the box.
-const PINS = [
-  { left: 34, top: 42 },
-  { left: 56, top: 30 },
-  { left: 48, top: 62 },
-  { left: 70, top: 54, accent: true },
-];
-
 function ComingSoonBadge() {
   return (
     <Badge variant="light" size="sm">
@@ -131,7 +124,7 @@ function Hero() {
               ))}
             </Group>
           </Stack>
-          <MapPreview />
+          <NearbyPreview />
         </div>
       </Container>
     </section>
@@ -170,40 +163,6 @@ function Search() {
         Buscar
       </Button>
     </form>
-  );
-}
-
-function MapPreview() {
-  return (
-    <Paper withBorder radius={14} p={14} className={styles.mapCard}>
-      <div className={styles.mapBox}>
-        <span className={styles.mapLabel}>Mapa de cooperativas</span>
-        {/* TODO(#17): replace the preview with the real map. */}
-        <span className={styles.mapSoon}>
-          <ComingSoonBadge />
-        </span>
-        {PINS.map(({ left, top, accent }) => (
-          <IconMapPinFilled
-            key={`${String(left)}-${String(top)}`}
-            size={26}
-            aria-hidden="true"
-            className={accent ? styles.pinAccent : styles.pin}
-            style={{ left: `${String(left)}%`, top: `${String(top)}%` }}
-          />
-        ))}
-        <Text fz={13} c="dimmed">
-          Vista previa del mapa
-        </Text>
-      </div>
-      <Group justify="space-between" px={6} pt={14} pb={4}>
-        <Text size="sm" c="dimmed">
-          Cooperativas cerca tuyo
-        </Text>
-        <Anchor component={Link} to="/map" fw={600} size="sm" underline="always">
-          Abrir el mapa →
-        </Anchor>
-      </Group>
-    </Paper>
   );
 }
 

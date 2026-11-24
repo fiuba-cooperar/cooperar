@@ -12,7 +12,7 @@ import type { RegistrationAddressResponse } from './registrationAddressResponse'
 import type { RegistrationStatus } from './registrationStatus';
 import type { Sector } from './sector';
 
-export interface CooperativeRegistrationRequestResponse {
+export interface AccountRegistrationRequestResponse {
   activityTypes: ActivityType[];
   address: RegistrationAddressResponse;
   /** The 11 digits, without dashes */

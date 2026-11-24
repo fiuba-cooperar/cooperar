@@ -20,6 +20,7 @@ import type { OrganizationProfileResponse } from '@/api/generated/model';
 import { PublicProducts } from '@/features/catalog/components/PublicProducts';
 import { NotFoundPage } from '@/features/errors/NotFoundPage';
 import { initials } from './initials';
+import { formatOpeningHours } from './openingHours';
 import { useOrganizationProfile } from './api/useOrganizationProfile';
 import {
   ACTIVITY_TYPE_LABELS,
@@ -65,11 +66,10 @@ function Profile({ profile }: { profile: OrganizationProfileResponse }) {
     <Stack gap="lg">
       <title>{`${profile.name} · CooperAR`}</title>
       <Paper withBorder radius="lg" className={styles.summary}>
-        {profile.photos.coverUrl ? (
+        {/* Without a cover there is no empty strip: the card starts with the logo and the name. */}
+        {profile.photos.coverUrl && (
           // Decorative: it shows the place, and the name right below says whose it is.
           <img src={profile.photos.coverUrl} alt="" className={styles.cover} />
-        ) : (
-          <div className={styles.cover} />
         )}
         <Group justify="space-between" gap="md" p="lg">
           <Group gap="md" wrap="nowrap" miw={0}>
@@ -77,7 +77,7 @@ function Profile({ profile }: { profile: OrganizationProfileResponse }) {
             <Avatar
               src={profile.photos.logoUrl ?? null}
               alt={profile.photos.logoUrl ? `Logo de ${profile.name}` : ''}
-              size={72}
+              size={80}
               radius="50%"
               color="brand"
               aria-hidden={profile.photos.logoUrl ? undefined : true}
@@ -268,10 +268,16 @@ function Profile({ profile }: { profile: OrganizationProfileResponse }) {
                     <dd>{profile.socialMedia}</dd>
                   </>
                 )}
-                {profile.openingHours && (
+                {profile.openingHours.length > 0 && (
                   <>
                     <dt>Horarios de atención</dt>
-                    <dd>{profile.openingHours}</dd>
+                    <dd>
+                      {formatOpeningHours(profile.openingHours).map(({ days, hours }) => (
+                        <div key={days}>
+                          {days}: {hours}
+                        </div>
+                      ))}
+                    </dd>
                   </>
                 )}
                 {profile.responseTime && (

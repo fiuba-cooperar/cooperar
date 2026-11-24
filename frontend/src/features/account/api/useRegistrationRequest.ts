@@ -6,20 +6,20 @@ import {
   getRegistrationRequest,
   listRegistrationRequestsSent,
   resubmitRegistrationRequest,
-} from '@/api/generated/cooperative-registration-requests/cooperative-registration-requests';
+} from '@/api/generated/account-registration-requests/account-registration-requests';
 import type {
-  CooperativeRegistrationRequestResponse,
+  AccountRegistrationRequestResponse,
   RegistrationOrganizationRequest,
 } from '@/api/generated/model';
 
-async function fetchRequests(): Promise<CooperativeRegistrationRequestResponse[]> {
+async function fetchRequests(): Promise<AccountRegistrationRequestResponse[]> {
   const response = await listRegistrationRequestsSent();
   const httpStatus: number = response.status;
   if (httpStatus !== 200) throw new Error(`Unexpected status ${String(httpStatus)}`);
   return response.data;
 }
 
-async function fetchRequest(id: string): Promise<CooperativeRegistrationRequestResponse> {
+async function fetchRequest(id: string): Promise<AccountRegistrationRequestResponse> {
   const response = await getRegistrationRequest(id);
   const httpStatus: number = response.status;
   if (httpStatus !== 200) throw new Error(`Unexpected status ${String(httpStatus)}`);
@@ -75,7 +75,7 @@ function failure(httpStatus: number, body: unknown): RequestSubmissionError {
 
 async function create(
   data: RegistrationOrganizationRequest,
-): Promise<CooperativeRegistrationRequestResponse> {
+): Promise<AccountRegistrationRequestResponse> {
   const response = await send(() => createRegistrationRequest(data));
   const httpStatus: number = response.status;
   if (httpStatus === 201) return response.data;
@@ -88,7 +88,7 @@ async function resubmit({
 }: {
   id: string;
   data: RegistrationOrganizationRequest;
-}): Promise<CooperativeRegistrationRequestResponse> {
+}): Promise<AccountRegistrationRequestResponse> {
   const response = await send(() => resubmitRegistrationRequest(id, data));
   const httpStatus: number = response.status;
   if (httpStatus === 200) return response.data;
@@ -98,7 +98,7 @@ async function resubmit({
 /** Keeps the list and the request itself in sync after sending one. */
 function useRefreshAfterSending() {
   const queryClient = useQueryClient();
-  return (request: CooperativeRegistrationRequestResponse) => {
+  return (request: AccountRegistrationRequestResponse) => {
     queryClient.setQueryData(getGetRegistrationRequestQueryKey(request.id), request);
     return queryClient.invalidateQueries({ queryKey: getListRegistrationRequestsSentQueryKey() });
   };

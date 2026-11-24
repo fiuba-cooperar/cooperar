@@ -7,7 +7,7 @@ import { useAuth } from '@/features/auth/useAuth';
 import { useRegistrationRequest, useResubmitRegistration } from './api/useRegistrationRequest';
 import { RegistrationRequestForm } from './components/RegistrationRequestForm';
 import { RequestSent } from './components/RequestSent';
-import { COOPERATIVE_REGISTRATION_REQUESTS_PATH } from './cooperativeSections';
+import { ACCOUNT_REGISTRATION_REQUESTS_PATH } from './accountSections';
 import styles from './CorrectRegistrationPage.module.css';
 
 const FORM_ERRORS = {
@@ -18,18 +18,23 @@ const FORM_ERRORS = {
     'No pudimos reenviar la solicitud por un problema de conexión. Intentá de nuevo en unos minutos.',
 };
 
-function RegistrationCorrection({ requestId }: { requestId: string }) {
+function RegistrationCorrection({
+  requestId,
+  resubmitted,
+  onResubmitted,
+}: {
+  requestId: string;
+  resubmitted: boolean;
+  onResubmitted: () => void;
+}) {
   const { refreshUser } = useAuth();
   const registration = useRegistrationRequest(requestId);
   const resubmission = useResubmitRegistration();
-  // Kept here: once sent, the request is pending again and would otherwise read as "no changes asked for".
-  const [resubmitted, setResubmitted] = useState(false);
-
   if (resubmitted) {
     return (
-      <RequestSent title="Reenviaste la solicitud">
-        El observatorio va a revisar los datos corregidos y te vamos a avisar por email cuando
-        termine.
+      <RequestSent title="Reenviaste la solicitud" level={1}>
+        La solicitud volvió a revisión. Recibirás un email cuando el observatorio la apruebe o
+        requiera nuevos cambios.
       </RequestSent>
     );
   }
@@ -49,12 +54,7 @@ function RegistrationCorrection({ requestId }: { requestId: string }) {
           El observatorio no pidió cambios en la solicitud de {data.name}. Podés ver sus datos en
           tus solicitudes.
         </Text>
-        <Button
-          component={Link}
-          to={COOPERATIVE_REGISTRATION_REQUESTS_PATH}
-          variant="default"
-          h={44}
-        >
+        <Button component={Link} to={ACCOUNT_REGISTRATION_REQUESTS_PATH} variant="default" h={44}>
           Ver mis solicitudes
         </Button>
       </Stack>
@@ -77,12 +77,12 @@ function RegistrationCorrection({ requestId }: { requestId: string }) {
       <RegistrationRequestForm
         initial={data}
         submitLabel="Reenviar la solicitud"
-        cancelPath={COOPERATIVE_REGISTRATION_REQUESTS_PATH}
+        cancelPath={ACCOUNT_REGISTRATION_REQUESTS_PATH}
         submitting={resubmission.isPending}
         formErrors={FORM_ERRORS}
         onSubmit={async (body) => {
           await resubmission.mutateAsync({ id: data.id, data: body });
-          setResubmitted(true);
+          onResubmitted();
           // The home shows the status from the session, which still says the changes are pending.
           await refreshUser();
         }}
@@ -97,21 +97,32 @@ function RegistrationCorrection({ requestId }: { requestId: string }) {
  */
 export function CorrectRegistrationPage() {
   const { id = '' } = useParams();
+  // Kept here: once sent, the request is pending again and would otherwise read as "no changes asked for".
+  const [resubmitted, setResubmitted] = useState(false);
 
   return (
     <Paper withBorder radius={14} p={{ base: 24, xs: 36 }} maw={720} w="100%">
       <Stack gap="lg">
-        <Stack gap={6}>
-          <Title order={1} fz={28}>
-            Corregir la solicitud
-          </Title>
-          <Text c="dimmed">
-            Revisá los datos de la entidad y reenviá la solicitud para que el observatorio la vuelva
-            a revisar.
-          </Text>
-        </Stack>
+        {!resubmitted && (
+          <Stack gap={6}>
+            <Title order={1} fz={28}>
+              Corregir la solicitud
+            </Title>
+            <Text c="dimmed">
+              Revisá los datos de la entidad y reenviá la solicitud para que el observatorio la
+              vuelva a revisar.
+            </Text>
+          </Stack>
+        )}
         {/* Keyed so that moving to another request starts over. */}
-        <RegistrationCorrection key={id} requestId={id} />
+        <RegistrationCorrection
+          key={id}
+          requestId={id}
+          resubmitted={resubmitted}
+          onResubmitted={() => {
+            setResubmitted(true);
+          }}
+        />
       </Stack>
     </Paper>
   );

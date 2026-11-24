@@ -1,10 +1,17 @@
+import { CountedTextInput } from '@/components/form/CountedTextInput';
 import { SimpleGrid, Stack, Text, TextInput } from '@mantine/core';
 import { useState } from 'react';
 import { Visibility, type CooperativeOrganizationProfileResponse } from '@/api/generated/model';
 import { formatCuit } from '@/features/organizations/cuit';
 import { ORGANIZATION_TYPE_LABELS } from '@/features/organizations/labels';
+import {
+  LEGAL_NAME_MAX_LENGTH,
+  ORGANIZATION_NAME_MAX_LENGTH,
+  legalNameProblem,
+  organizationNameProblem,
+} from '@/features/organizations/limits';
 import { SectionForm } from './SectionForm';
-import { hasErrors, type Errors, type SectionProps } from './sectionProps';
+import { differs, hasErrors, type Errors, type SectionProps } from './sectionProps';
 import { FieldHeader, VisibilityBadge, VisibilityToggle } from './Visibility';
 
 interface Form {
@@ -23,14 +30,28 @@ function fromProfile({ identification }: CooperativeOrganizationProfileResponse)
 
 function validate(form: Form): Errors<Form> {
   return {
-    name: form.name.trim() ? undefined : 'Ingresá el nombre de la entidad.',
-    legalName: form.legalName.trim() ? undefined : 'Ingresá la razón social.',
+    name: organizationNameProblem(form.name),
+    legalName: legalNameProblem(form.legalName),
   };
 }
 
-export function IdentificationSection({ profile, hidden, saving, next, save }: SectionProps) {
+export function IdentificationSection({
+  profile,
+  hidden,
+  saving,
+  next,
+  save,
+  onDirtyChange,
+  revision,
+}: SectionProps) {
   const [form, setForm] = useState(() => fromProfile(profile));
   const [errors, setErrors] = useState<Errors<Form>>({});
+  const [seenRevision, setSeenRevision] = useState(revision);
+  if (seenRevision !== revision) {
+    setSeenRevision(revision);
+    setForm(fromProfile(profile));
+    setErrors({});
+  }
 
   function update<K extends keyof Form>(field: K, value: Form[K]) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -61,6 +82,8 @@ export function IdentificationSection({ profile, hidden, saving, next, save }: S
       hidden={hidden}
       saving={saving}
       next={next}
+      dirty={differs(form, fromProfile(profile))}
+      onDirtyChange={onDirtyChange}
       onSave={onSave}
     >
       <Stack gap="md">
@@ -70,9 +93,9 @@ export function IdentificationSection({ profile, hidden, saving, next, save }: S
             label="Nombre de la entidad"
             visibility={<VisibilityBadge visibility={Visibility.PUBLIC} />}
           />
-          <TextInput
+          <CountedTextInput
             id="profile-name"
-            maxLength={200}
+            maxLength={ORGANIZATION_NAME_MAX_LENGTH}
             value={form.name}
             error={errors.name}
             onChange={(event) => {
@@ -94,9 +117,9 @@ export function IdentificationSection({ profile, hidden, saving, next, save }: S
               />
             }
           />
-          <TextInput
+          <CountedTextInput
             id="profile-legal-name"
-            maxLength={200}
+            maxLength={LEGAL_NAME_MAX_LENGTH}
             value={form.legalName}
             error={errors.legalName}
             onChange={(event) => {

@@ -56,8 +56,8 @@ const REGISTRATION = {
   ],
 };
 
-const REGISTRATION_URL = '/api/cooperative/registration-requests/r1';
-const PAGE = '/cooperative/registration-requests/r1';
+const REGISTRATION_URL = '/api/me/registration-requests/r1';
+const PAGE = '/account/registration-requests/r1';
 
 function signedIn(routes: Parameters<typeof stubFetchRoutes>[0] = {}) {
   saveTokens({ accessToken: 'access-1', refreshToken: 'refresh-1' });
@@ -106,7 +106,7 @@ describe('correcting a registration', () => {
       await userEvent.click(screen.getByRole('button', { name: 'Reenviar la solicitud' }));
 
       expect(
-        await screen.findByRole('heading', { name: 'Reenviaste la solicitud' }),
+        await screen.findByRole('heading', { level: 1, name: 'Reenviaste la solicitud' }),
       ).toBeInTheDocument();
       expect(requestTo(fetchMock, 'PUT')?.body).toBe(
         JSON.stringify({
@@ -127,7 +127,7 @@ describe('correcting a registration', () => {
       );
       expect(screen.getByRole('link', { name: 'Ver mis solicitudes' })).toHaveAttribute(
         'href',
-        '/cooperative/registration-requests',
+        '/account/registration-requests',
       );
     },
     FORM_TIMEOUT,
@@ -181,7 +181,7 @@ describe('correcting a registration', () => {
     expect(screen.queryByRole('button', { name: 'Reenviar la solicitud' })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Ver mis solicitudes' })).toHaveAttribute(
       'href',
-      '/cooperative/registration-requests',
+      '/account/registration-requests',
     );
   });
 

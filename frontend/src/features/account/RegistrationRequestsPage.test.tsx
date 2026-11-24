@@ -62,7 +62,7 @@ function signedIn(list: object[] | { status: number }) {
   saveTokens({ accessToken: 'access-1', refreshToken: 'refresh-1' });
   return stubFetchRoutes({
     'GET /api/me': { body: ACCOUNT },
-    'GET /api/cooperative/registration-requests': Array.isArray(list) ? { body: list } : list,
+    'GET /api/me/registration-requests': Array.isArray(list) ? { body: list } : list,
   });
 }
 
@@ -70,7 +70,7 @@ describe('registration requests', () => {
   it('lists every request the account sent with where it stands', async () => {
     signedIn(REQUESTS);
 
-    renderRoute('/cooperative/registration-requests');
+    renderRoute('/account/registration-requests');
 
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Solicitudes de alta' }),
@@ -98,20 +98,16 @@ describe('registration requests', () => {
     ).toHaveAttribute('href', '/organizations/la-litoralena');
     expect(screen.getByRole('link', { name: 'Nueva solicitud' })).toHaveAttribute(
       'href',
-      '/cooperative/registration-requests/new',
+      '/account/registration-requests/new',
     );
-    expect(
-      within(screen.getByRole('navigation', { name: 'Panel de la cooperativa' })).getByRole(
-        'link',
-        { name: 'Solicitudes de alta' },
-      ),
-    ).toHaveAttribute('aria-current', 'page');
+    const menu = screen.getByRole('navigation', { name: 'Mi cuenta' });
+    expect(within(menu).getByRole('link', { name: 'Inicio' })).toHaveAttribute('href', '/account');
   });
 
   it('shows the data and the history of a request on demand, as the observatory sees it', async () => {
     signedIn(REQUESTS);
 
-    renderRoute('/cooperative/registration-requests');
+    renderRoute('/account/registration-requests');
 
     const card = await screen.findByRole('article', { name: 'Gráfica Norte' });
     expect(
@@ -158,19 +154,19 @@ describe('registration requests', () => {
       }),
     ]);
 
-    renderRoute('/cooperative/registration-requests');
+    renderRoute('/account/registration-requests');
 
     const card = await screen.findByRole('article', { name: 'Textil Sur' });
     expect(within(card).queryByText('Revisá la dirección')).not.toBeInTheDocument();
     expect(
       within(card).getByRole('link', { name: 'Ver cambios solicitados y corregir' }),
-    ).toHaveAttribute('href', '/cooperative/registration-requests/r4');
+    ).toHaveAttribute('href', '/account/registration-requests/r4');
   });
 
   it('says so when the account has not sent any request', async () => {
     signedIn([]);
 
-    renderRoute('/cooperative/registration-requests');
+    renderRoute('/account/registration-requests');
 
     expect(await screen.findByText('Todavía no enviaste ninguna solicitud.')).toBeInTheDocument();
   });
@@ -178,7 +174,7 @@ describe('registration requests', () => {
   it('says so when the requests cannot be loaded', async () => {
     signedIn({ status: 500 });
 
-    renderRoute('/cooperative/registration-requests');
+    renderRoute('/account/registration-requests');
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'No pudimos cargar tus solicitudes.',
@@ -188,7 +184,7 @@ describe('registration requests', () => {
   it('has no accessibility violations', async () => {
     signedIn(REQUESTS);
 
-    const { container } = renderRoute('/cooperative/registration-requests');
+    const { container } = renderRoute('/account/registration-requests');
     await screen.findByRole('article', { name: 'Gráfica Norte' });
 
     await expectNoA11yViolations(container);

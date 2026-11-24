@@ -5,7 +5,7 @@ import { useAuth } from '@/features/auth/useAuth';
 import { useRegistrationRequests } from './api/useRegistrationRequest';
 import { RegistrationCard } from '@/features/organizations/components/RegistrationCard';
 import { RegistrationStatusDetail } from './components/RegistrationStatusDetail';
-import { NEW_REGISTRATION_REQUEST_PATH } from './cooperativeSections';
+import { NEW_REGISTRATION_REQUEST_PATH } from './accountSections';
 import styles from './RegistrationRequestsPage.module.css';
 
 /**
@@ -21,10 +21,7 @@ export function RegistrationRequestsPage() {
       <Group justify="space-between" align="flex-end" gap="md">
         <Stack gap={6}>
           <Title order={1}>Solicitudes de alta</Title>
-          <Text c="dimmed">
-            Pedile al observatorio que sume una cooperativa o empresa recuperada y seguí cómo va la
-            revisión.
-          </Text>
+          <Text c="dimmed">Historial de las solicitudes de alta enviadas al observatorio.</Text>
         </Stack>
         <Button
           component={Link}

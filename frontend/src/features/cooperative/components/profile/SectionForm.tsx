@@ -1,6 +1,6 @@
 import { Alert, Button, Group, Paper, Stack, Text, Title } from '@mantine/core';
 import { IconAlertCircle, IconArrowRight, IconCircleCheck } from '@tabler/icons-react';
-import { useState, type ReactNode, type SyntheticEvent } from 'react';
+import { useEffect, useRef, useState, type ReactNode, type SyntheticEvent } from 'react';
 import { ProfileSaveError } from '../../api/useManagedProfile';
 
 const SAVE_ERRORS: Record<ProfileSaveError['reason'], string> = {
@@ -19,6 +19,8 @@ export function SectionForm({
   hidden,
   saving,
   next,
+  dirty,
+  onDirtyChange,
   onSave,
   children,
 }: {
@@ -28,9 +30,26 @@ export function SectionForm({
   hidden: boolean;
   saving: boolean;
   next?: { label: string; go: () => void } | undefined;
+  /** Whether the form has changes that are not saved yet. */
+  dirty: boolean;
+  onDirtyChange: (dirty: boolean) => void;
   onSave: () => Promise<boolean>;
   children: ReactNode;
 }) {
+  // The page passes a new function on every render, so it is read from a ref: the effects run when `dirty` changes.
+  const report = useRef(onDirtyChange);
+  useEffect(() => {
+    report.current = onDirtyChange;
+  });
+  useEffect(() => {
+    report.current(dirty);
+  }, [dirty]);
+  useEffect(
+    () => () => {
+      report.current(false);
+    },
+    [],
+  );
   const [result, setResult] = useState<'saved' | ProfileSaveError['reason'] | null>(null);
 
   async function handleSubmit(event: SyntheticEvent<HTMLFormElement>) {
@@ -87,14 +106,13 @@ export function SectionForm({
               Seguir con {next.label.toLowerCase()}
             </Button>
           )}
+          {/* Always in the page, so the screen reader announces the message when it appears. */}
           <Text role="status" size="sm" c="dimmed" flex="1 1 220px">
-            {result === 'saved' ? (
+            {result === 'saved' && (
               <Group component="span" gap={6} c="green.8">
                 <IconCircleCheck size={18} aria-hidden />
                 Guardamos los cambios. Ya se ven en tu ficha pública.
               </Group>
-            ) : (
-              'Guardás cada sección por separado.'
             )}
           </Text>
         </Group>

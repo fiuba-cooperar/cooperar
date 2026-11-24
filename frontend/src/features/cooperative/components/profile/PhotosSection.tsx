@@ -1,7 +1,12 @@
-import { Button, Group, Input, SimpleGrid, Stack } from '@mantine/core';
+import { Badge, Button, Group, Input, Stack, Text, Title } from '@mantine/core';
 import { useState } from 'react';
 import { Visibility } from '@/api/generated/model';
 import { useProfilePhotos, type SinglePhoto } from '../../api/useProfilePhotos';
+import {
+  ORGANIZATION_TYPE_LABELS,
+  PROVINCE_LABELS,
+  SECTOR_LABELS,
+} from '@/features/organizations/labels';
 import { PhotosField } from '../PhotosField';
 import { GALLERY_HINT, MAX_GALLERY_PHOTOS, photoProblem } from '../photoRules';
 import type { SectionProps } from './sectionProps';
@@ -26,6 +31,7 @@ export function PhotosSection({
   const [uploading, setUploading] = useState<File[]>([]);
   const [galleryError, setGalleryError] = useState<string>();
   const [changing, setChanging] = useState<SinglePhoto>();
+  const [singleError, setSingleError] = useState<string>();
 
   function single(photo: SinglePhoto) {
     return {
@@ -94,22 +100,52 @@ export function PhotosSection({
           Cada foto se guarda apenas la subís.
         </Input.Description>
       </Stack>
-      <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="md">
-        <SinglePhotoField
-          name="el logo"
-          label="Logo"
-          shape="round"
-          url={photos.logoUrl}
-          {...single('logo')}
-        />
-        <SinglePhotoField
-          name="la portada"
-          label="Foto de portada"
-          shape="wide"
-          url={photos.coverUrl}
-          {...single('cover')}
-        />
-      </SimpleGrid>
+      <div>
+        <div className={styles.banner}>
+          <SinglePhotoField
+            name="la portada"
+            label="Foto de portada"
+            shape="wide"
+            url={photos.coverUrl}
+            onError={setSingleError}
+            {...single('cover')}
+          />
+          <div className={styles.identity}>
+            <SinglePhotoField
+              name="el logo"
+              label="Logo"
+              shape="round"
+              url={photos.logoUrl}
+              onError={setSingleError}
+              className={styles.bannerLogo}
+              {...single('logo')}
+            />
+            {/* The same lines as the header of the public profile, so what is framed here is what visitors see. */}
+            <Stack gap="xs" miw={0}>
+              <Title order={3} fz={34} lh={1.3}>
+                {profile.identification.name}
+              </Title>
+              <Group gap="sm">
+                <Badge variant="light">{ORGANIZATION_TYPE_LABELS[profile.type]}</Badge>
+                {profile.activity.sectors.map((sector) => (
+                  <Badge key={sector} variant="light" color="gray">
+                    {SECTOR_LABELS[sector]}
+                  </Badge>
+                ))}
+                <Text c="dimmed">
+                  {profile.location.address.locality},{' '}
+                  {PROVINCE_LABELS[profile.location.address.province]}
+                </Text>
+              </Group>
+            </Stack>
+          </div>
+        </div>
+        {singleError && (
+          <Text size="sm" c="red.8" role="alert">
+            {singleError}
+          </Text>
+        )}
+      </div>
       <PhotosField
         id="gallery-button"
         label="Galería"

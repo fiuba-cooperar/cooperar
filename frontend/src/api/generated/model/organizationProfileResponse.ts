@@ -6,6 +6,7 @@
  * OpenAPI spec version: v1
  */
 import type { ActivityType } from './activityType';
+import type { OpeningPeriodResponse } from './openingPeriodResponse';
 import type { OrganizationType } from './organizationType';
 import type { ProfilePhotosResponse } from './profilePhotosResponse';
 import type { Province } from './province';
@@ -27,7 +28,7 @@ export interface OrganizationProfileResponse {
   locality: string;
   location?: PublicLocation;
   name: string;
-  openingHours?: string;
+  openingHours: OpeningPeriodResponse[];
   /** Besides the main one, in order */
   otherAddresses: PublicOtherAddressResponse[];
   phone?: string;

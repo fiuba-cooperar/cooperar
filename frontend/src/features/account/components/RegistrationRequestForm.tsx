@@ -1,9 +1,10 @@
-import { Alert, Button, Group, Stack, TextInput } from '@mantine/core';
+import { CountedTextInput } from '@/components/form/CountedTextInput';
+import { Alert, Button, Group, Stack } from '@mantine/core';
 import { IconAlertCircle } from '@tabler/icons-react';
 import { useState, type SyntheticEvent } from 'react';
 import { Link } from 'react-router';
 import type {
-  CooperativeRegistrationRequestResponse,
+  AccountRegistrationRequestResponse,
   RegistrationOrganizationRequest,
 } from '@/api/generated/model';
 import { OrganizationRegistrationFields } from '@/features/organizations/components/OrganizationRegistrationFields';
@@ -34,7 +35,7 @@ export function RegistrationRequestForm({
   formErrors,
   onSubmit,
 }: {
-  initial?: CooperativeRegistrationRequestResponse;
+  initial?: AccountRegistrationRequestResponse;
   submitLabel: string;
   cancelPath: string;
   submitting: boolean;
@@ -89,7 +90,7 @@ export function RegistrationRequestForm({
             onChange={updateOrganization}
           />
         </Stack>
-        <TextInput
+        <CountedTextInput
           label="Tu rol en la entidad"
           placeholder="Presidenta, tesorero, asociada…"
           autoComplete="organization-title"

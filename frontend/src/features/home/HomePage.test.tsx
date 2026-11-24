@@ -151,7 +151,9 @@ describe('public site', () => {
       within(screen.getByRole('banner')).getByRole('link', { name: 'Registrá tu entidad' }),
     );
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Tu cuenta' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Creá tu cuenta' }),
+    ).toBeInTheDocument();
   });
 
   it('has no accessibility violations on the home page', async () => {

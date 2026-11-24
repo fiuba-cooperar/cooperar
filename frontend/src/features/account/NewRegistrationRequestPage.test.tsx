@@ -17,7 +17,7 @@ const ACCOUNT = {
   registrationRequests: [],
 };
 
-const URL = '/api/cooperative/registration-requests';
+const URL = '/api/me/registration-requests';
 // Filling in every field takes several seconds of simulated typing, more than the default 5 when the suite runs in
 // parallel.
 const FILL_IN_TIMEOUT = 20_000;
@@ -58,7 +58,7 @@ describe('new registration request', () => {
         [`POST ${URL}`]: { status: 201, body: { id: 'r9', name: 'Textil Sur', status: 'PENDING' } },
       });
 
-      renderRoute('/cooperative/registration-requests/new');
+      renderRoute('/account/registration-requests/new');
       expect(
         await screen.findByRole('heading', { level: 1, name: 'Nueva solicitud de alta' }),
       ).toBeInTheDocument();
@@ -66,8 +66,9 @@ describe('new registration request', () => {
       await userEvent.click(screen.getByRole('button', { name: 'Enviar la solicitud' }));
 
       expect(
-        await screen.findByRole('heading', { name: 'Enviaste la solicitud' }),
+        await screen.findByRole('heading', { level: 1, name: 'Enviaste la solicitud' }),
       ).toBeInTheDocument();
+      expect(screen.queryByText(/Contanos qué entidad querés sumar/)).not.toBeInTheDocument();
       expect(requestTo(fetchMock)?.body).toBe(
         JSON.stringify({
           name: 'Textil Sur',
@@ -87,16 +88,26 @@ describe('new registration request', () => {
       );
       expect(screen.getByRole('link', { name: 'Ver mis solicitudes' })).toHaveAttribute(
         'href',
-        '/cooperative/registration-requests',
+        '/account/registration-requests',
       );
     },
     FILL_IN_TIMEOUT,
   );
 
+  it('asks to confirm the email instead of showing the form until it is confirmed', async () => {
+    saveTokens({ accessToken: 'access-1', refreshToken: 'refresh-1' });
+    stubFetchRoutes({ 'GET /api/me': { body: { ...ACCOUNT, emailVerified: false } } });
+
+    renderRoute('/account/registration-requests/new');
+
+    expect(await screen.findByText('Confirmá tu email')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Enviar la solicitud' })).not.toBeInTheDocument();
+  });
+
   it('validates the form before sending it', async () => {
     const fetchMock = signedIn();
 
-    renderRoute('/cooperative/registration-requests/new');
+    renderRoute('/account/registration-requests/new');
     await userEvent.click(await screen.findByRole('button', { name: 'Enviar la solicitud' }));
 
     expect(screen.getByText('Ingresá el nombre de la entidad.')).toBeInTheDocument();
@@ -109,7 +120,7 @@ describe('new registration request', () => {
     async () => {
       signedIn({ [`POST ${URL}`]: { status: 409, body: { conflicts: ['CUIT'] } } });
 
-      renderRoute('/cooperative/registration-requests/new');
+      renderRoute('/account/registration-requests/new');
       await fillIn();
       await userEvent.click(screen.getByRole('button', { name: 'Enviar la solicitud' }));
 
@@ -125,7 +136,7 @@ describe('new registration request', () => {
     async () => {
       signedIn({ [`POST ${URL}`]: { status: 500 } });
 
-      renderRoute('/cooperative/registration-requests/new');
+      renderRoute('/account/registration-requests/new');
       await fillIn();
       await userEvent.click(screen.getByRole('button', { name: 'Enviar la solicitud' }));
 
@@ -137,7 +148,7 @@ describe('new registration request', () => {
   it('has no accessibility violations', async () => {
     signedIn();
 
-    const { container } = renderRoute('/cooperative/registration-requests/new');
+    const { container } = renderRoute('/account/registration-requests/new');
     await screen.findByRole('button', { name: 'Enviar la solicitud' });
 
     await expectNoA11yViolations(container);

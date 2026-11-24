@@ -5,6 +5,7 @@
  * Open observatory of worker-recovered companies and worker cooperatives
  * OpenAPI spec version: v1
  */
+import type { OpeningPeriodRequest } from './openingPeriodRequest';
 import type { ResponseTime } from './responseTime';
 import type { Visibility } from './visibility';
 
@@ -16,10 +17,11 @@ export interface ProfileContactRequest {
   email?: string;
   emailVisibility: Visibility;
   /**
-   * @minLength 0
-   * @maxLength 200
+   * The ranges in which it is open; a day not listed is closed, and HOLIDAY is the public holidays
+   * @minItems 0
+   * @maxItems 24
    */
-  openingHours?: string;
+  openingHours?: OpeningPeriodRequest[];
   /**
    * @minLength 0
    * @maxLength 50

@@ -1,4 +1,5 @@
-import { Alert, Select, SimpleGrid, Stack, Text, TextInput } from '@mantine/core';
+import { CountedTextInput } from '@/components/form/CountedTextInput';
+import { Alert, Select, SimpleGrid, Stack, Text } from '@mantine/core';
 import { IconMapPinOff } from '@tabler/icons-react';
 import { lazy, Suspense } from 'react';
 import { Province, Visibility } from '@/api/generated/model';
@@ -60,7 +61,7 @@ export function AddressFields({ idPrefix, draft, onChange, mapSubject, namePlace
           hint="Para reconocerla fácil, en tu ficha y en la pública."
           visibility={<VisibilityBadge visibility={Visibility.PUBLIC} />}
         />
-        <TextInput
+        <CountedTextInput
           id={id('address-name')}
           placeholder={namePlaceholder}
           maxLength={ADDRESS_NAME_MAX}
@@ -170,7 +171,7 @@ export function AddressFields({ idPrefix, draft, onChange, mapSubject, namePlace
           hint="Se muestran solo junto con la calle y el número."
           visibility={<VisibilityBadge visibility={form.streetVisibility} />}
         />
-        <TextInput
+        <CountedTextInput
           id={id('references')}
           placeholder="Ej.: portón verde, al lado de la escuela"
           autoComplete="address-line2"

@@ -1,8 +1,8 @@
 import { Menu, Text, UnstyledButton } from '@mantine/core';
-import { IconCheck, IconChevronDown } from '@tabler/icons-react';
+import { IconCheck, IconPlus, IconSelector } from '@tabler/icons-react';
 import { Link } from 'react-router';
 import type { OrganizationSummary } from '@/api/generated/model';
-import { NEW_REGISTRATION_REQUEST_PATH } from '../cooperativeSections';
+import { NEW_REGISTRATION_REQUEST_PATH } from '@/features/account/accountSections';
 import styles from './OrganizationSwitcher.module.css';
 
 function organizationInitials(name: string): string {
@@ -15,46 +15,56 @@ function organizationInitials(name: string): string {
     .toUpperCase();
 }
 
-/** Header selector of the organization being managed, with the entry to request adding another one. */
+/** The organization being managed, at the top of the side menu, to switch to another one or to add a new one. */
 export function OrganizationSwitcher({
   organizations,
   active,
+  compact = false,
   onChange,
 }: {
   organizations: OrganizationSummary[];
   active: OrganizationSummary;
+  /** Just the initials, when the side menu is collapsed. */
+  compact?: boolean;
   onChange: (id: string) => void;
 }) {
   return (
     <Menu
-      position="bottom-end"
+      position={compact ? 'right-start' : 'bottom-start'}
       offset={6}
-      width="max-content"
+      width={compact ? 260 : 'target'}
       classNames={{
         dropdown: styles.dropdown,
         label: styles.label,
         item: styles.item,
+        itemLabel: styles.itemLabel,
         divider: styles.divider,
       }}
     >
       <Menu.Target>
-        <UnstyledButton className={styles.trigger}>
+        <UnstyledButton
+          className={[styles.trigger, compact ? styles.compact : undefined]
+            .filter(Boolean)
+            .join(' ')}
+          // With the name hidden, the button still says which entity it is.
+          aria-label={compact ? `${active.name}. Seleccionar entidad` : undefined}
+        >
           <span aria-hidden className={styles.initials}>
             {organizationInitials(active.name)}
           </span>
-          <span className={styles.labels}>
-            <Text size="xs" c="dimmed" component="span">
-              Cooperativa
-            </Text>
-            <Text fw={700} fz={15} component="span" truncate="end" maw={{ base: 120, md: 360 }}>
+          <span className={styles.labels} hidden={compact}>
+            <Text fw={700} fz={15} component="span" truncate="end" maw="100%">
               {active.name}
             </Text>
+            <Text size="xs" c="dimmed" component="span">
+              Seleccionar entidad
+            </Text>
           </span>
-          <IconChevronDown size={18} stroke={2.2} aria-hidden />
+          {!compact && <IconSelector size={18} stroke={2.2} aria-hidden />}
         </UnstyledButton>
       </Menu.Target>
       <Menu.Dropdown>
-        <Menu.Label>Tus cooperativas</Menu.Label>
+        <Menu.Label>Tus entidades</Menu.Label>
         {organizations.map((organization) => {
           const selected = organization.id === active.id;
           return (
@@ -72,8 +82,12 @@ export function OrganizationSwitcher({
           );
         })}
         <Menu.Divider />
-        <Menu.Item component={Link} to={NEW_REGISTRATION_REQUEST_PATH}>
-          + Agregar cooperativa
+        <Menu.Item
+          component={Link}
+          to={NEW_REGISTRATION_REQUEST_PATH}
+          leftSection={<IconPlus size={18} aria-hidden />}
+        >
+          Crear entidad
         </Menu.Item>
       </Menu.Dropdown>
     </Menu>

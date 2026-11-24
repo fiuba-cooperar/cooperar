@@ -1,0 +1,27 @@
+.header {
+  padding-bottom: var(--mantine-spacing-md);
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+.title {
+  font-size: var(--mantine-font-size-lg);
+  font-weight: 700;
+}
+
+.body {
+  padding-top: var(--mantine-spacing-lg);
+}
+
+/* A long dialog scrolls its body only: the title stays in place and the corners stay rounded. */
+.content {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 2 * var(--mantine-spacing-xl));
+  overflow: hidden;
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}

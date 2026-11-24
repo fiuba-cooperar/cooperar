@@ -1,5 +1,48 @@
 .badge {
   flex: none;
+  height: 26px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* The same height, font and colors as the badge of the fixed fields: the chosen option is the light blue pill. The
+   doubled selectors beat the styles Mantine gives the control. */
+.toggle.toggle {
+  height: 26px;
+  padding: 0;
+  border-radius: 999px;
+}
+
+.toggle .toggleLabel {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 12px;
+  border-radius: 999px;
+  color: var(--mantine-color-dimmed);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+
+  &[data-active] {
+    color: var(--mantine-color-brand-light-color);
+  }
+}
+
+.toggle .toggleIndicator {
+  border-radius: 999px;
+  background: var(--mantine-color-brand-light);
+  box-shadow: none;
+}
+
+.option {
+  position: relative;
+  /* Measured: the text sat 1px higher than the one of the badge. */
+  top: 1px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .header {

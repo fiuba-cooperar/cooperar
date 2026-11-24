@@ -21,10 +21,7 @@ import type {
   UseQueryResult,
 } from '@tanstack/react-query';
 
-import type {
-  CooperativeRegistrationRequestResponse,
-  RegistrationOrganizationRequest,
-} from '../model';
+import type { AccountRegistrationRequestResponse, RegistrationOrganizationRequest } from '../model';
 
 import { apiFetch } from '../../apiFetch';
 
@@ -46,7 +43,7 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
 };
 
 export type listRegistrationRequestsSentResponse200 = {
-  data: CooperativeRegistrationRequestResponse[];
+  data: AccountRegistrationRequestResponse[];
   status: 200;
 };
 
@@ -57,7 +54,7 @@ export type listRegistrationRequestsSentResponseSuccess =
 export type listRegistrationRequestsSentResponse = listRegistrationRequestsSentResponseSuccess;
 
 export const getListRegistrationRequestsSentUrl = () => {
-  return `/api/cooperative/registration-requests`;
+  return `/api/me/registration-requests`;
 };
 
 /**
@@ -73,7 +70,7 @@ export const listRegistrationRequestsSent = async (
 };
 
 export const getListRegistrationRequestsSentQueryKey = () => {
-  return [`/api/cooperative/registration-requests`] as const;
+  return [`/api/me/registration-requests`] as const;
 };
 
 export const getListRegistrationRequestsSentQueryOptions = <
@@ -183,7 +180,7 @@ export function useListRegistrationRequestsSent<
 }
 
 export type createRegistrationRequestResponse201 = {
-  data: CooperativeRegistrationRequestResponse;
+  data: AccountRegistrationRequestResponse;
   status: 201;
 };
 
@@ -193,11 +190,11 @@ export type createRegistrationRequestResponseSuccess = createRegistrationRequest
 export type createRegistrationRequestResponse = createRegistrationRequestResponseSuccess;
 
 export const getCreateRegistrationRequestUrl = () => {
-  return `/api/cooperative/registration-requests`;
+  return `/api/me/registration-requests`;
 };
 
 /**
- * It reaches the review once the account has confirmed its email. Answers 409 with a `conflicts` list (`CUIT`) when another organization or request under review has that CUIT.
+ * Answers 403 until the account has confirmed its email, and 409 with a `conflicts` list (`CUIT`) when another organization or request under review has that CUIT.
  * @summary Send a request to add another organization
  */
 export const createRegistrationRequest = async (
@@ -299,7 +296,7 @@ export const useCreateRegistrationRequest = <TError = unknown, TContext = unknow
   return useMutation(getCreateRegistrationRequestMutationOptions(options), queryClient);
 };
 export type getRegistrationRequestResponse200 = {
-  data: CooperativeRegistrationRequestResponse;
+  data: AccountRegistrationRequestResponse;
   status: 200;
 };
 
@@ -309,7 +306,7 @@ export type getRegistrationRequestResponseSuccess = getRegistrationRequestRespon
 export type getRegistrationRequestResponse = getRegistrationRequestResponseSuccess;
 
 export const getGetRegistrationRequestUrl = (id: string) => {
-  return `/api/cooperative/registration-requests/${id}`;
+  return `/api/me/registration-requests/${id}`;
 };
 
 /**
@@ -327,7 +324,7 @@ export const getRegistrationRequest = async (
 };
 
 export const getGetRegistrationRequestQueryKey = (id: string) => {
-  return [`/api/cooperative/registration-requests/${id}`] as const;
+  return [`/api/me/registration-requests/${id}`] as const;
 };
 
 export const getGetRegistrationRequestQueryOptions = <
@@ -446,7 +443,7 @@ export function useGetRegistrationRequest<
 }
 
 export type resubmitRegistrationRequestResponse200 = {
-  data: CooperativeRegistrationRequestResponse;
+  data: AccountRegistrationRequestResponse;
   status: 200;
 };
 
@@ -456,7 +453,7 @@ export type resubmitRegistrationRequestResponseSuccess = resubmitRegistrationReq
 export type resubmitRegistrationRequestResponse = resubmitRegistrationRequestResponseSuccess;
 
 export const getResubmitRegistrationRequestUrl = (id: string) => {
-  return `/api/cooperative/registration-requests/${id}`;
+  return `/api/me/registration-requests/${id}`;
 };
 
 /**

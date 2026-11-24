@@ -15,8 +15,8 @@ export function EmailVerificationNotice({ email }: { email: string }) {
     >
       <Stack gap="sm" align="flex-start">
         <Text size="sm">
-          Te enviamos un enlace a <strong>{email}</strong>. Hasta que lo confirmes, el observatorio
-          no puede revisar el alta de tu entidad.
+          Te enviamos un enlace a <strong>{email}</strong>. Hasta que lo confirmes, no podés dar de
+          alta una entidad.
         </Text>
         <Button
           variant="outline"

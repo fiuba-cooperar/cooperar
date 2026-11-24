@@ -82,11 +82,9 @@ export function AppLayout() {
   const { pathname } = useLocation();
   const isLoginPage = pathname === '/login';
   const isRegisterPage = pathname === REGISTER_PATH;
-  const focusedAction = isLoginPage ? (
-    <Button component={Link} to={REGISTER_PATH} {...FOCUSED_ACTION_PROPS}>
-      Registrá tu entidad
-    </Button>
-  ) : isRegisterPage ? (
+  // The login page keeps only the logo: its own form links to the registration.
+  const isFocusedPage = isLoginPage || isRegisterPage;
+  const focusedAction = isRegisterPage ? (
     <Button component={Link} to="/login" variant="outline" {...FOCUSED_ACTION_PROPS}>
       Ya tengo cuenta
     </Button>
@@ -101,11 +99,11 @@ export function AppLayout() {
       <header className={styles.header}>
         {/* Same bar on every page, so its height does not jump between screens. */}
         <Container fluid px={{ base: 'md', sm: 48 }} py="md" className={styles.headerBar}>
-          {focusedAction ? (
-            // The login and register mocks keep only the logo and one action, so the form has no distractions.
+          {isFocusedPage ? (
+            // The login and register pages keep only the logo and, at most, one action, so the form has no distractions.
             <>
               <Brand />
-              <div className={styles.headerEnd}>{focusedAction}</div>
+              {focusedAction && <div className={styles.headerEnd}>{focusedAction}</div>}
             </>
           ) : (
             // Logo and buttons at the edges and the menu centered, as in the mock.

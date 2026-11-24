@@ -1,5 +1,6 @@
 import {
   Alert,
+  Anchor,
   Button,
   Image,
   Paper,
@@ -12,7 +13,8 @@ import {
 } from '@mantine/core';
 import { IconAlertCircle } from '@tabler/icons-react';
 import { useState, type SyntheticEvent } from 'react';
-import { Navigate, useNavigate } from 'react-router';
+import { Link, Navigate, useNavigate } from 'react-router';
+import { REGISTER_PATH } from '@/components/layout/publicSections';
 import { LoginError } from './authContext';
 import styles from './LoginPage.module.css';
 import { ROLE_HOME } from './roleHome';
@@ -126,6 +128,12 @@ export function LoginPage() {
           >
             Ingresar
           </Button>
+          <Text ta="center" fz={15}>
+            ¿No tenés cuenta?{' '}
+            <Anchor component={Link} to={REGISTER_PATH} fw={600} inherit>
+              Registrate
+            </Anchor>
+          </Text>
         </Stack>
       </form>
     </Paper>

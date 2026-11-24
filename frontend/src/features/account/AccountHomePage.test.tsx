@@ -76,7 +76,9 @@ describe('account home', () => {
       '/account/registration-requests/new',
     );
     const panel = screen.getByRole('region', { name: 'Notificaciones' });
-    expect(within(panel).getByText('No tenés notificaciones por ahora.')).toBeInTheDocument();
+    expect(
+      await within(panel).findByText('No tenés notificaciones por ahora.'),
+    ).toBeInTheDocument();
   });
 
   it('lists every organization with its own way into the panel', async () => {

@@ -315,6 +315,87 @@
         "tags" : [ "admin-registration-requests" ]
       }
     },
+    "/api/admin/users" : {
+      "get" : {
+        "description" : "Every filter is optional: without it, the list is not narrowed by that criterion.",
+        "operationId" : "listUsers",
+        "parameters" : [ {
+          "description" : "A part of the name, the surname or the email, without caring about case or accents",
+          "in" : "query",
+          "name" : "q",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "description" : "A part of the name, the surname or the email, without caring about case or accents",
+            "maxLength" : 200,
+            "minLength" : 0
+          }
+        }, {
+          "description" : "Only the accounts with this role",
+          "in" : "query",
+          "name" : "role",
+          "required" : false,
+          "schema" : {
+            "$ref" : "#/components/schemas/Role"
+          }
+        }, {
+          "description" : "Only the accounts that confirmed their email (true) or that did not (false)",
+          "in" : "query",
+          "name" : "emailVerified",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean",
+            "description" : "Only the accounts that confirmed their email (true) or that did not (false)"
+          }
+        }, {
+          "description" : "Only the organization accounts that manage no approved organization",
+          "in" : "query",
+          "name" : "withoutOrganizations",
+          "required" : false,
+          "schema" : {
+            "type" : "boolean",
+            "description" : "Only the organization accounts that manage no approved organization"
+          }
+        }, {
+          "description" : "From 0; 0 by default",
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "From 0; 0 by default",
+            "minimum" : 0
+          }
+        }, {
+          "description" : "20 by default",
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "20 by default",
+            "maximum" : 50,
+            "minimum" : 1
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AdminUserPageResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "A page of the accounts of the platform, the newest first",
+        "tags" : [ "admin-users" ]
+      }
+    },
     "/api/auth/login" : {
       "post" : {
         "description" : "Each address and each email can fail a limited number of times per quarter of an hour; past it the answer is 429 with `Retry-After`.",
@@ -2535,6 +2616,66 @@
           }
         },
         "required" : [ "activityTypes", "address", "cuit", "id", "name", "registeredAt", "reviews", "sectors", "status", "submittedAt", "type" ]
+      },
+      "AdminUserPageResponse" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AdminUserResponse"
+            }
+          },
+          "page" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "size" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "total" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Accounts found, on every page"
+          }
+        },
+        "required" : [ "items", "page", "size", "total" ]
+      },
+      "AdminUserResponse" : {
+        "type" : "object",
+        "properties" : {
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "email" : {
+            "type" : "string"
+          },
+          "emailVerified" : {
+            "type" : "boolean"
+          },
+          "firstName" : {
+            "type" : "string",
+            "description" : "Missing for accounts created without a name, such as the initial admin"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "lastName" : {
+            "type" : "string"
+          },
+          "organizationCount" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "Approved organizations it manages"
+          },
+          "role" : {
+            "$ref" : "#/components/schemas/Role"
+          }
+        },
+        "required" : [ "createdAt", "email", "emailVerified", "id", "organizationCount", "role" ]
       },
       "CatalogOrganizationResponse" : {
         "type" : "object",

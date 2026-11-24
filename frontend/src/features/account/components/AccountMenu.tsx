@@ -1,5 +1,6 @@
 import { Avatar, Badge, Menu, Text, UnstyledButton } from '@mantine/core';
 import {
+  IconBell,
   IconBuildingCommunity,
   IconChevronDown,
   IconLogout,
@@ -12,6 +13,7 @@ import { useAuth } from '@/features/auth/useAuth';
 import { displayName, initials } from '@/features/auth/userName';
 import {
   ACCOUNT_HOME_PATH,
+  ACCOUNT_NOTIFICATIONS_PATH,
   ACCOUNT_REGISTRATION_REQUESTS_PATH,
   NEW_REGISTRATION_REQUEST_PATH,
 } from '../accountSections';
@@ -54,6 +56,13 @@ export function AccountMenu() {
           leftSection={<IconPlus size={18} aria-hidden />}
         >
           Crear entidad
+        </Menu.Item>
+        <Menu.Item
+          component={Link}
+          to={ACCOUNT_NOTIFICATIONS_PATH}
+          leftSection={<IconBell size={18} aria-hidden />}
+        >
+          Notificaciones
         </Menu.Item>
         <Menu.Item
           component={Link}

@@ -5,11 +5,13 @@ import { AccountLayout } from '@/features/account/AccountLayout';
 import {
   ACCOUNT_HOME_PATH,
   ACCOUNT_REGISTRATION_REQUEST_PATH,
+  ACCOUNT_NOTIFICATIONS_PATH,
   ACCOUNT_REGISTRATION_REQUESTS_PATH,
   NEW_REGISTRATION_REQUEST_PATH,
 } from '@/features/account/accountSections';
 import { CorrectRegistrationPage } from '@/features/account/CorrectRegistrationPage';
 import { NewRegistrationRequestPage } from '@/features/account/NewRegistrationRequestPage';
+import { NotificationsPage } from '@/features/notifications/NotificationsPage';
 import { RegistrationRequestsPage } from '@/features/account/RegistrationRequestsPage';
 import { AdminHomePage } from '@/features/admin/AdminHomePage';
 import { AdminLayout } from '@/features/admin/AdminLayout';
@@ -124,6 +126,7 @@ export const routes: RouteObject[] = [
         element: <AccountLayout />,
         children: [
           { path: ACCOUNT_HOME_PATH, element: <AccountHomePage /> },
+          { path: ACCOUNT_NOTIFICATIONS_PATH, element: <NotificationsPage /> },
           { path: ACCOUNT_REGISTRATION_REQUESTS_PATH, element: <RegistrationRequestsPage /> },
           { path: NEW_REGISTRATION_REQUEST_PATH, element: <NewRegistrationRequestPage /> },
           { path: ACCOUNT_REGISTRATION_REQUEST_PATH, element: <CorrectRegistrationPage /> },

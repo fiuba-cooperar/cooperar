@@ -63,8 +63,14 @@ export const theme = createTheme({
       styles: { input: { height: 'auto', minHeight: 48 } },
     }),
     PasswordInput: { defaultProps: { size: 'md' } },
+    // The size also sets the error text, so without it these fields showed smaller errors than the rest.
+    Autocomplete: { defaultProps: { size: 'md' } },
     // The group's size also sets its description and its checkboxes, so they match the other fields.
-    CheckboxGroup: { defaultProps: { size: 'md' } },
+    // Its error would sit right under the checkboxes, which have no field border to give it room.
+    CheckboxGroup: {
+      defaultProps: { size: 'md' },
+      styles: { error: { marginTop: 10 } },
+    },
     Checkbox: { defaultProps: { size: 'md' } },
     // A plain chevron like the mocks, instead of Mantine's up-and-down arrows.
     Select: Select.extend({

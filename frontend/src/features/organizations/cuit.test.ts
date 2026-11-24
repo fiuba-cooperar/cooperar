@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cuitProblem } from './cuit';
+import { cuitProblem, maskCuit } from './cuit';
 
 describe('cuitProblem', () => {
   it.each(['30-12345678-1', '30123456781', ' 30 12345678 1 ', '20-40000000-0'])(
@@ -23,4 +23,21 @@ describe('cuitProblem', () => {
       expect(cuitProblem(value)).toBe('check-digit');
     },
   );
+});
+
+describe('maskCuit', () => {
+  it.each([
+    ['', ''],
+    ['3', '3'],
+    ['30', '30'],
+    ['301', '30-1'],
+    ['3012345678', '30-12345678'],
+    ['30123456781', '30-12345678-1'],
+    ['30-12345678-1', '30-12345678-1'],
+    [' 30 12345678 1 ', '30-12345678-1'],
+    ['30a12b345678-19999', '30-12345678-1'],
+    ['abc', ''],
+  ])('turns "%s" into "%s"', (input, expected) => {
+    expect(maskCuit(input)).toBe(expected);
+  });
 });

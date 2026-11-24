@@ -1,6 +1,7 @@
 import { Alert, Button, Group, Stack, Text, Title } from '@mantine/core';
 import { IconAlertCircle, IconPlus } from '@tabler/icons-react';
 import { Link } from 'react-router';
+import { RegistrationStatus } from '@/api/generated/model';
 import { useAuth } from '@/features/auth/useAuth';
 import { useRegistrationRequests } from './api/useRegistrationRequest';
 import { RegistrationCard } from '@/features/organizations/components/RegistrationCard';
@@ -8,9 +9,23 @@ import { RegistrationStatusDetail } from './components/RegistrationStatusDetail'
 import { NEW_REGISTRATION_REQUEST_PATH } from './accountSections';
 import styles from './RegistrationRequestsPage.module.css';
 
+/** Requests that need something from the account come first, then the ones under review, then the finished ones. */
+const STATUS_RANK: Record<RegistrationStatus, number> = {
+  [RegistrationStatus.CHANGES_REQUESTED]: 0,
+  [RegistrationStatus.PENDING]: 1,
+  [RegistrationStatus.APPROVED]: 2,
+  [RegistrationStatus.REJECTED]: 2,
+};
+
+/** Sorted by that rank; within each rank the order the API gave is kept (the sort is stable). */
+function sortByAttention<T extends { status: RegistrationStatus }>(list: T[]): T[] {
+  return [...list].sort((a, b) => STATUS_RANK[a.status] - STATUS_RANK[b.status]);
+}
+
 /**
- * The requests the account sent to add organizations, newest first, each with the same card the observatory reviews
- * it with (without who reviewed it), and the entry to send a new one.
+ * The requests the account sent to add organizations, the ones that need changes first, then the pending ones and
+ * then the finished ones, each with the same card the observatory reviews it with (without who reviewed it), and the
+ * entry to send a new one.
  */
 export function RegistrationRequestsPage() {
   const { user } = useAuth();
@@ -42,7 +57,7 @@ export function RegistrationRequestsPage() {
         <Text>Todavía no enviaste ninguna solicitud.</Text>
       ) : (
         <Stack component="ul" gap="md" className={styles.list}>
-          {requests.data.map((request) => (
+          {sortByAttention(requests.data).map((request) => (
             <li key={request.id}>
               <RegistrationCard
                 registration={request}

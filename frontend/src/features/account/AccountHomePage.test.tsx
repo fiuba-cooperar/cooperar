@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { saveTokens } from '@/api/session';
@@ -22,6 +22,7 @@ function signedIn(user: object = ACCOUNT, routes: Parameters<typeof stubFetchRou
   return stubFetchRoutes({
     'GET /api/me': { body: user },
     'POST /api/auth/logout': { status: 204 },
+    'GET /api/me/notifications': { body: { items: [], total: 0, unread: 0 } },
     ...routes,
   });
 }
@@ -33,7 +34,6 @@ describe('account home', () => {
     renderRoute('/account');
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Hola, Ana' })).toBeInTheDocument();
-    expect(screen.getByText(/el estado de tus solicitudes de alta/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Dar de alta mi entidad' })).toHaveAttribute(
       'href',
       '/account/registration-requests/new',
@@ -75,10 +75,8 @@ describe('account home', () => {
       'href',
       '/account/registration-requests/new',
     );
-    expect(screen.getByRole('link', { name: 'Ver todas' })).toHaveAttribute(
-      'href',
-      '/account/registration-requests',
-    );
+    const panel = screen.getByRole('region', { name: 'Notificaciones' });
+    expect(within(panel).getByText('No tenés notificaciones por ahora.')).toBeInTheDocument();
   });
 
   it('lists every organization with its own way into the panel', async () => {
@@ -120,7 +118,7 @@ describe('account home', () => {
     expect(screen.getByRole('menuitem', { name: 'Cerrar sesión' })).toBeVisible();
   });
 
-  it('shows where a request under review stands', async () => {
+  it('tells an account whose first request is under review, and leads to its requests', async () => {
     signedIn({
       ...ACCOUNT,
       registrationRequests: [{ id: 'r1', name: 'Textil Sur', status: 'PENDING' }],
@@ -128,13 +126,18 @@ describe('account home', () => {
 
     renderRoute('/account');
 
-    const card = await screen.findByRole('article', { name: 'Textil Sur' });
-    expect(within(card).getByText('Pendiente de aprobación')).toBeInTheDocument();
-    expect(within(card).getByText(/está revisando la solicitud/)).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { level: 2, name: 'Tu solicitud está en revisión' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Ver mis solicitudes' })).toHaveAttribute(
+      'href',
+      '/account/registration-requests',
+    );
     expect(screen.queryByRole('link', { name: 'Dar de alta mi entidad' })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'Notificaciones' })).not.toBeInTheDocument();
   });
 
-  it('leaves rejected requests for the requests section and offers to try again', async () => {
+  it('offers to try again when the only request was rejected', async () => {
     signedIn({
       ...ACCOUNT,
       registrationRequests: [
@@ -150,35 +153,130 @@ describe('account home', () => {
     renderRoute('/account');
 
     expect(await screen.findByRole('link', { name: 'Dar de alta mi entidad' })).toBeInTheDocument();
-    expect(screen.queryByRole('article')).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Ver todas' })).toHaveAttribute(
-      'href',
-      '/account/registration-requests',
-    );
+    expect(screen.queryByRole('region', { name: 'Notificaciones' })).not.toBeInTheDocument();
   });
 
-  it('says the observatory asked for changes, with a link to see them and correct', async () => {
-    signedIn({
+  describe('notifications', () => {
+    const changes = {
+      id: 'n1',
+      type: 'REGISTRATION_CHANGES_REQUESTED',
+      subject: 'Metalúrgica Oeste',
+      message: 'Falta la razón social',
+      registrationRequestId: 'r4',
+      createdAt: '2026-11-20T15:00:00Z',
+    };
+    const approved = {
+      id: 'n2',
+      type: 'REGISTRATION_APPROVED',
+      subject: 'Textil Sur',
+      organizationId: 'c1',
+      registrationRequestId: 'r1',
+      createdAt: '2026-11-19T15:00:00Z',
+      readAt: '2026-11-19T16:00:00Z',
+    };
+    const withOrganization = {
       ...ACCOUNT,
-      registrationRequests: [
-        {
-          id: 'r4',
-          name: 'Metalúrgica Oeste',
-          status: 'CHANGES_REQUESTED',
-          reviewMessage: 'Falta la razón social',
-        },
-      ],
+      organizations: [{ id: 'c1', name: 'Textil Sur', slug: 'textil-sur' }],
+    };
+
+    function page(items: object[], unread: number) {
+      return { 'GET /api/me/notifications': { body: { items, total: items.length, unread } } };
+    }
+
+    it('shows the unread ones apart from the read ones, with a link to act on each', async () => {
+      signedIn(withOrganization, page([changes, approved], 1));
+
+      renderRoute('/account');
+
+      const panel = await screen.findByRole('region', { name: 'Notificaciones' });
+      expect(
+        await within(panel).findByText('Cambios solicitados en «Metalúrgica Oeste»'),
+      ).toBeInTheDocument();
+      expect(within(panel).getByText('Falta la razón social')).toBeInTheDocument();
+      expect(within(panel).getByLabelText('1 sin leer')).toBeInTheDocument();
+      expect(within(panel).getAllByText('Nueva')).toHaveLength(1);
+      expect(within(panel).getByRole('link', { name: 'Corregir solicitud' })).toHaveAttribute(
+        'href',
+        '/account/registration-requests/r4',
+      );
+      expect(
+        within(panel).getByRole('link', { name: 'Ver todas las notificaciones' }),
+      ).toHaveAttribute('href', '/account/notifications');
     });
 
-    renderRoute('/account');
+    it('opens the panel of the organization an approval is about', async () => {
+      signedIn(withOrganization, page([approved], 0));
 
-    const card = await screen.findByRole('article', { name: 'Metalúrgica Oeste' });
-    expect(within(card).getByText('Solicitud de cambios')).toBeInTheDocument();
-    // What was asked for is read along with the form, not here.
-    expect(within(card).queryByText('Falta la razón social')).not.toBeInTheDocument();
-    expect(
-      within(card).getByRole('link', { name: 'Ver cambios solicitados y corregir' }),
-    ).toHaveAttribute('href', '/account/registration-requests/r4');
+      renderRoute('/account');
+      const panel = await screen.findByRole('region', { name: 'Notificaciones' });
+      await userEvent.click(await within(panel).findByRole('link', { name: 'Ir al panel' }));
+
+      expect(await screen.findByText(/Estás administrando/)).toHaveTextContent('Textil Sur');
+    });
+
+    it('marks one as read, and all of them at once', async () => {
+      let unread = 2;
+      const fetchMock = signedIn(withOrganization, {
+        'GET /api/me/notifications': () => ({
+          body: { items: [changes, { ...changes, id: 'n3' }], total: 2, unread },
+        }),
+        'POST /api/me/notifications/n1/read': () => {
+          unread = 1;
+          return { status: 204 };
+        },
+        'POST /api/me/notifications/read-all': () => {
+          unread = 0;
+          return { status: 204 };
+        },
+      });
+
+      renderRoute('/account');
+      const panel = await screen.findByRole('region', { name: 'Notificaciones' });
+      const buttons = await within(panel).findAllByRole('button', { name: /Marcar como leída/ });
+      await userEvent.click(buttons.at(0) ?? panel);
+
+      expect(fetchMock).toHaveBeenCalledWith('/api/me/notifications/n1/read', expect.anything());
+      expect(await within(panel).findByLabelText('1 sin leer')).toBeInTheDocument();
+
+      await userEvent.click(
+        within(panel).getByRole('button', { name: 'Marcar todas como leídas' }),
+      );
+
+      expect(fetchMock).toHaveBeenCalledWith('/api/me/notifications/read-all', expect.anything());
+      await waitFor(() => {
+        expect(within(panel).queryByLabelText(/sin leer/)).not.toBeInTheDocument();
+      });
+    });
+
+    it('shows the notifications of an account without organizations instead of inviting it to register', async () => {
+      signedIn(
+        {
+          ...ACCOUNT,
+          registrationRequests: [
+            { id: 'r4', name: 'Metalúrgica Oeste', status: 'CHANGES_REQUESTED' },
+          ],
+        },
+        page([changes], 1),
+      );
+
+      renderRoute('/account');
+
+      expect(await screen.findByRole('region', { name: 'Notificaciones' })).toBeInTheDocument();
+      expect(
+        screen.queryByRole('link', { name: 'Dar de alta mi entidad' }),
+      ).not.toBeInTheDocument();
+    });
+
+    it('says so when it cannot load them', async () => {
+      signedIn(withOrganization, { 'GET /api/me/notifications': { status: 500 } });
+
+      renderRoute('/account');
+
+      const panel = await screen.findByRole('region', { name: 'Notificaciones' });
+      expect(await within(panel).findByRole('alert')).toHaveTextContent(
+        'No pudimos cargar tus notificaciones.',
+      );
+    });
   });
 
   it('asks an unconfirmed account to confirm its email and resends the link', async () => {
@@ -195,11 +293,6 @@ describe('account home', () => {
 
     expect(await screen.findByText('Confirmá tu email')).toBeInTheDocument();
     expect(screen.getByText(/Te enviamos un enlace a/)).toHaveTextContent('ana@coop.local');
-    expect(
-      within(screen.getByRole('article', { name: 'Textil Sur' })).getByText(
-        'Cuando confirmes tu email, el observatorio va a revisar la solicitud.',
-      ),
-    ).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Reenviar el email' }));
 

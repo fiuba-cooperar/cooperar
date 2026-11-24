@@ -175,7 +175,7 @@ class InquiryIntegrationTest {
 
     @Test
     void blocksMassSendingFromTheSameAddressButNotFromOthers() {
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 20; i++) {
             assertThat(send(shirt, "10.0.0.6", INQUIRY)).hasStatus(HttpStatus.CREATED);
         }
 
@@ -183,7 +183,7 @@ class InquiryIntegrationTest {
 
         assertThat(blocked).hasStatus(HttpStatus.TOO_MANY_REQUESTS);
         assertThat(blocked.getResponse().getHeader("Retry-After")).isNotNull();
-        assertThat(inquiries.findAll()).hasSize(5);
+        assertThat(inquiries.findAll()).hasSize(20);
         assertThat(send(shirt, "10.0.0.7", INQUIRY)).hasStatus(HttpStatus.CREATED);
     }
 

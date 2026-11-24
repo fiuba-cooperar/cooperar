@@ -34,7 +34,7 @@ class InquiryClientAddressIntegrationTest {
 
     @Test
     void limitsEachVisitorBehindAProxyAndAForgedHeaderDoesNotEscapeIt() throws Exception {
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 20; i++) {
             // A product that does not exist answers 404, but each try counts all the same.
             assertThat(send("6.6.6." + i + ", 203.0.113.1")).isEqualTo(404);
         }

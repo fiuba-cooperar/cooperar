@@ -7,8 +7,10 @@ import {
   Select,
   SimpleGrid,
   Stack,
+  TextInput,
   Title,
 } from '@mantine/core';
+import { maskCuit } from '../cuit';
 import { LEGAL_NAME_MAX_LENGTH, ORGANIZATION_NAME_MAX_LENGTH } from '../limits';
 import { ActivityType, Province, Sector } from '@/api/generated/model';
 import {
@@ -66,15 +68,15 @@ export function OrganizationRegistrationFields({
               onChange('legalName', event.currentTarget.value);
             }}
           />
-          <CountedTextInput
+          <TextInput
             label="CUIT"
             inputMode="numeric"
             placeholder="30-12345678-1"
-            maxLength={15}
+            maxLength={13}
             value={value.cuit}
             error={errors.cuit}
             onChange={(event) => {
-              onChange('cuit', event.currentTarget.value);
+              onChange('cuit', maskCuit(event.currentTarget.value));
             }}
           />
         </SimpleGrid>

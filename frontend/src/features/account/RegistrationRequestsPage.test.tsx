@@ -104,6 +104,32 @@ describe('registration requests', () => {
     expect(within(menu).getByRole('link', { name: 'Inicio' })).toHaveAttribute('href', '/account');
   });
 
+  it('lists the requests with changes requested first, then the pending ones, keeping the API order in each group', async () => {
+    signedIn([
+      request({ id: 'a1', name: 'Aprobada Uno', status: 'APPROVED' }),
+      request({ id: 'p1', name: 'Pendiente Uno', status: 'PENDING' }),
+      request({ id: 'r1', name: 'Rechazada Uno', status: 'REJECTED', reviewMessage: 'No' }),
+      request({
+        id: 'c1',
+        name: 'Cambios Uno',
+        status: 'CHANGES_REQUESTED',
+        reviewMessage: 'Falta algo',
+      }),
+      request({ id: 'p2', name: 'Pendiente Dos', status: 'PENDING' }),
+    ]);
+
+    renderRoute('/account/registration-requests');
+
+    const cards = await screen.findAllByRole('article');
+    expect(cards.map((card) => within(card).getAllByRole('heading')[0]?.textContent)).toEqual([
+      'Cambios Uno',
+      'Pendiente Uno',
+      'Pendiente Dos',
+      'Aprobada Uno',
+      'Rechazada Uno',
+    ]);
+  });
+
   it('shows the data and the history of a request on demand, as the observatory sees it', async () => {
     signedIn(REQUESTS);
 

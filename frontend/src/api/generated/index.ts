@@ -7,5 +7,6 @@ export * from './cooperative-organization-profile/cooperative-organization-profi
 export * from './cooperative-products/cooperative-products';
 export * from './geography/geography';
 export * from './health/health';
+export * from './notifications/notifications';
 export * from './organizations/organizations';
 export * from './products/products';

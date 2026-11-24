@@ -3,11 +3,18 @@ package ar.uba.fi.cooperar.integration.smtp;
 import ar.uba.fi.cooperar.service.notifications.EmailMessage;
 import ar.uba.fi.cooperar.service.notifications.EmailSender;
 import ar.uba.fi.cooperar.service.notifications.NotificationProperties;
-import org.springframework.mail.SimpleMailMessage;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+import java.nio.charset.StandardCharsets;
+import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 
-/** Sends through the SMTP server configured in {@code spring.mail.*} (MAIL_HOST, MAIL_PORT, etc.). */
+/**
+ * Sends through the SMTP server configured in {@code spring.mail.*} (MAIL_HOST, MAIL_PORT, etc.). The email carries
+ * the plain text and, when there is one, the HTML, so each client shows the one it can.
+ */
 @Component
 public class SmtpEmailSender implements EmailSender {
 
@@ -21,11 +28,20 @@ public class SmtpEmailSender implements EmailSender {
 
     @Override
     public void send(EmailMessage message) {
-        SimpleMailMessage mail = new SimpleMailMessage();
-        mail.setFrom(properties.from());
-        mail.setTo(message.to());
-        mail.setSubject(message.subject());
-        mail.setText(message.body());
+        MimeMessage mail = mailSender.createMimeMessage();
+        try {
+            MimeMessageHelper helper = new MimeMessageHelper(mail, true, StandardCharsets.UTF_8.name());
+            helper.setFrom(properties.from());
+            helper.setTo(message.to());
+            helper.setSubject(message.subject());
+            if (message.html() == null) {
+                helper.setText(message.body(), false);
+            } else {
+                helper.setText(message.body(), message.html());
+            }
+        } catch (MessagingException e) {
+            throw new MailSendException("Could not build the email", e);
+        }
         mailSender.send(mail);
     }
 }

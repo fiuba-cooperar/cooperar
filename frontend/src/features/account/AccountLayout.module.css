@@ -13,6 +13,10 @@
   }
 }
 
+.wide {
+  max-width: 1760px;
+}
+
 .main:focus {
   outline: none;
 }

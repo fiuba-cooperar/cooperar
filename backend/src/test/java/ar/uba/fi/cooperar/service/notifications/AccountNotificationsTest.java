@@ -18,6 +18,7 @@ import org.mockito.ArgumentCaptor;
 class AccountNotificationsTest {
 
     private static final UUID ACCOUNT = UUID.randomUUID();
+    private static final UUID REQUEST = UUID.randomUUID();
 
     private final EmailSender sender = mock(EmailSender.class);
     private final AccountNotifications notifications = new AccountNotifications(
@@ -40,21 +41,44 @@ class AccountNotificationsTest {
     @Test
     void announcesAnApproval() {
         notifications.onRegistrationReviewed(new RegistrationReviewed(
-                ACCOUNT, "ana@coop.local", "Ana", "La Litoraleña", ReviewOutcome.APPROVED, null));
+                ACCOUNT,
+                "ana@coop.local",
+                "Ana",
+                UUID.randomUUID(),
+                "La Litoraleña",
+                UUID.randomUUID(),
+                ReviewOutcome.APPROVED,
+                null));
 
         EmailMessage message = sent();
         assertThat(message.subject()).isEqualTo("Aprobamos el alta de La Litoraleña");
-        assertThat(message.body()).contains("aprobó el alta de La Litoraleña", "https://cooperar.example/login");
+        assertThat(message.body()).contains("aprobó el alta de La Litoraleña", "https://cooperar.example/account");
+        assertThat(message.html())
+                .contains("href=\"https://cooperar.example/account\"", "Ir a mis entidades")
+                .contains("src=\"https://cooperar.example/brand/symbol-mocks.png\"");
     }
 
     @Test
     void includesTheReasonOfARejection() {
         notifications.onRegistrationReviewed(new RegistrationReviewed(
-                ACCOUNT, "ana@coop.local", null, "La Litoraleña", ReviewOutcome.REJECTED, "CUIT duplicado"));
+                ACCOUNT,
+                "ana@coop.local",
+                null,
+                UUID.randomUUID(),
+                "La Litoraleña",
+                null,
+                ReviewOutcome.REJECTED,
+                "CUIT duplicado"));
 
         EmailMessage message = sent();
         assertThat(message.subject()).isEqualTo("Revisamos el alta de La Litoraleña");
-        assertThat(message.body()).startsWith("Hola:").contains("no aprobó el alta de La Litoraleña", "CUIT duplicado");
+        assertThat(message.body())
+                .startsWith("Hola:")
+                .contains(
+                        "no aprobó el alta de La Litoraleña",
+                        "CUIT duplicado",
+                        "https://cooperar.example/account/registration-requests");
+        assertThat(message.html()).contains("<blockquote", "CUIT duplicado");
     }
 
     @Test
@@ -63,14 +87,20 @@ class AccountNotificationsTest {
                 ACCOUNT,
                 "ana@coop.local",
                 "Ana",
+                REQUEST,
                 "La Litoraleña",
+                null,
                 ReviewOutcome.CHANGES_REQUESTED,
                 "Falta la razón social"));
 
         EmailMessage message = sent();
         assertThat(message.subject()).isEqualTo("Necesitamos más información sobre el alta de La Litoraleña");
         assertThat(message.body())
-                .contains("Falta la razón social", "corregí la solicitud", "https://cooperar.example/login");
+                .contains(
+                        "Falta la razón social",
+                        "Corregir la solicitud",
+                        "https://cooperar.example/account/registration-requests/" + REQUEST);
+        assertThat(message.html()).contains("Corregir la solicitud", REQUEST.toString());
     }
 
     @Test
@@ -88,5 +118,22 @@ class AccountNotificationsTest {
         ArgumentCaptor<EmailMessage> message = ArgumentCaptor.forClass(EmailMessage.class);
         verify(sender).send(message.capture());
         return message.getValue();
+    }
+
+    @Test
+    void escapesWhatTheObservatoryWroteInTheHtml() {
+        notifications.onRegistrationReviewed(new RegistrationReviewed(
+                ACCOUNT,
+                "ana@coop.local",
+                "Ana",
+                REQUEST,
+                "La Litoraleña",
+                null,
+                ReviewOutcome.REJECTED,
+                "<script>alert(1)</script>\nSegunda línea"));
+
+        EmailMessage message = sent();
+        assertThat(message.html()).contains("&lt;script&gt;alert(1)&lt;/script&gt;<br>Segunda línea");
+        assertThat(message.html()).doesNotContain("<script>");
     }
 }

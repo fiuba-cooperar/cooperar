@@ -28,7 +28,12 @@ async function fetchRequest(id: string): Promise<AccountRegistrationRequestRespo
 
 /** Every registration request the account sent, newest first. */
 export function useRegistrationRequests() {
-  return useQuery({ queryKey: getListRegistrationRequestsSentQueryKey(), queryFn: fetchRequests });
+  return useQuery({
+    queryKey: getListRegistrationRequestsSentQueryKey(),
+    queryFn: fetchRequests,
+    // A decision may have been made since the last visit, and the home announces it.
+    refetchOnMount: 'always',
+  });
 }
 
 /** A registration request the account sent, with what the observatory said about it. */

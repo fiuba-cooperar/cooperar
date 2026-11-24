@@ -1,0 +1,14 @@
+.panel {
+  overflow: hidden;
+}
+
+.panelHeader {
+  padding: 8px var(--mantine-spacing-lg);
+  height: 53px;
+  background: var(--mantine-color-brand-light);
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+.panelBody {
+  padding: var(--mantine-spacing-lg);
+}

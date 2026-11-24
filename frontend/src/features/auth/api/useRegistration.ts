@@ -2,7 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { register } from '@/api/generated/auth/auth';
 import type { RegistrationRequest, RegistrationResponse } from '@/api/generated/model';
 
-export type RegistrationConflict = 'EMAIL' | 'CUIT';
+export type RegistrationConflict = 'EMAIL';
 
 /** Why a registration failed: data already taken, rejected by the server, or no usable answer. */
 export class RegistrationError extends Error {
@@ -24,9 +24,7 @@ function conflictsOf(body: unknown): RegistrationConflict[] {
   if (typeof body !== 'object' || body === null || !('conflicts' in body)) return [];
   const { conflicts } = body;
   if (!Array.isArray(conflicts)) return [];
-  return conflicts.filter(
-    (conflict): conflict is RegistrationConflict => conflict === 'EMAIL' || conflict === 'CUIT',
-  );
+  return conflicts.filter((conflict): conflict is RegistrationConflict => conflict === 'EMAIL');
 }
 
 async function submitRegistration(data: RegistrationRequest): Promise<RegistrationResponse> {
@@ -43,7 +41,7 @@ async function submitRegistration(data: RegistrationRequest): Promise<Registrati
   throw new RegistrationError('unavailable');
 }
 
-/** Creates the account and its first organization; rejects with a {@link RegistrationError}. */
+/** Creates the account; rejects with a {@link RegistrationError}. */
 export function useRegistration() {
   return useMutation({ mutationFn: submitRegistration });
 }

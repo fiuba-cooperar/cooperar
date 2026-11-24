@@ -1,5 +1,16 @@
 import type { RouteObject } from 'react-router';
 import { Role } from '@/api/generated/model';
+import { AccountHomePage } from '@/features/account/AccountHomePage';
+import { AccountLayout } from '@/features/account/AccountLayout';
+import {
+  ACCOUNT_HOME_PATH,
+  ACCOUNT_REGISTRATION_REQUEST_PATH,
+  ACCOUNT_REGISTRATION_REQUESTS_PATH,
+  NEW_REGISTRATION_REQUEST_PATH,
+} from '@/features/account/accountSections';
+import { CorrectRegistrationPage } from '@/features/account/CorrectRegistrationPage';
+import { NewRegistrationRequestPage } from '@/features/account/NewRegistrationRequestPage';
+import { RegistrationRequestsPage } from '@/features/account/RegistrationRequestsPage';
 import { AdminHomePage } from '@/features/admin/AdminHomePage';
 import { AdminLayout } from '@/features/admin/AdminLayout';
 import {
@@ -22,18 +33,12 @@ import {
   COOPERATIVE_PRODUCT_PATH,
   COOPERATIVE_PRODUCTS_PATH,
   COOPERATIVE_PROFILE_PATH,
-  COOPERATIVE_REGISTRATION_REQUEST_PATH,
-  COOPERATIVE_REGISTRATION_REQUESTS_PATH,
   COOPERATIVE_SECTIONS,
   NEW_PRODUCT_PATH,
-  NEW_REGISTRATION_REQUEST_PATH,
 } from '@/features/cooperative/cooperativeSections';
-import { CorrectRegistrationPage } from '@/features/cooperative/CorrectRegistrationPage';
-import { NewRegistrationRequestPage } from '@/features/cooperative/NewRegistrationRequestPage';
 import { ProductFormPage } from '@/features/cooperative/ProductFormPage';
 import { ProductsPage } from '@/features/cooperative/ProductsPage';
 import { ProfilePage } from '@/features/cooperative/ProfilePage';
-import { RegistrationRequestsPage } from '@/features/cooperative/RegistrationRequestsPage';
 import { ForbiddenPage } from '@/features/errors/ForbiddenPage';
 import { NotFoundPage } from '@/features/errors/NotFoundPage';
 import { ComingSoonPage } from '@/features/home/ComingSoonPage';
@@ -98,19 +103,30 @@ export const routes: RouteObject[] = [
           { path: COOPERATIVE_PRODUCTS_PATH, element: <ProductsPage /> },
           { path: NEW_PRODUCT_PATH, element: <ProductFormPage /> },
           { path: COOPERATIVE_PRODUCT_PATH, element: <ProductFormPage /> },
-          { path: COOPERATIVE_REGISTRATION_REQUESTS_PATH, element: <RegistrationRequestsPage /> },
-          { path: NEW_REGISTRATION_REQUEST_PATH, element: <NewRegistrationRequestPage /> },
-          { path: COOPERATIVE_REGISTRATION_REQUEST_PATH, element: <CorrectRegistrationPage /> },
           ...COOPERATIVE_SECTIONS.filter(
             ({ path }) =>
               path !== COOPERATIVE_HOME_PATH &&
               path !== COOPERATIVE_PROFILE_PATH &&
-              path !== COOPERATIVE_PRODUCTS_PATH &&
-              path !== COOPERATIVE_REGISTRATION_REQUESTS_PATH,
+              path !== COOPERATIVE_PRODUCTS_PATH,
           ).map(({ path, label }) => ({
             path,
             element: <ComingSoonPage title={label} homePath={COOPERATIVE_HOME_PATH} />,
           })),
+        ],
+      },
+    ],
+  },
+  {
+    // The home and the registration requests belong to the signed-in account, not to any of its organizations.
+    element: <RequireRole />,
+    children: [
+      {
+        element: <AccountLayout />,
+        children: [
+          { path: ACCOUNT_HOME_PATH, element: <AccountHomePage /> },
+          { path: ACCOUNT_REGISTRATION_REQUESTS_PATH, element: <RegistrationRequestsPage /> },
+          { path: NEW_REGISTRATION_REQUEST_PATH, element: <NewRegistrationRequestPage /> },
+          { path: ACCOUNT_REGISTRATION_REQUEST_PATH, element: <CorrectRegistrationPage /> },
         ],
       },
     ],

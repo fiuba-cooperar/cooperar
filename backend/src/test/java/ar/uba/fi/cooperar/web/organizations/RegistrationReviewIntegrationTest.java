@@ -21,7 +21,7 @@ import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
 
 /**
- * Sign-up, email confirmation, review and correction of registration requests end to end. Emails go out after commit, so these tests are not transactional
+ * Sign-up, email confirmation, and sending, review and correction of registration requests end to end. Emails go out after commit, so these tests are not transactional
  * and clean up after themselves.
  */
 @IntegrationTest
@@ -49,23 +49,33 @@ class RegistrationReviewIntegrationTest {
     }
 
     @Test
-    void aRequestReachesTheReviewOnlyAfterItsAccountConfirmsTheEmail() {
-        String requestId = register("ana@coop.local", "30-12345678-1", "La Litoraleña");
-        String coop = accessToken("ana@coop.local", "secret-password");
+    void rejectsAnOrganizationNameLongerThanFiftyCharacters() {
+        assertThat(sendRequest("ana@coop.local", "30-12345678-1", "x".repeat(51)))
+                .hasStatus(HttpStatus.BAD_REQUEST);
+        assertThat(sendRequest("ana@coop.local", "30-12345678-1", "x".repeat(50)))
+                .hasStatus(HttpStatus.CREATED);
+    }
 
-        assertThat(get("/api/me", coop)).bodyJson().isLenientlyEqualTo("""
-                {"emailVerified": false, "organizations": [],
-                 "registrationRequests": [{"id": "%s", "name": "La Litoraleña", "status": "PENDING"}]}
-                """.formatted(requestId));
-        assertThat(get(PENDING, admin())).bodyJson().isEqualTo("[]");
-        assertThat(post(approve(requestId), admin(), null))
-                .hasStatus(HttpStatus.CONFLICT)
+    @Test
+    void anAccountCanOnlySendARequestOnceItConfirmedTheEmail() {
+        post("/api/auth/register", null, accountBody("ana@coop.local"));
+        String coop = accessToken("ana@coop.local", "secret-password");
+        String own = "/api/me/registration-requests";
+
+        assertThat(post(own, coop, requestBody("30-12345678-1", "La Litoraleña")))
+                .hasStatus(HttpStatus.FORBIDDEN)
                 .bodyJson()
                 .isLenientlyEqualTo("""
-                        {"status": 409, "detail": "The registration request is not awaiting review"}
+                        {"status": 403, "detail": "The email must be confirmed before registering an organization"}
                         """);
+        assertThat(get("/api/me", coop)).bodyJson().isLenientlyEqualTo("""
+                {"emailVerified": false, "organizations": [], "registrationRequests": []}
+                """);
 
         assertThat(verify(lastToken("ana@coop.local"))).hasStatus(HttpStatus.NO_CONTENT);
+        var sent = post(own, coop, requestBody("30-12345678-1", "La Litoraleña"));
+        assertThat(sent).hasStatus(HttpStatus.CREATED);
+        String requestId = field(sent, "id");
 
         assertThat(get(PENDING, admin())).hasStatusOk().bodyJson().isLenientlyEqualTo("""
                 [{
@@ -91,8 +101,6 @@ class RegistrationReviewIntegrationTest {
     void listsThePendingRequestsOldestFirst() {
         register("ana@coop.local", "30-12345678-1", "Primera");
         register("beto@coop.local", "20-12345678-6", "Segunda");
-        verify(lastToken("beto@coop.local"));
-        verify(lastToken("ana@coop.local"));
 
         assertThat(get(PENDING, admin()))
                 .bodyJson()
@@ -153,7 +161,7 @@ class RegistrationReviewIntegrationTest {
     void askingForChangesLetsTheAccountCorrectAndResubmitTheRequest() {
         String requestId = registerAndVerify("ana@coop.local", "30-12345678-1", "La Litoraleña");
         String coop = accessToken("ana@coop.local", "secret-password");
-        String ownRequest = "/api/cooperative/registration-requests/" + requestId;
+        String ownRequest = "/api/me/registration-requests/" + requestId;
 
         assertThat(put(ownRequest, coop, correction("30-12345678-1"))).hasStatus(HttpStatus.CONFLICT);
         assertThat(post(requestChanges(requestId), admin(), "{\"message\": \"\"}"))
@@ -213,7 +221,7 @@ class RegistrationReviewIntegrationTest {
         post(requestChanges(requestId), admin(), "{\"message\": \"Revisá el CUIT\"}");
 
         assertThat(put(
-                        "/api/cooperative/registration-requests/" + requestId,
+                        "/api/me/registration-requests/" + requestId,
                         accessToken("ana@coop.local", "secret-password"),
                         correction("20-12345678-6")))
                 .hasStatus(HttpStatus.CONFLICT)
@@ -228,7 +236,7 @@ class RegistrationReviewIntegrationTest {
         String first = registerAndVerify("ana@coop.local", "30-12345678-1", "La Litoraleña");
         String coop = accessToken("ana@coop.local", "secret-password");
         post(approve(first), admin(), null);
-        String own = "/api/cooperative/registration-requests";
+        String own = "/api/me/registration-requests";
 
         assertThat(post(own, coop, correction("30-12345678-1")))
                 .hasStatus(HttpStatus.CONFLICT)
@@ -254,23 +262,23 @@ class RegistrationReviewIntegrationTest {
                 .bodyJson()
                 .extractingPath("$[*].name")
                 .isEqualTo(List.of("La Litoraleña Coop"));
-        assertThat(post(own, admin(), correction("30-70000000-8"))).hasStatus(HttpStatus.FORBIDDEN);
+        assertThat(post(own, null, correction("30-70000000-8"))).hasStatus(HttpStatus.UNAUTHORIZED);
     }
 
     @Test
     void anAccountOnlySeesItsOwnRequests() {
         String requestId = registerAndVerify("ana@coop.local", "30-12345678-1", "La Litoraleña");
         registerAndVerify("beto@coop.local", "20-12345678-6", "Textil Sur");
-        String ownRequest = "/api/cooperative/registration-requests/" + requestId;
+        String ownRequest = "/api/me/registration-requests/" + requestId;
         String beto = accessToken("beto@coop.local", "secret-password");
 
         assertThat(get(ownRequest, beto)).hasStatus(HttpStatus.NOT_FOUND);
-        assertThat(get("/api/cooperative/registration-requests", beto))
+        assertThat(get("/api/me/registration-requests", beto))
                 .bodyJson()
                 .extractingPath("$[*].name")
                 .isEqualTo(List.of("Textil Sur"));
         assertThat(put(ownRequest, beto, correction("30-12345678-1"))).hasStatus(HttpStatus.NOT_FOUND);
-        assertThat(get(ownRequest, admin())).hasStatus(HttpStatus.FORBIDDEN);
+        assertThat(get(ownRequest, admin())).hasStatus(HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -278,7 +286,6 @@ class RegistrationReviewIntegrationTest {
         String approved = registerAndVerify("ana@coop.local", "30-12345678-1", "Aprobada");
         String rejected = registerAndVerify("beto@coop.local", "20-12345678-6", "Rechazada");
         registerAndVerify("caro@coop.local", "30-71234567-1", "Pendiente");
-        register("dani@coop.local", "30-70000000-8", "Sin confirmar");
         post(approve(approved), admin(), null);
         post(ADMIN_REQUESTS + "/" + rejected + "/reject", admin(), "{\"reason\": \"Duplicada\"}");
 
@@ -342,7 +349,7 @@ class RegistrationReviewIntegrationTest {
 
     @Test
     void aNewLinkReplacesThePreviousOne() {
-        register("ana@coop.local", "30-12345678-1", "La Litoraleña");
+        post("/api/auth/register", null, accountBody("ana@coop.local"));
         String first = lastToken("ana@coop.local");
         String coop = accessToken("ana@coop.local", "secret-password");
 
@@ -364,38 +371,48 @@ class RegistrationReviewIntegrationTest {
     }
 
     private String registerAndVerify(String email, String cuit, String name) {
-        String requestId = register(email, cuit, name);
-        verify(lastToken(email));
-        return requestId;
+        return register(email, cuit, name);
     }
 
+    /** Signs up the account if it does not exist yet, confirms its email, and sends a request from the panel. */
     private String register(String email, String cuit, String name) {
-        var registration = post("/api/auth/register", null, registrationBody(email, cuit, name));
-        assertThat(registration).hasStatus(HttpStatus.CREATED);
-        return field(registration, "registrationRequestId");
+        var sent = sendRequest(email, cuit, name);
+        assertThat(sent).hasStatus(HttpStatus.CREATED);
+        return field(sent, "id");
     }
 
     private MvcTestResult register(String email, String cuit) {
-        return post("/api/auth/register", null, registrationBody(email, cuit, "Otra"));
+        return sendRequest(email, cuit, "Otra");
     }
 
-    private static String registrationBody(String email, String cuit, String name) {
+    private MvcTestResult sendRequest(String email, String cuit, String name) {
+        var signUp = post("/api/auth/register", null, accountBody(email));
+        if (signUp.getResponse().getStatus() == HttpStatus.CREATED.value()) {
+            assertThat(verify(lastToken(email))).hasStatus(HttpStatus.NO_CONTENT);
+        }
+        return post("/api/me/registration-requests", accessToken(email, "secret-password"), requestBody(cuit, name));
+    }
+
+    private static String accountBody(String email) {
+        return """
+                {"firstName": "Ana", "lastName": "Pérez", "email": "%s", "password": "secret-password"}
+                """.formatted(email);
+    }
+
+    private static String requestBody(String cuit, String name) {
         return """
                 {
-                  "account": {"firstName": "Ana", "lastName": "Pérez", "email": "%s", "password": "secret-password"},
-                  "organization": {
-                    "name": "%s",
-                    "legalName": "Cooperativa de Trabajo La Litoraleña Ltda.",
-                    "type": "ERT",
-                    "cuit": "%s",
-                    "sectors": ["TEXTILE", "FOOD"],
-                    "activityTypes": ["PRODUCT", "WORK"],
-                    "registrantRole": "Presidenta",
-                    "address": {"province": "SANTA_FE", "district": "Rosario", "locality": "Centro",
-                                "street": "Rivadavia 100"}
-                  }
+                  "name": "%s",
+                  "legalName": "Cooperativa de Trabajo La Litoraleña Ltda.",
+                  "type": "ERT",
+                  "cuit": "%s",
+                  "sectors": ["TEXTILE", "FOOD"],
+                  "activityTypes": ["PRODUCT", "WORK"],
+                  "registrantRole": "Presidenta",
+                  "address": {"province": "SANTA_FE", "district": "Rosario", "locality": "Centro",
+                              "street": "Rivadavia 100"}
                 }
-                """.formatted(email, name, cuit);
+                """.formatted(name, cuit);
     }
 
     private static String approve(String requestId) {

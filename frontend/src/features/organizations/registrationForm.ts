@@ -1,12 +1,13 @@
 import type {
   ActivityType,
-  CooperativeRegistrationRequestResponse,
+  AccountRegistrationRequestResponse,
   OrganizationType,
   Province,
   RegistrationOrganizationRequest,
   Sector,
 } from '@/api/generated/model';
 import { cuitProblem, formatCuit, type CuitProblem } from './cuit';
+import { legalNameProblem as legalNameProblemOf, organizationNameProblem } from './limits';
 
 /** The organization data of a registration as typed in the form. */
 export interface OrganizationForm {
@@ -50,8 +51,10 @@ export const CUIT_TAKEN = 'Ya hay una entidad registrada con este CUIT.';
 export function validateOrganization(form: OrganizationForm): FormErrors<OrganizationForm> {
   const errors: FormErrors<OrganizationForm> = {};
   if (!form.type) errors.type = 'Elegí si es una cooperativa o una empresa recuperada.';
-  if (!form.name.trim()) errors.name = 'Ingresá el nombre de la entidad.';
-  if (!form.legalName.trim()) errors.legalName = 'Ingresá la razón social.';
+  const nameProblem = organizationNameProblem(form.name);
+  if (nameProblem) errors.name = nameProblem;
+  const legalNameProblem = legalNameProblemOf(form.legalName);
+  if (legalNameProblem) errors.legalName = legalNameProblem;
   if (!form.cuit.trim()) errors.cuit = 'Ingresá el CUIT.';
   else {
     const problem = cuitProblem(form.cuit);
@@ -100,7 +103,7 @@ export function toRegistrationRequest(
 
 /** The form filled with a saved request, to correct it. */
 export function formFromRegistration(
-  registration: CooperativeRegistrationRequestResponse,
+  registration: AccountRegistrationRequestResponse,
 ): OrganizationForm {
   const { address } = registration;
   return {

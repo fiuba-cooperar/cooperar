@@ -6,27 +6,27 @@ Niveles: **público** (cualquier visitante y la API pública), **privado** (solo
 
 | Sección | Campo | En el código | Tipo y validación | Obligatorio | Visibilidad |
 |---|---|---|---|---|---|
-| Identificación | Nombre | `name` | Texto, hasta 200 | Sí | Público |
-| | Razón social | `legalName` | Texto, hasta 200 | Sí | Configurable (privado) |
+| Identificación | Nombre | `name` | Texto, hasta 50 | Sí | Público |
+| | Razón social | `legalName` | Texto, hasta 120 | Sí | Configurable (privado) |
 | | Tipo (cooperativa o ERT) | `type` | Lista cerrada; lo valida el observatorio en el alta y no se edita | Sí | Público |
 | | CUIT | `cuit` | 11 dígitos con dígito verificador; no se edita | Sí | Privado |
 | Actividad | Rubros | `sectors` | Lista cerrada, uno o más | Sí | Público |
 | | Qué ofrecen | `activityTypes` | Trabajo, servicio o producto, uno o más | Sí | Público |
 | | Descripción | `description` | Texto, hasta 1.500 | No | Público |
 | | Año de inicio | `startYear` | Entre 1800 y el año actual (en una ERT, el de la recuperación) | No | Público |
-| | Cantidad de trabajadores | `workerCount` | Entero mayor que cero | No | Configurable (público) |
+| | Cantidad de trabajadores | `workerCount` | Entero entre 1 y 99.999 | No | Configurable (público) |
 | Ubicación | Nombre de la dirección principal | `addresses[].name` (la de tipo `MAIN`) | Texto, hasta 50 («planta», «local») | No | Público |
 | | Provincia, partido y localidad | `addresses[].address.province`, `district`, `locality` | Lista cerrada y texto | Sí | Público |
 | | Calle y número | `addresses[].address.street` | Texto, hasta 200 | Sí | Configurable (público) |
 | | Referencias para llegar | `addresses[].address.additionalReferences` | Texto, hasta 300 | No | Sigue a la calle: se muestran solo si la calle es pública |
 | | Punto en el mapa | `addresses[].point` | Punto WGS84; se geocodifica desde la dirección o lo mueve la cooperativa | No | Exacto si la calle es pública; si no, redondeado a la zona (unos 1 km) |
 | | Otras direcciones | `addresses[]` (las que no son `MAIN`) | Hasta 10, cada una con su tipo (por ahora solo «Secundaria»), un nombre opcional de hasta 50 caracteres («sucursal», «depósito») y los mismos campos que la principal: provincia, partido, localidad, calle, referencias y punto en el mapa | No | Las mismas reglas que la principal, cada una con su propia visibilidad de la calle |
-| Contacto | Teléfono | `phone` | Texto, hasta 50 | No | Configurable (público) |
-| | WhatsApp | `whatsapp` | Texto, hasta 50 | No | Configurable (público) |
+| Contacto | Teléfono | `phone` | Texto, hasta 50. El formulario lo pide como característica y número (juntos, 10 dígitos) y lo guarda como «(011) 4444-5555» | No | Configurable (público) |
+| | WhatsApp | `whatsapp` | Texto, hasta 50. Mismo formato que el teléfono | No | Configurable (público) |
 | | Email de contacto | `email` | Email, hasta 200 | No | Configurable (público) |
 | | Sitio web | `website` | URL `http(s)://`, hasta 300 | No | Público |
 | | Redes sociales | `socialMedia` | Texto libre, hasta 200 | No | Público |
-| | Horarios de atención | `openingHours` | Texto libre, hasta 200 | No | Público |
+| | Horarios de atención | `openingHours` | Lista de rangos con día (cada día de la semana y `HOLIDAY`, los feriados), hora de apertura y de cierre («HH:mm», de a 15 minutos; el cierre también puede ser 23:59, que se muestra como «24 horas»). El cierre es posterior a la apertura, así que no cruza la medianoche. Un día puede tener hasta 3 rangos, que no se superponen; un día sin rangos está cerrado (y los feriados sin rangos no se mencionan). Hasta 24 en total | No | Público |
 | | Tiempo estimado de respuesta | `responseTime` | En el día, 24 horas, 48 horas o una semana | No | Público |
 | Fotos | Logo | `logo` | JPEG, PNG o WebP de hasta 5 MB, validado por su contenido; uno solo, uno nuevo reemplaza al anterior | No | Público |
 | | Foto de portada | `cover` | Igual que el logo | No | Público |

@@ -12,11 +12,11 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.util.Set;
 
-/** The data of a registration request, both on sign-up and when correcting it at the observatory's request. */
+/** The data of a registration request, both when sending it and when correcting it at the observatory's request. */
 public record RegistrationOrganizationRequest(
-        @NotBlank @Size(max = 200) String name,
+        @NotBlank @Size(max = 50) String name,
 
-        @NotBlank @Size(max = 200) @Schema(description = "Razón social, as registered with the tax authority")
+        @NotBlank @Size(max = 120) @Schema(description = "Razón social, as registered with the tax authority")
         String legalName,
 
         @NotNull OrganizationType type,

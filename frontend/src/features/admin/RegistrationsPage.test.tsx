@@ -394,10 +394,10 @@ describe('registrations', () => {
       name: 'Pedir más información a La Litoraleña',
     });
     await userEvent.click(within(dialog).getByRole('button', { name: 'Enviar el pedido' }));
-    expect(within(dialog).getByText('Escribí qué información necesitás.')).toBeInTheDocument();
+    expect(within(dialog).getByText('Indicá qué información hace falta.')).toBeInTheDocument();
 
     await userEvent.type(
-      within(dialog).getByRole('textbox', { name: 'Qué tiene que corregir o agregar' }),
+      within(dialog).getByRole('textbox', { name: /Datos a corregir o agregar/ }),
       'Falta la razón social',
     );
     await userEvent.click(within(dialog).getByRole('button', { name: 'Enviar el pedido' }));

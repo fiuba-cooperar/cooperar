@@ -165,7 +165,7 @@ public class DevOrganizationSeeder implements ApplicationRunner {
                     Visibility.PUBLIC,
                     null,
                     null,
-                    null,
+                    List.of(),
                     null));
             account.getOrganizations().add(organizations.save(organization));
             log.info("Seeded the sample organization {}", organization.getId());

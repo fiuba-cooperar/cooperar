@@ -57,13 +57,6 @@ import styles from './ProductsPage.module.css';
 /** "Productos y servicios": what the active organization offers, with the entries to add, edit, publish and unpublish. */
 export function ProductsPage() {
   const organization = useActiveOrganization();
-  if (!organization) {
-    return (
-      <Text c="dimmed">
-        Vas a poder cargar tus productos y servicios cuando el observatorio apruebe tu solicitud.
-      </Text>
-    );
-  }
   // Remounted per organization, so a pending confirmation never refers to another one's product.
   return <ProductsList key={organization.id} organization={organization} />;
 }

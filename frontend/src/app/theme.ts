@@ -4,6 +4,7 @@ import {
   InputWrapper,
   MultiSelect,
   Select,
+  Textarea,
   Title,
   type CSSVariablesResolver,
   type MantineColorsTuple,
@@ -56,7 +57,11 @@ export const theme = createTheme({
     }),
     Title: Title.extend({ styles: { root: { letterSpacing: '-0.02em' } } }),
     TextInput: { defaultProps: { size: 'md' } },
-    Textarea: { defaultProps: { size: 'md' } },
+    // The 48px of the fields above would cut a text area down to two lines, so it takes the height of its rows.
+    Textarea: Textarea.extend({
+      defaultProps: { size: 'md' },
+      styles: { input: { height: 'auto', minHeight: 48 } },
+    }),
     PasswordInput: { defaultProps: { size: 'md' } },
     // The group's size also sets its description and its checkboxes, so they match the other fields.
     CheckboxGroup: { defaultProps: { size: 'md' } },

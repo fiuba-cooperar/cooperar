@@ -25,12 +25,12 @@ export interface RegistrationOrganizationRequest {
   /**
    * Razón social, as registered with the tax authority
    * @minLength 0
-   * @maxLength 200
+   * @maxLength 120
    */
   legalName: string;
   /**
    * @minLength 0
-   * @maxLength 200
+   * @maxLength 50
    */
   name: string;
   /**

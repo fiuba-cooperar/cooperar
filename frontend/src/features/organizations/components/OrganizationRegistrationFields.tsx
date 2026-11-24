@@ -1,3 +1,4 @@
+import { CountedTextInput } from '@/components/form/CountedTextInput';
 import {
   Checkbox,
   Fieldset,
@@ -6,9 +7,9 @@ import {
   Select,
   SimpleGrid,
   Stack,
-  TextInput,
   Title,
 } from '@mantine/core';
+import { LEGAL_NAME_MAX_LENGTH, ORGANIZATION_NAME_MAX_LENGTH } from '../limits';
 import { ActivityType, Province, Sector } from '@/api/generated/model';
 import {
   DistrictInput,
@@ -45,9 +46,9 @@ export function OrganizationRegistrationFields({
             onChange('type', type);
           }}
         />
-        <TextInput
+        <CountedTextInput
           label="Nombre de la entidad"
-          maxLength={200}
+          maxLength={ORGANIZATION_NAME_MAX_LENGTH}
           value={value.name}
           error={errors.name}
           onChange={(event) => {
@@ -55,17 +56,17 @@ export function OrganizationRegistrationFields({
           }}
         />
         <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="md">
-          <TextInput
+          <CountedTextInput
             label="Razón social"
             placeholder="Cooperativa de Trabajo … Ltda."
-            maxLength={200}
+            maxLength={LEGAL_NAME_MAX_LENGTH}
             value={value.legalName}
             error={errors.legalName}
             onChange={(event) => {
               onChange('legalName', event.currentTarget.value);
             }}
           />
-          <TextInput
+          <CountedTextInput
             label="CUIT"
             inputMode="numeric"
             placeholder="30-12345678-1"
@@ -99,6 +100,8 @@ export function OrganizationRegistrationFields({
           label="Rubros"
           description="Podés elegir más de uno."
           placeholder={value.sectors.length === 0 ? 'Elegí los rubros' : undefined}
+          searchable
+          nothingFoundMessage="No encontramos ese rubro"
           data={SECTOR_OPTIONS}
           value={value.sectors}
           error={errors.sectors}
@@ -176,7 +179,7 @@ export function OrganizationRegistrationFields({
               }}
             />
           </SimpleGrid>
-          <TextInput
+          <CountedTextInput
             label="Referencias adicionales (opcional)"
             placeholder="Piso, local, entre calles…"
             autoComplete="address-line2"

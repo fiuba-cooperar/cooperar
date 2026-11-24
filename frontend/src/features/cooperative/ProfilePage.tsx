@@ -1,23 +1,11 @@
-import {
-  Alert,
-  Button,
-  Collapse,
-  Group,
-  Paper,
-  Stack,
-  Text,
-  Title,
-  UnstyledButton,
-} from '@mantine/core';
+import { Alert, Button, Group, Stack, Text, Title, UnstyledButton } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import {
-  IconAlertCircle,
-  IconChevronDown,
-  IconCircleCheck,
-  IconExternalLink,
-} from '@tabler/icons-react';
-import { Link, useSearchParams } from 'react-router';
+import { IconAlertCircle, IconCircleCheck, IconEye, IconExternalLink } from '@tabler/icons-react';
+import { useCallback, useEffect, useState } from 'react';
+import { Link, useBlocker, useSearchParams } from 'react-router';
 import { Visibility, type CooperativeOrganizationProfileResponse } from '@/api/generated/model';
+import { AppModal } from '@/components/AppModal';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { useManagedProfile, useSaveProfileSection } from './api/useManagedProfile';
 import { ActivitySection } from './components/profile/ActivitySection';
 import { ContactSection } from './components/profile/ContactSection';
@@ -28,23 +16,17 @@ import {
   isProfileSection,
   PROFILE_SECTIONS,
   sectionStatus,
+  type SectionStatus,
   type ProfileSectionKey,
 } from './components/profile/profileStatus';
 import type { SectionProps } from './components/profile/sectionProps';
-import { VisibilityBadge } from './components/profile/Visibility';
+import { VisibilityBadge, VisibilityToggle } from './components/profile/Visibility';
 import { useActiveOrganization } from './useActiveOrganization';
 import styles from './ProfilePage.module.css';
 
-/** "Mi ficha": the profile of the active organization, edited section by section, with the visibility of each field. */
+/** "Ficha": the profile of the active organization, edited section by section, with the visibility of each field. */
 export function ProfilePage() {
   const organization = useActiveOrganization();
-  if (!organization) {
-    return (
-      <Text c="dimmed">
-        Vas a poder completar tu ficha cuando el observatorio apruebe tu solicitud.
-      </Text>
-    );
-  }
   // Remounted per organization, so the forms never mix the data of two of them.
   return <ProfileEditor key={organization.id} organizationId={organization.id} />;
 }
@@ -55,34 +37,24 @@ function ProfileEditor({ organizationId }: { organizationId: string }) {
   return (
     <Stack gap={24}>
       <Group justify="space-between" align="flex-start" gap="md">
-        <Stack gap={6} maw={640}>
-          <Title order={1} fz={32}>
-            Mi ficha
-          </Title>
-          <Text c="dimmed">
-            Estos datos arman la ficha pública
-            {profile && (
-              <>
-                {' '}
-                de <strong>{profile.identification.name}</strong>
-              </>
-            )}
-            . Vos elegís qué datos de contacto se muestran.
-          </Text>
-        </Stack>
-        {profile && (
-          <Button
-            component={Link}
-            to={`/organizations/${profile.slug}`}
-            variant="outline"
-            h={44}
-            rightSection={<IconExternalLink size={18} aria-hidden />}
-          >
-            Ver mi ficha pública
-          </Button>
-        )}
+        <Title order={1} fz={32}>
+          Ficha
+        </Title>
+        <Group gap="sm">
+          <VisibilityHelp />
+          {profile && (
+            <Button
+              component={Link}
+              to={`/organizations/${profile.slug}`}
+              variant="outline"
+              h={44}
+              rightSection={<IconExternalLink size={18} aria-hidden />}
+            >
+              Ver ficha pública
+            </Button>
+          )}
+        </Group>
       </Group>
-      <VisibilityLegend />
       {isPending && <Text role="status">Cargando tu ficha…</Text>}
       {isError && (
         <Alert
@@ -98,31 +70,23 @@ function ProfileEditor({ organizationId }: { organizationId: string }) {
   );
 }
 
-/** What the visibility badges mean; collapsed until the person opens it. */
-function VisibilityLegend() {
-  const [opened, { toggle }] = useDisclosure(false);
+const noop = () => undefined;
+
+/** A button that opens what the visibility badges and toggles mean. */
+function VisibilityHelp() {
+  const [opened, { open, close }] = useDisclosure(false);
   return (
-    <Paper withBorder radius="lg" px={20} py={12} component="section" aria-labelledby="legend">
-      <Text component="h2" fz="sm" m={0}>
-        <UnstyledButton
-          id="legend"
-          type="button"
-          className={styles.legendToggle}
-          aria-expanded={opened}
-          aria-controls="legend-content"
-          onClick={toggle}
-        >
-          <span>Quién ve cada dato</span>
-          <IconChevronDown
-            size={18}
-            aria-hidden
-            className={styles.legendChevron}
-            data-expanded={opened || undefined}
-          />
-        </UnstyledButton>
-      </Text>
-      <Collapse expanded={opened} id="legend-content">
-        <Stack gap={10} pt={10}>
+    <>
+      <Button
+        variant="default"
+        h={44}
+        leftSection={<IconEye size={18} aria-hidden />}
+        onClick={open}
+      >
+        ¿Quién ve mis datos?
+      </Button>
+      <AppModal opened={opened} onClose={close} title="¿Quién ve mis datos?" size={620}>
+        <Stack gap={0} className={styles.legendList}>
           <div className={styles.legendRow}>
             <span className={styles.legendSample}>
               <VisibilityBadge visibility={Visibility.PUBLIC} />
@@ -140,21 +104,23 @@ function VisibilityLegend() {
             </Text>
           </div>
           <div className={styles.legendRow}>
-            {/* A picture of the toggle, not a control: the text next to it says what it means. */}
-            <span className={styles.legendSample} aria-hidden="true">
-              <span className={styles.toggleSample}>
-                <span className={styles.toggleSampleOn}>Público</span>
-                <span>Privado</span>
-              </span>
+            {/* The real toggle as a sample, not a control: the text next to it says what it means. */}
+            <span className={styles.legendSample} aria-hidden="true" inert>
+              <VisibilityToggle field="ejemplo" value={Visibility.PUBLIC} onChange={noop} />
             </span>
             <Text size="sm" c="dimmed">
               Lo configurás vos: elegís si el dato es visible o no para visitantes externos.
             </Text>
           </div>
         </Stack>
-      </Collapse>
-    </Paper>
+      </AppModal>
+    </>
   );
+}
+
+/** "2 de 3": how many of the data of a section are already there. */
+function progress({ items }: SectionStatus): string {
+  return `${String(items.filter(({ done }) => done).length)} de ${String(items.length)}`;
 }
 
 function Sections({ profile }: { profile: CooperativeOrganizationProfileResponse }) {
@@ -162,9 +128,59 @@ function Sections({ profile }: { profile: CooperativeOrganizationProfileResponse
   const requested = searchParams.get('section');
   const current: ProfileSectionKey = isProfileSection(requested) ? requested : 'identification';
   const { mutateAsync, isPending, variables } = useSaveProfileSection(profile.id);
+  // The sections that have changes not saved yet. Each section is saved on its own, so leaving one with changes asks
+  // first, and so does leaving the page or closing the tab.
+  const [dirty, setDirty] = useState<ReadonlySet<ProfileSectionKey>>(new Set());
+  const [leaving, setLeaving] = useState<ProfileSectionKey | null>(null);
+  // A section starts over from the saved profile when its revision goes up.
+  const [resets, setResets] = useState<Record<ProfileSectionKey, number>>({
+    identification: 0,
+    activity: 0,
+    photos: 0,
+    location: 0,
+    contact: 0,
+  });
+  const hasUnsaved = dirty.size > 0;
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      hasUnsaved && currentLocation.pathname !== nextLocation.pathname,
+  );
+
+  useEffect(() => {
+    if (!hasUnsaved) return;
+    function warn(event: BeforeUnloadEvent) {
+      event.preventDefault();
+    }
+    window.addEventListener('beforeunload', warn);
+    return () => {
+      window.removeEventListener('beforeunload', warn);
+    };
+  }, [hasUnsaved]);
+
+  const markDirty = useCallback((section: ProfileSectionKey, isDirty: boolean) => {
+    setDirty((current) => {
+      if (current.has(section) === isDirty) return current;
+      const next = new Set(current);
+      if (isDirty) next.add(section);
+      else next.delete(section);
+      return next;
+    });
+  }, []);
 
   function go(section: ProfileSectionKey) {
     setSearchParams({ section }, { replace: true });
+  }
+
+  /** Moves to another section, asking first when the current one has changes that are not saved. */
+  function leave(section: ProfileSectionKey) {
+    if (section !== current && dirty.has(current)) setLeaving(section);
+    else go(section);
+  }
+
+  function discardAndGo(section: ProfileSectionKey) {
+    setResets((counts) => ({ ...counts, [current]: counts[current] + 1 }));
+    setLeaving(null);
+    go(section);
   }
 
   function props(section: ProfileSectionKey): SectionProps {
@@ -177,10 +193,14 @@ function Sections({ profile }: { profile: CooperativeOrganizationProfileResponse
       next: following && {
         label: following.label,
         go: () => {
-          go(following.key);
+          leave(following.key);
         },
       },
       save: mutateAsync,
+      revision: resets[section],
+      onDirtyChange: (isDirty) => {
+        markDirty(section, isDirty);
+      },
     };
   }
 
@@ -196,14 +216,32 @@ function Sections({ profile }: { profile: CooperativeOrganizationProfileResponse
               className={styles.navButton}
               aria-current={key === current ? 'step' : undefined}
               onClick={() => {
-                go(key);
+                leave(key);
               }}
             >
               <span className={styles.navText}>
                 <span>{label}</span>
-                <span className={status.complete ? styles.done : styles.pending}>
-                  {status.label}
-                </span>
+                {key === current ? (
+                  <ul className={styles.items}>
+                    {status.items.map((item) => (
+                      <li key={item.label} className={item.done ? styles.done : styles.pending}>
+                        {item.done ? (
+                          <IconCircleCheck size={16} aria-hidden className={styles.itemDone} />
+                        ) : (
+                          <IconAlertCircle size={16} aria-hidden className={styles.itemMissing} />
+                        )}
+                        {item.label}
+                        <span className={styles.srOnly}>
+                          {item.done ? ': completo' : ': falta'}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <span className={status.complete ? styles.done : styles.pending}>
+                    {status.complete ? 'Completo' : progress(status)}
+                  </span>
+                )}
               </span>
               {status.complete ? (
                 <IconCircleCheck size={20} aria-hidden className={styles.doneIcon} />
@@ -214,6 +252,34 @@ function Sections({ profile }: { profile: CooperativeOrganizationProfileResponse
           );
         })}
       </nav>
+      <ConfirmDialog
+        opened={blocker.state === 'blocked'}
+        title="Tenés cambios sin guardar"
+        icon={<IconAlertCircle aria-hidden />}
+        confirmLabel="Salir sin guardar"
+        onConfirm={() => {
+          blocker.proceed?.();
+        }}
+        onClose={() => {
+          blocker.reset?.();
+        }}
+      >
+        Si salís de la ficha ahora, se pierden los cambios que todavía no guardaste.
+      </ConfirmDialog>
+      <ConfirmDialog
+        opened={leaving !== null}
+        title="Tenés cambios sin guardar"
+        icon={<IconAlertCircle aria-hidden />}
+        confirmLabel="Descartar cambios"
+        onConfirm={() => {
+          if (leaving) discardAndGo(leaving);
+        }}
+        onClose={() => {
+          setLeaving(null);
+        }}
+      >
+        Si cambiás de sección ahora, perderás los cambios que todavía no guardaste.
+      </ConfirmDialog>
       <div className={styles.section}>
         <IdentificationSection {...props('identification')} />
         <ActivitySection {...props('activity')} />

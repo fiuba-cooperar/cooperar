@@ -42,8 +42,9 @@ public class AccountNotifications {
 
                 %s
 
-                El enlace vence en %d horas. Cuando confirmes tu email, el observatorio va a revisar el alta \
-                de tu organización y te vamos a avisar por este medio.
+                El enlace vence en %d horas. Una vez que tengas tu cuenta, podés dar de alta tu organización \
+                desde tu panel: el observatorio la va a revisar cuando hayas confirmado tu email y te vamos a \
+                avisar por este medio.
 
                 Si no te registraste en CooperAR, ignorá este mensaje.
                 """.formatted(greeting(event.firstName()), link, EmailVerificationService.TOKEN_TTL.toHours());

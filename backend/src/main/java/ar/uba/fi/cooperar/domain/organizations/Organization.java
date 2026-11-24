@@ -120,12 +120,18 @@ public class Organization {
     @Column(name = "social_media")
     private String socialMedia;
 
-    @Column(name = "opening_hours")
-    private String openingHours;
+    @Enumerated(EnumType.STRING)
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "organization_opening_hours", joinColumns = @JoinColumn(name = "organization_id"))
+    @Fetch(FetchMode.SUBSELECT)
+    private Set<OpeningPeriod> openingHours = new HashSet<>();
 
     @Enumerated(EnumType.STRING)
     @Column(name = "response_time")
     private ResponseTime responseTime;
+
+    @Column(name = "onboarding_dismissed", nullable = false)
+    private boolean onboardingDismissed;
 
     @Embedded
     @AttributeOverride(name = "storageRef", column = @Column(name = "logo_storage_ref"))
@@ -284,7 +290,9 @@ public class Organization {
         this.emailVisibility = contact.emailVisibility();
         this.website = optional(contact.website());
         this.socialMedia = optional(contact.socialMedia());
-        this.openingHours = optional(contact.openingHours());
+        List<OpeningPeriod> hours = OpeningPeriod.requireNoOverlap(contact.openingHours());
+        this.openingHours.clear();
+        this.openingHours.addAll(hours);
         this.responseTime = contact.responseTime();
     }
 
@@ -420,8 +428,18 @@ public class Organization {
         return socialMedia;
     }
 
-    public String getOpeningHours() {
-        return openingHours;
+    /** In the order of the week, and within a day by the hour it opens. */
+    public List<OpeningPeriod> getOpeningHours() {
+        return openingHours.stream().sorted(OpeningPeriod.CHRONOLOGICAL).toList();
+    }
+
+    public boolean isOnboardingDismissed() {
+        return onboardingDismissed;
+    }
+
+    /** The getting-started card of the panel is closed for good. */
+    public void dismissOnboarding() {
+        this.onboardingDismissed = true;
     }
 
     public ResponseTime getResponseTime() {

@@ -8,6 +8,4 @@
 
 export interface RegistrationResponse {
   accountId: string;
-  /** The organization only exists once the observatory approves this request */
-  registrationRequestId: string;
 }

@@ -9,27 +9,11 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import ar.uba.fi.cooperar.domain.organizations.ActivityType;
-import ar.uba.fi.cooperar.domain.organizations.Address;
-import ar.uba.fi.cooperar.domain.organizations.InvalidCuitException;
-import ar.uba.fi.cooperar.domain.organizations.OrganizationDetails;
-import ar.uba.fi.cooperar.domain.organizations.OrganizationType;
-import ar.uba.fi.cooperar.domain.organizations.Province;
-import ar.uba.fi.cooperar.domain.organizations.RegistrationRequest;
-import ar.uba.fi.cooperar.domain.organizations.RegistrationStatus;
-import ar.uba.fi.cooperar.domain.organizations.Sector;
 import ar.uba.fi.cooperar.domain.user.Role;
 import ar.uba.fi.cooperar.domain.user.UserAccount;
-import ar.uba.fi.cooperar.repository.organizations.OrganizationRepository;
-import ar.uba.fi.cooperar.repository.organizations.RegistrationRequestRepository;
 import ar.uba.fi.cooperar.repository.user.UserAccountRepository;
-import ar.uba.fi.cooperar.service.organizations.CuitAvailability;
-import ar.uba.fi.cooperar.service.user.RegistrationConflictException.Field;
 import java.sql.SQLException;
-import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.util.Set;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -39,125 +23,51 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 class RegistrationServiceTest {
 
     private static final NewAccount ACCOUNT = new NewAccount(" Ana ", " Pérez ", " Ana@Coop.Local ", "secret-password");
-    private static final OrganizationDetails ORGANIZATION = new OrganizationDetails(
-            " La Litoraleña ",
-            " Cooperativa de Trabajo La Litoraleña Ltda. ",
-            OrganizationType.COOPERATIVE,
-            "30-12345678-1",
-            Set.of(Sector.FOOD, Sector.SERVICES),
-            Set.of(ActivityType.PRODUCT, ActivityType.WORK),
-            new Address(Province.SANTA_FE, " Rosario ", " Centro ", " Rivadavia 100 ", "  "),
-            " Presidenta ");
 
     private final UserAccountRepository users = mock(UserAccountRepository.class);
-    private final OrganizationRepository organizations = mock(OrganizationRepository.class);
-    private final RegistrationRequestRepository requests = mock(RegistrationRequestRepository.class);
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
     private final EmailVerificationService emailVerification = mock(EmailVerificationService.class);
-    private final Instant now = Instant.parse("2026-10-30T12:00:00Z");
-    private final RegistrationService service = new RegistrationService(
-            users,
-            requests,
-            new CuitAvailability(organizations, requests),
-            encoder,
-            emailVerification,
-            Clock.fixed(now, ZoneOffset.UTC));
+    private final RegistrationService service = new RegistrationService(users, encoder, emailVerification);
 
     @BeforeEach
     void saveReturnsTheEntity() {
         when(users.saveAndFlush(any())).then(returnsFirstArg());
-        when(requests.saveAndFlush(any())).then(returnsFirstArg());
     }
 
     @Test
-    void createsACooperativeAccountWithARequestForItsOrganization() {
-        Registration registration = service.register(ACCOUNT, ORGANIZATION);
+    void createsACooperativeAccountWithoutOrganizationsAndSendsTheConfirmationLink() {
+        UUID accountId = service.register(ACCOUNT);
 
         ArgumentCaptor<UserAccount> account = ArgumentCaptor.forClass(UserAccount.class);
         verify(users).saveAndFlush(account.capture());
         UserAccount saved = account.getValue();
+        assertThat(saved.getId()).isEqualTo(accountId);
         assertThat(saved.getRole()).isEqualTo(Role.COOPERATIVE);
         assertThat(saved.getEmail()).isEqualTo("ana@coop.local");
         assertThat(saved.getFirstName()).isEqualTo("Ana");
         assertThat(saved.getLastName()).isEqualTo("Pérez");
         assertThat(encoder.matches("secret-password", saved.getPasswordHash())).isTrue();
-
         assertThat(saved.getOrganizations()).isEmpty();
-
-        ArgumentCaptor<RegistrationRequest> request = ArgumentCaptor.forClass(RegistrationRequest.class);
-        verify(requests).saveAndFlush(request.capture());
-        RegistrationRequest organization = request.getValue();
-        assertThat(organization.getName()).isEqualTo("La Litoraleña");
-        assertThat(organization.getType()).isEqualTo(OrganizationType.COOPERATIVE);
-        assertThat(organization.getCuit().digits()).isEqualTo("30123456781");
-        assertThat(organization.getLegalName()).isEqualTo("Cooperativa de Trabajo La Litoraleña Ltda.");
-        assertThat(organization.getSectors()).containsExactly(Sector.FOOD, Sector.SERVICES);
-        assertThat(organization.getActivityTypes()).containsExactly(ActivityType.WORK, ActivityType.PRODUCT);
-        assertThat(organization.getRegistrantRole()).isEqualTo("Presidenta");
-        assertThat(organization.getAddress())
-                .isEqualTo(new Address(Province.SANTA_FE, "Rosario", "Centro", "Rivadavia 100", null));
-        assertThat(organization.getStatus()).isEqualTo(RegistrationStatus.PENDING);
-        assertThat(organization.getRegisteredBy()).isSameAs(saved);
-        assertThat(organization.getCreatedAt()).isEqualTo(now);
         verify(emailVerification).sendLink(saved);
-
-        assertThat(registration).isEqualTo(new Registration(saved.getId(), organization.getId()));
     }
 
     @Test
-    void doesNotTakeTheCuitOfARequestStillUnderReview() {
-        when(requests.existsOpenWithCuit(any(), any())).thenReturn(true);
-
-        assertThatThrownBy(() -> service.register(ACCOUNT, ORGANIZATION))
-                .isInstanceOfSatisfying(
-                        RegistrationConflictException.class,
-                        e -> assertThat(e.getFields()).containsExactly(Field.CUIT));
-    }
-
-    @Test
-    void reportsEveryFieldThatIsAlreadyRegistered() {
+    void rejectsAnEmailThatIsAlreadyRegistered() {
         when(users.existsByEmail("ana@coop.local")).thenReturn(true);
-        when(organizations.existsByCuit("30123456781")).thenReturn(true);
 
-        assertThatThrownBy(() -> service.register(ACCOUNT, ORGANIZATION))
-                .isInstanceOfSatisfying(
-                        RegistrationConflictException.class,
-                        e -> assertThat(e.getFields()).containsExactlyInAnyOrder(Field.EMAIL, Field.CUIT))
-                .hasMessage("The email and the CUIT are already registered");
+        assertThatThrownBy(() -> service.register(ACCOUNT))
+                .isInstanceOf(EmailAlreadyRegisteredException.class)
+                .hasMessage("The email is already registered");
         verify(users, never()).saveAndFlush(any());
         verify(emailVerification, never()).sendLink(any());
-    }
-
-    @Test
-    void reportsATakenCuitAlone() {
-        when(organizations.existsByCuit("30123456781")).thenReturn(true);
-
-        assertThatThrownBy(() -> service.register(ACCOUNT, ORGANIZATION))
-                .isInstanceOfSatisfying(
-                        RegistrationConflictException.class,
-                        e -> assertThat(e.getFields()).containsExactly(Field.CUIT))
-                .hasMessage("The CUIT is already registered");
     }
 
     @Test
     void translatesAUniqueViolationFromAConcurrentRegistration() {
         when(users.saveAndFlush(any())).thenThrow(uniqueViolation("users_email_key"));
 
-        assertThatThrownBy(() -> service.register(ACCOUNT, ORGANIZATION))
-                .isInstanceOfSatisfying(
-                        RegistrationConflictException.class,
-                        e -> assertThat(e.getFields()).containsExactly(Field.EMAIL))
-                .hasMessage("The email is already registered");
-    }
-
-    @Test
-    void translatesAUniqueViolationOnTheCuit() {
-        when(requests.saveAndFlush(any())).thenThrow(uniqueViolation("registration_requests_open_cuit_key"));
-
-        assertThatThrownBy(() -> service.register(ACCOUNT, ORGANIZATION))
-                .isInstanceOfSatisfying(
-                        RegistrationConflictException.class,
-                        e -> assertThat(e.getFields()).containsExactly(Field.CUIT));
+        assertThatThrownBy(() -> service.register(ACCOUNT)).isInstanceOf(EmailAlreadyRegisteredException.class);
+        verify(emailVerification, never()).sendLink(any());
     }
 
     @Test
@@ -165,22 +75,7 @@ class RegistrationServiceTest {
         DataIntegrityViolationException violation = uniqueViolation("some_other_constraint");
         when(users.saveAndFlush(any())).thenThrow(violation);
 
-        assertThatThrownBy(() -> service.register(ACCOUNT, ORGANIZATION)).isSameAs(violation);
-    }
-
-    @Test
-    void rejectsAnInvalidCuit() {
-        OrganizationDetails invalid = new OrganizationDetails(
-                "Coop",
-                "Coop Ltda.",
-                OrganizationType.ERT,
-                "30-12345678-9",
-                ORGANIZATION.sectors(),
-                ORGANIZATION.activityTypes(),
-                ORGANIZATION.address(),
-                "Presidenta");
-
-        assertThatThrownBy(() -> service.register(ACCOUNT, invalid)).isInstanceOf(InvalidCuitException.class);
+        assertThatThrownBy(() -> service.register(ACCOUNT)).isSameAs(violation);
     }
 
     @Test
@@ -188,7 +83,7 @@ class RegistrationServiceTest {
         // 72 characters, but 73 bytes in UTF-8.
         NewAccount account = new NewAccount("Ana", "Pérez", "ana@coop.local", "ñ" + "a".repeat(71));
 
-        assertThatThrownBy(() -> service.register(account, ORGANIZATION))
+        assertThatThrownBy(() -> service.register(account))
                 .isInstanceOf(PasswordTooLongException.class)
                 .hasMessage("The password must be at most 72 bytes long");
     }

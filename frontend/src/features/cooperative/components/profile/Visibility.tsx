@@ -5,9 +5,26 @@ import type { ReactNode } from 'react';
 import { Visibility } from '@/api/generated/model';
 import styles from './Visibility.module.css';
 
+// The same icons as the badge of the fixed fields, so both read as the same element.
 const VISIBILITY_OPTIONS = [
-  { value: Visibility.PUBLIC, label: 'Público' },
-  { value: Visibility.PRIVATE, label: 'Privado' },
+  {
+    value: Visibility.PUBLIC,
+    label: (
+      <span className={styles.option}>
+        <IconWorld size={14} aria-hidden />
+        Público
+      </span>
+    ),
+  },
+  {
+    value: Visibility.PRIVATE,
+    label: (
+      <span className={styles.option}>
+        <IconLock size={14} aria-hidden />
+        Privado
+      </span>
+    ),
+  },
 ];
 
 /** The visibility of a field the organization cannot change. */
@@ -44,7 +61,11 @@ export function VisibilityToggle({
     <div role="radiogroup" aria-label={`Visibilidad de ${field}`}>
       <SegmentedControl
         size="xs"
-        color="brand"
+        classNames={{
+          root: styles.toggle,
+          label: styles.toggleLabel,
+          indicator: styles.toggleIndicator,
+        }}
         data={VISIBILITY_OPTIONS}
         value={value}
         onChange={(next) => {

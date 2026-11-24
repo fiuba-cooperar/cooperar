@@ -1,0 +1,22 @@
+.navLink {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 8px;
+  color: var(--mantine-color-text);
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.navLink:hover {
+  background: var(--color-hover);
+}
+
+.navLink[aria-current='page'] {
+  background: var(--mantine-color-brand-light);
+  color: var(--mantine-color-brand-light-color);
+  font-weight: 600;
+}

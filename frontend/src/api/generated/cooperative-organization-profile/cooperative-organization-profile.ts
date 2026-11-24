@@ -1060,6 +1060,100 @@ export const useReplaceProfileLogo = <TError = unknown, TContext = unknown>(
 > => {
   return useMutation(getReplaceProfileLogoMutationOptions(options), queryClient);
 };
+export type dismissOnboardingResponse200 = {
+  data: CooperativeOrganizationProfileResponse;
+  status: 200;
+};
+
+export type dismissOnboardingResponseSuccess = dismissOnboardingResponse200 & {
+  headers: Headers;
+};
+export type dismissOnboardingResponse = dismissOnboardingResponseSuccess;
+
+export const getDismissOnboardingUrl = (id: string) => {
+  return `/api/cooperative/organizations/${id}/profile/onboarding-dismissal`;
+};
+
+/**
+ * @summary Close the getting-started card of the panel for good
+ */
+export const dismissOnboarding = async (
+  id: string,
+  options?: Parameters<typeof apiFetch>[1],
+): Promise<dismissOnboardingResponse> => {
+  return apiFetch<dismissOnboardingResponse>(getDismissOnboardingUrl(id), {
+    ...options,
+    method: 'PUT',
+  });
+};
+
+export const getDismissOnboardingMutationKey = () => ['dismissOnboarding'] as const;
+
+export const getDismissOnboardingMutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof dismissOnboarding>>,
+    TError,
+    DismissOnboardingMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof apiFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof dismissOnboarding>>,
+  TError,
+  DismissOnboardingMutationVariables,
+  TContext
+> => {
+  const mutationKey = getDismissOnboardingMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof dismissOnboarding>>,
+    DismissOnboardingMutationVariables
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return dismissOnboarding(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DismissOnboardingMutationResult = NonNullable<
+  Awaited<ReturnType<typeof dismissOnboarding>>
+>;
+
+export type DismissOnboardingMutationError = unknown;
+export type DismissOnboardingMutationVariables = { id: string };
+
+/**
+ * @summary Close the getting-started card of the panel for good
+ */
+export const useDismissOnboarding = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof dismissOnboarding>>,
+      TError,
+      DismissOnboardingMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof dismissOnboarding>>,
+  TError,
+  DismissOnboardingMutationVariables,
+  TContext
+> => {
+  return useMutation(getDismissOnboardingMutationOptions(options), queryClient);
+};
 export type addProfilePhotoResponse200 = {
   data: CooperativeOrganizationProfileResponse;
   status: 200;

@@ -103,7 +103,7 @@ class OrganizationSearchIntegrationTest {
                 Visibility.PUBLIC,
                 null,
                 null,
-                null,
+                List.of(),
                 null));
         organizations.flush();
 

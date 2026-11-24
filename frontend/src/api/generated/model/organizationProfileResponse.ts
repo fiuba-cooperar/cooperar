@@ -6,6 +6,7 @@
  * OpenAPI spec version: v1
  */
 import type { ActivityType } from './activityType';
+import type { OpeningPeriodResponse } from './openingPeriodResponse';
 import type { OrganizationType } from './organizationType';
 import type { ProfilePhotosResponse } from './profilePhotosResponse';
 import type { PublicAddressResponse } from './publicAddressResponse';
@@ -20,7 +21,7 @@ export interface OrganizationProfileResponse {
   email?: string;
   legalName?: string;
   name: string;
-  openingHours?: string;
+  openingHours: OpeningPeriodResponse[];
   phone?: string;
   photos: ProfilePhotosResponse;
   responseTime?: ResponseTime;

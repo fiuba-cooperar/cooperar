@@ -6,6 +6,7 @@
  * OpenAPI spec version: v1
  */
 
+export * from './accountRegistrationRequestResponse';
 export * from './activityType';
 export * from './activityTypeCount';
 export * from './addProductPhotoBody';
@@ -20,7 +21,6 @@ export * from './catalogOrganizationResponse';
 export * from './catalogProductDetailResponse';
 export * from './catalogProductResponse';
 export * from './cooperativeOrganizationProfileResponse';
-export * from './cooperativeRegistrationRequestResponse';
 export * from './countRegistrationRequestsParams';
 export * from './currentUserResponse';
 export * from './decisionResponse';
@@ -40,6 +40,9 @@ export * from './listStreetsParams';
 export * from './localityResponse';
 export * from './loginRequest';
 export * from './managedProductPageResponse';
+export * from './openingDay';
+export * from './openingPeriodRequest';
+export * from './openingPeriodResponse';
 export * from './organizationProfileResponse';
 export * from './organizationSearchResponse';
 export * from './organizationSearchSort';
@@ -70,7 +73,6 @@ export * from './publicLocation';
 export * from './publicProductResponse';
 export * from './refreshTokenRequest';
 export * from './registrantResponse';
-export * from './registrationAccountRequest';
 export * from './registrationAddressRequest';
 export * from './registrationAddressResponse';
 export * from './registrationCountsResponse';

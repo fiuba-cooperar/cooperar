@@ -28,7 +28,7 @@ export interface ProfileActivityRequest {
    */
   startYear?: number;
   /**
-   * @maximum 1000000
+   * @maximum 99999
    * @exclusiveMinimum 0
    */
   workerCount?: number;

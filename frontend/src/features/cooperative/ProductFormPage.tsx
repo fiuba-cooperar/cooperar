@@ -143,13 +143,6 @@ function move<T>(list: T[], from: number, to: number): T[] {
 /** "Nuevo producto o servicio" and "Editar producto o servicio", depending on whether the route carries an id. */
 export function ProductFormPage() {
   const organization = useActiveOrganization();
-  if (!organization) {
-    return (
-      <Text c="dimmed">
-        Vas a poder cargar tus productos y servicios cuando el observatorio apruebe tu solicitud.
-      </Text>
-    );
-  }
   // Remounted per organization, so the form never mixes the data of two of them.
   return <ProductFormLoader key={organization.id} organization={organization} />;
 }

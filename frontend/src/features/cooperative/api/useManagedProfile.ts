@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  dismissOnboarding,
   getGetManagedOrganizationProfileQueryKey,
   getManagedOrganizationProfile,
   updateProfileActivity,
@@ -88,6 +89,22 @@ export function useSaveProfileSection(id: string) {
         queryKey: getGetOrganizationProfileQueryKey(profile.slug),
       });
       if (change.section === 'identification') await refreshUser();
+    },
+  });
+}
+
+/** Closes the getting-started card of the panel for good; it is saved with the organization. */
+export function useDismissOnboarding(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const response = await dismissOnboarding(id);
+      const httpStatus: number = response.status;
+      if (httpStatus !== 200) throw new Error(`Unexpected status ${String(httpStatus)}`);
+      return response.data;
+    },
+    onSuccess: (profile) => {
+      queryClient.setQueryData(getGetManagedOrganizationProfileQueryKey(id), profile);
     },
   });
 }

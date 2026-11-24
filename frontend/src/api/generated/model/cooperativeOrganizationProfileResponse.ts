@@ -20,6 +20,8 @@ export interface CooperativeOrganizationProfileResponse {
   id: string;
   identification: ProfileIdentificationResponse;
   location: ProfileLocationResponse;
+  /** Whether the getting-started card of the panel was closed for good */
+  onboardingDismissed: boolean;
   photos: ProfilePhotosResponse;
   slug: string;
   /** Validated by the observatory; always public */

@@ -94,7 +94,7 @@ public class RegistrationRequest {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    /** When it last went into the review: on sign-up, and again each time it is corrected. */
+    /** When it last went into the review: when it is sent, and again each time it is corrected. */
     @Column(name = "submitted_at", nullable = false)
     private Instant submittedAt;
 

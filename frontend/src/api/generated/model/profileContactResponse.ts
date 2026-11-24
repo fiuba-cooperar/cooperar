@@ -5,13 +5,14 @@
  * Open observatory of worker-recovered companies and worker cooperatives
  * OpenAPI spec version: v1
  */
+import type { OpeningPeriodResponse } from './openingPeriodResponse';
 import type { ResponseTime } from './responseTime';
 import type { Visibility } from './visibility';
 
 export interface ProfileContactResponse {
   email?: string;
   emailVisibility: Visibility;
-  openingHours?: string;
+  openingHours: OpeningPeriodResponse[];
   phone?: string;
   phoneVisibility: Visibility;
   responseTime?: ResponseTime;

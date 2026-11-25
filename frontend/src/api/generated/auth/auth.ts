@@ -24,6 +24,10 @@ import type {
 import type {
   CurrentUserResponse,
   LoginRequest,
+  NewPasswordRequest,
+  PasswordResetAccountResponse,
+  PasswordResetRequest,
+  PasswordResetTokenRequest,
   RefreshTokenRequest,
   RegistrationRequest,
   RegistrationResponse,
@@ -269,6 +273,349 @@ export const useLogout = <TError = unknown, TContext = unknown>(
   TContext
 > => {
   return useMutation(getLogoutMutationOptions(options), queryClient);
+};
+export type requestPasswordResetResponse200 = {
+  data: void;
+  status: 200;
+};
+
+export type requestPasswordResetResponseSuccess = requestPasswordResetResponse200 & {
+  headers: Headers;
+};
+export type requestPasswordResetResponse = requestPasswordResetResponseSuccess;
+
+export const getRequestPasswordResetUrl = () => {
+  return `/api/auth/password-reset`;
+};
+
+/**
+ * Answers 204 whether the email has an account or not. Each address and each email can ask a limited number of times per hour; past it the answer is 429 with `Retry-After`.
+ * @summary Email a link to choose a new password, if the email has an account
+ */
+export const requestPasswordReset = async (
+  passwordResetRequest: PasswordResetRequest,
+  options?: Parameters<typeof apiFetch>[1],
+): Promise<requestPasswordResetResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return apiFetch<requestPasswordResetResponse>(getRequestPasswordResetUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(passwordResetRequest),
+  });
+};
+
+export const getRequestPasswordResetMutationKey = () => ['requestPasswordReset'] as const;
+
+export const getRequestPasswordResetMutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof requestPasswordReset>>,
+    TError,
+    RequestPasswordResetMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof apiFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof requestPasswordReset>>,
+  TError,
+  RequestPasswordResetMutationVariables,
+  TContext
+> => {
+  const mutationKey = getRequestPasswordResetMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof requestPasswordReset>>,
+    RequestPasswordResetMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return requestPasswordReset(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RequestPasswordResetMutationResult = NonNullable<
+  Awaited<ReturnType<typeof requestPasswordReset>>
+>;
+export type RequestPasswordResetMutationBody = PasswordResetRequest;
+export type RequestPasswordResetMutationError = unknown;
+export type RequestPasswordResetMutationVariables = { data: PasswordResetRequest };
+
+/**
+ * @summary Email a link to choose a new password, if the email has an account
+ */
+export const useRequestPasswordReset = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof requestPasswordReset>>,
+      TError,
+      RequestPasswordResetMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof requestPasswordReset>>,
+  TError,
+  RequestPasswordResetMutationVariables,
+  TContext
+> => {
+  return useMutation(getRequestPasswordResetMutationOptions(options), queryClient);
+};
+export type checkPasswordResetTokenResponse200 = {
+  data: PasswordResetAccountResponse;
+  status: 200;
+};
+
+export type checkPasswordResetTokenResponseSuccess = checkPasswordResetTokenResponse200 & {
+  headers: Headers;
+};
+export type checkPasswordResetTokenResponse = checkPasswordResetTokenResponseSuccess;
+
+export const getCheckPasswordResetTokenUrl = () => {
+  return `/api/auth/password-reset/check`;
+};
+
+/**
+ * Answers 400 when the token is unknown, already used or expired.
+ * @summary Whose password the link is for
+ */
+export const checkPasswordResetToken = async (
+  passwordResetTokenRequest: PasswordResetTokenRequest,
+  options?: Parameters<typeof apiFetch>[1],
+): Promise<checkPasswordResetTokenResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return apiFetch<checkPasswordResetTokenResponse>(getCheckPasswordResetTokenUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(passwordResetTokenRequest),
+  });
+};
+
+export const getCheckPasswordResetTokenMutationKey = () => ['checkPasswordResetToken'] as const;
+
+export const getCheckPasswordResetTokenMutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof checkPasswordResetToken>>,
+    TError,
+    CheckPasswordResetTokenMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof apiFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof checkPasswordResetToken>>,
+  TError,
+  CheckPasswordResetTokenMutationVariables,
+  TContext
+> => {
+  const mutationKey = getCheckPasswordResetTokenMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof checkPasswordResetToken>>,
+    CheckPasswordResetTokenMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return checkPasswordResetToken(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CheckPasswordResetTokenMutationResult = NonNullable<
+  Awaited<ReturnType<typeof checkPasswordResetToken>>
+>;
+export type CheckPasswordResetTokenMutationBody = PasswordResetTokenRequest;
+export type CheckPasswordResetTokenMutationError = unknown;
+export type CheckPasswordResetTokenMutationVariables = { data: PasswordResetTokenRequest };
+
+/**
+ * @summary Whose password the link is for
+ */
+export const useCheckPasswordResetToken = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof checkPasswordResetToken>>,
+      TError,
+      CheckPasswordResetTokenMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof checkPasswordResetToken>>,
+  TError,
+  CheckPasswordResetTokenMutationVariables,
+  TContext
+> => {
+  return useMutation(getCheckPasswordResetTokenMutationOptions(options), queryClient);
+};
+export type resetPasswordResponse200 = {
+  data: void;
+  status: 200;
+};
+
+export type resetPasswordResponseSuccess = resetPasswordResponse200 & {
+  headers: Headers;
+};
+export type resetPasswordResponse = resetPasswordResponseSuccess;
+
+export const getResetPasswordUrl = () => {
+  return `/api/auth/password-reset/confirm`;
+};
+
+/**
+ * Signs the account out everywhere and confirms its email. Answers 400 when the token is unknown, already used or expired.
+ * @summary Choose a new password with the token from the emailed link
+ */
+export const resetPassword = async (
+  newPasswordRequest: NewPasswordRequest,
+  options?: Parameters<typeof apiFetch>[1],
+): Promise<resetPasswordResponse> => {
+  const getHeaders = (
+    h?: NonNullable<RequestInit['headers']>,
+  ): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(
+          h as Iterable<Iterable<string>>,
+          (entry) => Array.from(entry) as [string, string],
+        ),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+  return apiFetch<resetPasswordResponse>(getResetPasswordUrl(), {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(newPasswordRequest),
+  });
+};
+
+export const getResetPasswordMutationKey = () => ['resetPassword'] as const;
+
+export const getResetPasswordMutationOptions = <TError = unknown, TContext = unknown>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof resetPassword>>,
+    TError,
+    ResetPasswordMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof apiFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof resetPassword>>,
+  TError,
+  ResetPasswordMutationVariables,
+  TContext
+> => {
+  const mutationKey = getResetPasswordMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof resetPassword>>,
+    ResetPasswordMutationVariables
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return resetPassword(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ResetPasswordMutationResult = NonNullable<Awaited<ReturnType<typeof resetPassword>>>;
+export type ResetPasswordMutationBody = NewPasswordRequest;
+export type ResetPasswordMutationError = unknown;
+export type ResetPasswordMutationVariables = { data: NewPasswordRequest };
+
+/**
+ * @summary Choose a new password with the token from the emailed link
+ */
+export const useResetPassword = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof resetPassword>>,
+      TError,
+      ResetPasswordMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof resetPassword>>,
+  TError,
+  ResetPasswordMutationVariables,
+  TContext
+> => {
+  return useMutation(getResetPasswordMutationOptions(options), queryClient);
 };
 export type refreshSessionResponse200 = {
   data: TokenResponse;

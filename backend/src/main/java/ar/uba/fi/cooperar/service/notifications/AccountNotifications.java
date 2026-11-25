@@ -2,6 +2,9 @@ package ar.uba.fi.cooperar.service.notifications;
 
 import ar.uba.fi.cooperar.service.organizations.RegistrationReviewed;
 import ar.uba.fi.cooperar.service.user.EmailVerificationService;
+import ar.uba.fi.cooperar.service.user.PasswordChanged;
+import ar.uba.fi.cooperar.service.user.PasswordResetEmailRequested;
+import ar.uba.fi.cooperar.service.user.PasswordResetService;
 import ar.uba.fi.cooperar.service.user.VerificationEmailRequested;
 import java.util.List;
 import java.util.UUID;
@@ -13,7 +16,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /**
- * Emails sent to an account about its sign-up. They go out only after the transaction commits, and a delivery failure
+ * Emails sent to an account about its sign-up and its password. They go out only after the transaction commits, and a delivery failure
  * never undoes what was saved: the person can ask for the link again and sees the review outcome in the panel.
  */
 @Component
@@ -48,6 +51,43 @@ public class AccountNotifications {
                         "Confirmar mi email",
                         link,
                         "Si no te registraste en CooperAR, ignorá este mensaje."));
+    }
+
+    @TransactionalEventListener
+    public void onPasswordResetEmailRequested(PasswordResetEmailRequested event) {
+        send(
+                event.accountId(),
+                "password reset",
+                compose(
+                        event.email(),
+                        "Elegí tu contraseña nueva en CooperAR",
+                        greeting(event.firstName()),
+                        List.of(
+                                "Pediste recuperar la contraseña de tu cuenta de CooperAR. Para elegir una nueva, hacé clic en «Elegir mi contraseña», acá abajo.",
+                                "El enlace sirve una sola vez y vence en %d hora."
+                                        .formatted(PasswordResetService.TOKEN_TTL.toHours())),
+                        null,
+                        "Elegir mi contraseña",
+                        link("/reset-password", "token", event.token()),
+                        "Si no lo pediste, ignorá este mensaje: tu contraseña no cambia."));
+    }
+
+    @TransactionalEventListener
+    public void onPasswordChanged(PasswordChanged event) {
+        send(
+                event.accountId(),
+                "password changed",
+                compose(
+                        event.email(),
+                        "Cambió la contraseña de tu cuenta de CooperAR",
+                        greeting(event.firstName()),
+                        List.of(
+                                "La contraseña de tu cuenta de CooperAR cambió recién, y cerramos las sesiones que tenías abiertas.",
+                                "Si no fuiste vos, pedí un enlace para elegir otra desde «¿Olvidaste tu contraseña?», en el login."),
+                        null,
+                        "Ir al login",
+                        link("/login"),
+                        null));
     }
 
     /** Each outcome leads to the place where the account acts on it, and signs in first when it has no session. */

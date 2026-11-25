@@ -27,7 +27,10 @@ import { ProductCategoriesPage } from '@/features/admin/ProductCategoriesPage';
 import { RegistrationsPage } from '@/features/admin/RegistrationsPage';
 import { UserDetailPage } from '@/features/admin/UserDetailPage';
 import { UsersPage } from '@/features/admin/UsersPage';
+import { ForgotPasswordPage } from '@/features/auth/ForgotPasswordPage';
 import { LoginPage } from '@/features/auth/LoginPage';
+import { FORGOT_PASSWORD_PATH, RESET_PASSWORD_PATH } from '@/features/auth/passwordResetPaths';
+import { ResetPasswordPage } from '@/features/auth/ResetPasswordPage';
 import { RegisterPage } from '@/features/auth/RegisterPage';
 import { RequireRole } from '@/features/auth/RequireRole';
 import { VERIFY_EMAIL_PATH, VerifyEmailPage } from '@/features/auth/VerifyEmailPage';
@@ -59,6 +62,8 @@ export const routes: RouteObject[] = [
       { path: 'login', element: <LoginPage /> },
       { path: REGISTER_PATH, element: <RegisterPage /> },
       { path: VERIFY_EMAIL_PATH, element: <VerifyEmailPage /> },
+      { path: FORGOT_PASSWORD_PATH, element: <ForgotPasswordPage /> },
+      { path: RESET_PASSWORD_PATH, element: <ResetPasswordPage /> },
       { path: ORGANIZATIONS_PATH, element: <OrganizationSearchPage /> },
       { path: CATALOG_PATH, element: <CatalogPage /> },
       { path: `${CATALOG_PATH}/:id`, element: <ProductDetailPage /> },

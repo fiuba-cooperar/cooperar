@@ -19,6 +19,7 @@ import { hasErrors, type FormErrors } from '@/features/organizations/registratio
 import { NEW_REGISTRATION_REQUEST_PATH } from '@/features/account/accountSections';
 import { Role } from '@/api/generated/model';
 import { RegistrationError, useRegistration } from './api/useRegistration';
+import { PASSWORD_HINT, passwordErrors } from './passwordRules';
 import styles from './RegisterPage.module.css';
 import { ROLE_HOME } from './roleHome';
 import { useAuth } from './useAuth';
@@ -31,9 +32,6 @@ interface AccountForm {
   passwordConfirmation: string;
 }
 
-// BCrypt on the backend only takes 72 bytes, which can be fewer than 72 characters.
-const MAX_PASSWORD_BYTES = 72;
-const MIN_PASSWORD_LENGTH = 8;
 // 560px of content, as in the mock, plus the 36px padding and the border.
 const CARD_WIDTH = 560 + 2 * 36 + 2;
 
@@ -47,7 +45,6 @@ const EMPTY_ACCOUNT: AccountForm = {
 
 const EMAIL_HINT =
   'Es tu usuario para ingresar. Con esta cuenta vas a poder dar de alta y administrar una o más entidades.';
-const PASSWORD_HINT = `Usá al menos ${String(MIN_PASSWORD_LENGTH)} caracteres.`;
 const EMAIL_TAKEN = 'Ya hay una cuenta con este email. Si es tuya, ingresá desde el login.';
 const FORM_ERRORS: Record<RegistrationError['reason'], string> = {
   conflict: 'Algunos datos ya están registrados. Revisalos e intentá de nuevo.',
@@ -65,13 +62,7 @@ function validateAccount(form: AccountForm): FormErrors<AccountForm> {
   if (!form.email.trim()) errors.email = 'Ingresá tu email.';
   else if (!/^\S+@\S+\.\S+$/.test(form.email.trim()))
     errors.email = 'Revisá el email: tiene que ser como tu@email.com.';
-  if (form.password.length < MIN_PASSWORD_LENGTH)
-    errors.password = `La contraseña tiene que tener al menos ${String(MIN_PASSWORD_LENGTH)} caracteres.`;
-  else if (new TextEncoder().encode(form.password).length > MAX_PASSWORD_BYTES)
-    errors.password = 'La contraseña es demasiado larga.';
-  if (form.passwordConfirmation !== form.password)
-    errors.passwordConfirmation = 'Las contraseñas no coinciden.';
-  return errors;
+  return { ...errors, ...passwordErrors(form.password, form.passwordConfirmation) };
 }
 
 export function RegisterPage() {

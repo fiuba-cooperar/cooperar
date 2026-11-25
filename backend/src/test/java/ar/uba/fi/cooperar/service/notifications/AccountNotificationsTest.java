@@ -9,6 +9,8 @@ import static org.mockito.Mockito.verify;
 
 import ar.uba.fi.cooperar.domain.organizations.ReviewOutcome;
 import ar.uba.fi.cooperar.service.organizations.RegistrationReviewed;
+import ar.uba.fi.cooperar.service.user.PasswordChanged;
+import ar.uba.fi.cooperar.service.user.PasswordResetEmailRequested;
 import ar.uba.fi.cooperar.service.user.VerificationEmailRequested;
 import java.net.URI;
 import java.util.UUID;
@@ -36,6 +38,32 @@ class AccountNotificationsTest {
                 .startsWith("Hola, Ana:")
                 .contains("https://cooperar.example/verify-email?token=abc-123_x")
                 .contains("vence en 48 horas");
+    }
+
+    @Test
+    void sendsTheLinkToChooseANewPassword() {
+        notifications.onPasswordResetEmailRequested(
+                new PasswordResetEmailRequested(ACCOUNT, "ana@coop.local", "Ana", "abc-123_x"));
+
+        EmailMessage message = sent();
+        assertThat(message.subject()).isEqualTo("Elegí tu contraseña nueva en CooperAR");
+        assertThat(message.body())
+                .startsWith("Hola, Ana:")
+                .contains("https://cooperar.example/reset-password?token=abc-123_x")
+                .contains("vence en 1 hora")
+                .contains("tu contraseña no cambia");
+    }
+
+    @Test
+    void warnsThatThePasswordChanged() {
+        notifications.onPasswordChanged(new PasswordChanged(ACCOUNT, "ana@coop.local", null));
+
+        EmailMessage message = sent();
+        assertThat(message.subject()).isEqualTo("Cambió la contraseña de tu cuenta de CooperAR");
+        assertThat(message.body())
+                .startsWith("Hola:")
+                .contains("cerramos las sesiones")
+                .contains("https://cooperar.example/login");
     }
 
     @Test

@@ -6,6 +6,7 @@
  * OpenAPI spec version: v1
  */
 import type { ActivityType } from './activityType';
+import type { AdminOrganizationUserResponse } from './adminOrganizationUserResponse';
 import type { OrganizationType } from './organizationType';
 import type { RegistrationAddressResponse } from './registrationAddressResponse';
 import type { Sector } from './sector';
@@ -25,4 +26,6 @@ export interface AdminOrganizationResponse {
   /** Path segment of its public profile */
   slug: string;
   type: OrganizationType;
+  /** The accounts that manage it, oldest first */
+  users: AdminOrganizationUserResponse[];
 }

@@ -9,13 +9,14 @@ import {
   PROVINCE_LABELS,
   SECTOR_LABELS,
 } from '@/features/organizations/labels';
+import { OrganizationUsers } from './OrganizationUsers';
 
 const DATE_FORMAT = new Intl.DateTimeFormat('es-AR', {
   dateStyle: 'long',
   timeZone: 'America/Argentina/Buenos_Aires',
 });
 
-/** An organization in the observatory's list: what it does, where it is and the way to its public profile. */
+/** An organization in the observatory's list: what it does, where it is, who manages it and its public profile. */
 export function OrganizationCard({ organization }: { organization: AdminOrganizationResponse }) {
   const headingId = `organization-${organization.id}`;
   const { address } = organization;
@@ -44,6 +45,11 @@ export function OrganizationCard({ organization }: { organization: AdminOrganiza
             .filter(Boolean)
             .join(' · ')}
         </Text>
+        <OrganizationUsers
+          organizationId={organization.id}
+          organizationName={organization.name}
+          users={organization.users}
+        />
         <Anchor
           component={Link}
           to={`/organizations/${organization.slug}`}

@@ -31,4 +31,10 @@ public class UserListService {
                         .collect(Collectors.toMap(OrganizationCount::getId, OrganizationCount::getCount));
         return accounts.map(account -> new UserSummary(account, counts.getOrDefault(account.getId(), 0)));
     }
+
+    /** One account with the organizations it manages. */
+    @Transactional(readOnly = true)
+    public UserAccount get(UUID id) {
+        return users.findWithOrganizationsById(id).orElseThrow(UserNotFoundException::new);
+    }
 }

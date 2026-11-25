@@ -33,6 +33,10 @@ const LITORALENA = {
     street: 'Rivadavia 100',
   },
   createdAt: '2026-10-28T15:00:00Z',
+  users: [
+    { id: 'u1', firstName: 'José', lastName: 'Pérez', email: 'jose@litoralena.coop' },
+    { id: 'u2', email: 'administracion@litoralena.coop' },
+  ],
 };
 
 const METALURGICA = {
@@ -44,6 +48,7 @@ const METALURGICA = {
   cuit: '20123456786',
   sectors: ['METALWORKING'],
   activityTypes: ['SERVICE'],
+  users: [],
 };
 
 const URL = '/api/admin/organizations';
@@ -93,6 +98,58 @@ describe('organizations', () => {
         name: 'Entidades',
       }),
     ).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('shows how many accounts manage each organization, and who they are once opened', async () => {
+    signedIn();
+
+    renderRoute('/admin/organizations');
+
+    const card = await screen.findByRole('article', { name: 'La Litoraleña' });
+    const toggle = within(card).getByRole('button', { name: 'Ver los usuarios de La Litoraleña' });
+    expect(toggle).toHaveTextContent('2 usuarios');
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(within(card).queryByText('jose@litoralena.coop')).not.toBeInTheDocument();
+
+    await userEvent.click(toggle);
+
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(toggle).toHaveAccessibleName('Ocultar los usuarios de La Litoraleña');
+    expect(within(card).getByRole('link', { name: 'José Pérez' })).toHaveAttribute(
+      'href',
+      '/admin/users/u1',
+    );
+    expect(within(card).getByText('jose@litoralena.coop')).toBeInTheDocument();
+    expect(within(card).getByRole('link', { name: 'Sin nombre' })).toHaveAttribute(
+      'href',
+      '/admin/users/u2',
+    );
+
+    await userEvent.click(toggle);
+    expect(within(card).queryByText('jose@litoralena.coop')).not.toBeInTheDocument();
+  });
+
+  it('says so when no account manages an organization', async () => {
+    signedIn();
+
+    renderRoute('/admin/organizations');
+
+    const card = await screen.findByRole('article', { name: 'Metalúrgica Oeste' });
+    expect(within(card).getByText('Sin usuarios')).toBeInTheDocument();
+    expect(within(card).queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('says one user in singular', async () => {
+    signedIn({
+      [`GET ${URL}`]: { body: [{ ...LITORALENA, users: LITORALENA.users.slice(0, 1) }] },
+    });
+
+    renderRoute('/admin/organizations');
+
+    const card = await screen.findByRole('article', { name: 'La Litoraleña' });
+    expect(
+      within(card).getByRole('button', { name: 'Ver los usuarios de La Litoraleña' }),
+    ).toHaveTextContent('1 usuario');
   });
 
   it('leaves out the activity type of an organization registered before it was asked for', async () => {

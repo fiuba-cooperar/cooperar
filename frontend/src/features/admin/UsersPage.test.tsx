@@ -107,6 +107,46 @@ describe('users', () => {
     ).toHaveAttribute('aria-current', 'page');
   });
 
+  it('links each name to the detail of its account', async () => {
+    signedIn();
+
+    renderRoute('/admin/users');
+
+    await screen.findByRole('cell', { name: 'maria@ejemplo.org' });
+    expect(screen.getByRole('link', { name: 'María Gómez' })).toHaveAttribute(
+      'href',
+      '/admin/users/u1',
+    );
+    expect(
+      screen.getByRole('link', { name: 'Sin nombre (observatorio@ejemplo.org)' }),
+    ).toHaveAttribute('href', '/admin/users/u3');
+  });
+
+  it('comes back from the detail of an account to the same search, filters and page', async () => {
+    const listUrl = `${URL}?q=maria&role=COOPERATIVE&page=1&size=20`;
+    signedIn({
+      [`GET ${listUrl}`]: page([MARIA], 21, 1),
+      'GET /api/admin/users/u1': {
+        body: { ...MARIA, organizations: [] },
+      },
+    });
+
+    renderRoute('/admin/users?q=maria&role=cooperative&page=2');
+    await userEvent.click(await screen.findByRole('link', { name: 'María Gómez' }));
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'María Gómez' }),
+    ).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('link', { name: 'Volver a Usuarios' }));
+
+    expect(await screen.findByRole('searchbox', { name: 'Buscar' })).toHaveValue('maria');
+    expect(screen.getByRole('combobox', { name: 'Rol' })).toHaveValue('Entidad');
+    expect(await screen.findByRole('button', { name: 'Página 2' })).toHaveAttribute(
+      'data-active',
+      'true',
+    );
+  });
+
   it('shows an observatory account without a name nor an organization count', async () => {
     signedIn();
 

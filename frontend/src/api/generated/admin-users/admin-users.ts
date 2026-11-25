@@ -18,7 +18,7 @@ import type {
   UseQueryResult,
 } from '@tanstack/react-query';
 
-import type { AdminUserPageResponse, ListUsersParams } from '../model';
+import type { AdminUserDetailResponse, AdminUserPageResponse, ListUsersParams } from '../model';
 
 import { apiFetch } from '../../apiFetch';
 
@@ -163,6 +163,128 @@ export function useListUsers<TData = Awaited<ReturnType<typeof listUsers>>, TErr
   queryClient?: QueryClient,
 ): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
   const queryOptions = getListUsersQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+export type getUserResponse200 = {
+  data: AdminUserDetailResponse;
+  status: 200;
+};
+
+export type getUserResponseSuccess = getUserResponse200 & {
+  headers: Headers;
+};
+export type getUserResponse = getUserResponseSuccess;
+
+export const getGetUserUrl = (id: string) => {
+  return `/api/admin/users/${id}`;
+};
+
+/**
+ * @summary One account with the organizations it manages
+ */
+export const getUser = async (
+  id: string,
+  options?: Parameters<typeof apiFetch>[1],
+): Promise<getUserResponse> => {
+  return apiFetch<getUserResponse>(getGetUserUrl(id), {
+    ...options,
+    method: 'GET',
+  });
+};
+
+export const getGetUserQueryKey = (id: string) => {
+  return [`/api/admin/users/${id}`] as const;
+};
+
+export const getGetUserQueryOptions = <
+  TData = Awaited<ReturnType<typeof getUser>>,
+  TError = unknown,
+>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getUser>>, TError, TData>>;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetUserQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getUser>>> = ({ signal }) =>
+    getUser(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: id !== null && id !== undefined,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof getUser>>, TError, TData> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+};
+
+export type GetUserQueryResult = NonNullable<Awaited<ReturnType<typeof getUser>>>;
+export type GetUserQueryError = unknown;
+
+export function useGetUser<TData = Awaited<ReturnType<typeof getUser>>, TError = unknown>(
+  id: string,
+  options: {
+    query: Partial<UseQueryOptions<Awaited<ReturnType<typeof getUser>>, TError, TData>> &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getUser>>,
+          TError,
+          Awaited<ReturnType<typeof getUser>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetUser<TData = Awaited<ReturnType<typeof getUser>>, TError = unknown>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getUser>>, TError, TData>> &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getUser>>,
+          TError,
+          Awaited<ReturnType<typeof getUser>>
+        >,
+        'initialData'
+      >;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+export function useGetUser<TData = Awaited<ReturnType<typeof getUser>>, TError = unknown>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getUser>>, TError, TData>>;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+/**
+ * @summary One account with the organizations it manages
+ */
+
+export function useGetUser<TData = Awaited<ReturnType<typeof getUser>>, TError = unknown>(
+  id: string,
+  options?: {
+    query?: Partial<UseQueryOptions<Awaited<ReturnType<typeof getUser>>, TError, TData>>;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+  const queryOptions = getGetUserQueryOptions(id, options);
 
   const query = useQuery(queryOptions, queryClient) as UseQueryResult<TData, TError> & {
     queryKey: DataTag<QueryKey, TData, TError>;

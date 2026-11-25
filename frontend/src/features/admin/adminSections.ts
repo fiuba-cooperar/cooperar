@@ -10,6 +10,7 @@ export const ADMIN_HOME_PATH = '/admin';
 export const ADMIN_REGISTRATIONS_PATH = '/admin/registrations';
 export const ADMIN_ORGANIZATIONS_PATH = '/admin/organizations';
 export const ADMIN_USERS_PATH = '/admin/users';
+export const adminUserPath = (id: string) => `${ADMIN_USERS_PATH}/${id}`;
 export const ADMIN_PRODUCT_CATEGORIES_PATH = '/admin/product-categories';
 
 /** Sections of the observatory panel, in menu order. */

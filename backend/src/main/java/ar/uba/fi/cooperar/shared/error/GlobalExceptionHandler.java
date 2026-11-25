@@ -33,6 +33,7 @@ import ar.uba.fi.cooperar.service.user.InvalidCredentialsException;
 import ar.uba.fi.cooperar.service.user.InvalidRefreshTokenException;
 import ar.uba.fi.cooperar.service.user.InvalidVerificationTokenException;
 import ar.uba.fi.cooperar.service.user.PasswordTooLongException;
+import ar.uba.fi.cooperar.service.user.UserNotFoundException;
 import ar.uba.fi.cooperar.shared.ratelimit.TooManyRequestsException;
 import java.util.List;
 import org.slf4j.Logger;
@@ -87,7 +88,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         ProductNotFoundException.class,
         ProductCategoryNotFoundException.class,
         ProductPhotoNotFoundException.class,
-        ProfilePhotoNotFoundException.class
+        ProfilePhotoNotFoundException.class,
+        UserNotFoundException.class
     })
     public ProblemDetail handleNotFound(RuntimeException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());

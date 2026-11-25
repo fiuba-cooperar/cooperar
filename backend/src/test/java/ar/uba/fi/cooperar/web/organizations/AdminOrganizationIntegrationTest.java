@@ -53,8 +53,9 @@ class AdminOrganizationIntegrationTest {
         UserAccount account =
                 new UserAccount("coop@test.local", passwordEncoder.encode("secret-password"), Role.COOPERATIVE);
         account.verifyEmail(Instant.now());
-        users.saveAndFlush(account);
-        organizations.saveAll(List.of(
+        // The id is set in Java, so saving merges and the managed copy is the one returned.
+        account = users.saveAndFlush(account);
+        List<Organization> saved = organizations.saveAll(List.of(
                 organization(
                         "Metalúrgica Oeste",
                         OrganizationType.ERT,
@@ -77,6 +78,33 @@ class AdminOrganizationIntegrationTest {
                         Set.of(ActivityType.SERVICE),
                         account)));
         organizations.flush();
+        // Metalúrgica Oeste is managed by two accounts, la Litoraleña by one and Gráfica Norte by none.
+        UserAccount partner = users.saveAndFlush(new UserAccount(
+                "Raúl", "Acuña", "raul@test.local", passwordEncoder.encode("secret-password"), Role.COOPERATIVE));
+        account.getOrganizations().addAll(List.of(saved.get(0), saved.get(1)));
+        partner.getOrganizations().add(saved.get(0));
+        users.flush();
+    }
+
+    @Test
+    void listsTheAccountsThatManageEachOrganization() {
+        assertThat(get(ORGANIZATIONS, admin())).bodyJson().isLenientlyEqualTo("""
+                [{"name": "Gráfica Norte", "users": []},
+                 {"name": "la Litoraleña", "users": [{"firstName": null, "email": "coop@test.local"}]},
+                 {"name": "Metalúrgica Oeste",
+                  "users": [{"firstName": null, "email": "coop@test.local"},
+                            {"firstName": "Raúl", "lastName": "Acuña", "email": "raul@test.local"}]}]
+                """);
+        // The oldest account first, since it is usually the one that registered the organization.
+        assertThat(get(ORGANIZATIONS, admin()))
+                .bodyJson()
+                .extractingPath("$[2].users[*].email")
+                .isEqualTo(List.of("coop@test.local", "raul@test.local"));
+    }
+
+    @Test
+    void neverReturnsThePasswordHashOfTheAccounts() {
+        assertThat(body(get(ORGANIZATIONS, admin()))).doesNotContain("password", "$2a$", "$2b$", "token");
     }
 
     @Test

@@ -396,6 +396,34 @@
         "tags" : [ "admin-users" ]
       }
     },
+    "/api/admin/users/{id}" : {
+      "get" : {
+        "operationId" : "getUser",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AdminUserDetailResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "One account with the organizations it manages",
+        "tags" : [ "admin-users" ]
+      }
+    },
     "/api/auth/login" : {
       "post" : {
         "description" : "Each address and each email can fail a limited number of times per quarter of an hour; past it the answer is 429 with `Retry-After`.",
@@ -2526,9 +2554,36 @@
           },
           "type" : {
             "$ref" : "#/components/schemas/OrganizationType"
+          },
+          "users" : {
+            "type" : "array",
+            "description" : "The accounts that manage it, oldest first",
+            "items" : {
+              "$ref" : "#/components/schemas/AdminOrganizationUserResponse"
+            }
           }
         },
-        "required" : [ "activityTypes", "address", "createdAt", "cuit", "id", "name", "sectors", "slug", "type" ]
+        "required" : [ "activityTypes", "address", "createdAt", "cuit", "id", "name", "sectors", "slug", "type", "users" ]
+      },
+      "AdminOrganizationUserResponse" : {
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "type" : "string"
+          },
+          "firstName" : {
+            "type" : "string",
+            "description" : "Missing for accounts created without a name"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "lastName" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "email", "id" ]
       },
       "AdminProductCategoryResponse" : {
         "type" : "object",
@@ -2616,6 +2671,63 @@
           }
         },
         "required" : [ "activityTypes", "address", "cuit", "id", "name", "registeredAt", "reviews", "sectors", "status", "submittedAt", "type" ]
+      },
+      "AdminUserDetailResponse" : {
+        "type" : "object",
+        "properties" : {
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "email" : {
+            "type" : "string"
+          },
+          "emailVerified" : {
+            "type" : "boolean"
+          },
+          "firstName" : {
+            "type" : "string",
+            "description" : "Missing for accounts created without a name, such as the initial admin"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "lastName" : {
+            "type" : "string"
+          },
+          "organizations" : {
+            "type" : "array",
+            "description" : "The organizations it manages, by name",
+            "items" : {
+              "$ref" : "#/components/schemas/AdminUserOrganizationResponse"
+            }
+          },
+          "role" : {
+            "$ref" : "#/components/schemas/Role"
+          }
+        },
+        "required" : [ "createdAt", "email", "emailVerified", "id", "organizations", "role" ]
+      },
+      "AdminUserOrganizationResponse" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "slug" : {
+            "type" : "string",
+            "description" : "Path segment of its public profile"
+          },
+          "type" : {
+            "$ref" : "#/components/schemas/OrganizationType"
+          }
+        },
+        "required" : [ "id", "name", "slug", "type" ]
       },
       "AdminUserPageResponse" : {
         "type" : "object",

@@ -97,6 +97,10 @@ public class UserAccount {
         return emailVerifiedAt != null;
     }
 
+    public void changePassword(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
+
     public void verifyEmail(Instant now) {
         if (emailVerifiedAt == null) {
             emailVerifiedAt = now;

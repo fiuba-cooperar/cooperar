@@ -30,6 +30,7 @@ import ar.uba.fi.cooperar.service.user.AccountNotFoundException;
 import ar.uba.fi.cooperar.service.user.EmailAlreadyRegisteredException;
 import ar.uba.fi.cooperar.service.user.EmailAlreadyVerifiedException;
 import ar.uba.fi.cooperar.service.user.InvalidCredentialsException;
+import ar.uba.fi.cooperar.service.user.InvalidPasswordResetTokenException;
 import ar.uba.fi.cooperar.service.user.InvalidRefreshTokenException;
 import ar.uba.fi.cooperar.service.user.InvalidVerificationTokenException;
 import ar.uba.fi.cooperar.service.user.PasswordTooLongException;
@@ -74,7 +75,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         InvalidPhotoOrderException.class,
         InvalidGalleryOrderException.class,
         PasswordTooLongException.class,
-        InvalidVerificationTokenException.class
+        InvalidVerificationTokenException.class,
+        InvalidPasswordResetTokenException.class
     })
     public ProblemDetail handleInvalidInput(RuntimeException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, exception.getMessage());

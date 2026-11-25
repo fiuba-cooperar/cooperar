@@ -367,6 +367,82 @@
         "tags" : [ "auth" ]
       }
     },
+    "/api/auth/password-reset" : {
+      "post" : {
+        "description" : "Answers 204 whether the email has an account or not. Each address and each email can ask a limited number of times per hour; past it the answer is 429 with `Retry-After`.",
+        "operationId" : "requestPasswordReset",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PasswordResetRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "summary" : "Email a link to choose a new password, if the email has an account",
+        "tags" : [ "auth" ]
+      }
+    },
+    "/api/auth/password-reset/check" : {
+      "post" : {
+        "description" : "Answers 400 when the token is unknown, already used or expired.",
+        "operationId" : "checkPasswordResetToken",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PasswordResetTokenRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/PasswordResetAccountResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Whose password the link is for",
+        "tags" : [ "auth" ]
+      }
+    },
+    "/api/auth/password-reset/confirm" : {
+      "post" : {
+        "description" : "Signs the account out everywhere and confirms its email. Answers 400 when the token is unknown, already used or expired.",
+        "operationId" : "resetPassword",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/NewPasswordRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "summary" : "Choose a new password with the token from the emailed link",
+        "tags" : [ "auth" ]
+      }
+    },
     "/api/auth/refresh" : {
       "post" : {
         "operationId" : "refreshSession",
@@ -2965,6 +3041,23 @@
         },
         "required" : [ "approximate", "district", "latitude", "locality", "longitude", "province", "type" ]
       },
+      "NewPasswordRequest" : {
+        "type" : "object",
+        "properties" : {
+          "password" : {
+            "type" : "string",
+            "format" : "password",
+            "maxLength" : 72,
+            "minLength" : 8
+          },
+          "token" : {
+            "type" : "string",
+            "maxLength" : 200,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "password", "token" ]
+      },
       "NotificationPageResponse" : {
         "type" : "object",
         "properties" : {
@@ -3305,6 +3398,38 @@
       "OrganizationType" : {
         "type" : "string",
         "enum" : [ "COOPERATIVE", "ERT" ]
+      },
+      "PasswordResetAccountResponse" : {
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "email" ]
+      },
+      "PasswordResetRequest" : {
+        "type" : "object",
+        "properties" : {
+          "email" : {
+            "type" : "string",
+            "format" : "email",
+            "maxLength" : 254,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "email" ]
+      },
+      "PasswordResetTokenRequest" : {
+        "type" : "object",
+        "properties" : {
+          "token" : {
+            "type" : "string",
+            "maxLength" : 200,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "token" ]
       },
       "PhotoOrderRequest" : {
         "type" : "object",

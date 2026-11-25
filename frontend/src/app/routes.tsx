@@ -20,10 +20,13 @@ import {
   ADMIN_ORGANIZATIONS_PATH,
   ADMIN_PRODUCT_CATEGORIES_PATH,
   ADMIN_REGISTRATIONS_PATH,
+  ADMIN_USERS_PATH,
 } from '@/features/admin/adminSections';
 import { OrganizationsPage } from '@/features/admin/OrganizationsPage';
 import { ProductCategoriesPage } from '@/features/admin/ProductCategoriesPage';
 import { RegistrationsPage } from '@/features/admin/RegistrationsPage';
+import { UserDetailPage } from '@/features/admin/UserDetailPage';
+import { UsersPage } from '@/features/admin/UsersPage';
 import { ForgotPasswordPage } from '@/features/auth/ForgotPasswordPage';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { FORGOT_PASSWORD_PATH, RESET_PASSWORD_PATH } from '@/features/auth/passwordResetPaths';
@@ -88,6 +91,8 @@ export const routes: RouteObject[] = [
           { index: true, element: <AdminHomePage /> },
           { path: ADMIN_REGISTRATIONS_PATH, element: <RegistrationsPage /> },
           { path: ADMIN_ORGANIZATIONS_PATH, element: <OrganizationsPage /> },
+          { path: ADMIN_USERS_PATH, element: <UsersPage /> },
+          { path: `${ADMIN_USERS_PATH}/:id`, element: <UserDetailPage /> },
           { path: ADMIN_PRODUCT_CATEGORIES_PATH, element: <ProductCategoriesPage /> },
         ],
       },

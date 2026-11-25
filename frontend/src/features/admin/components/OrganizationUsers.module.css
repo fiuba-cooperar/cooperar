@@ -1,0 +1,23 @@
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 4px;
+  min-height: 32px;
+  font-size: var(--mantine-font-size-sm);
+  font-weight: 600;
+}
+
+.chevron {
+  transition: transform 150ms ease;
+
+  &[data-expanded] {
+    transform: rotate(180deg);
+  }
+}
+
+.list {
+  margin: 0;
+  padding-left: var(--mantine-spacing-md);
+  list-style: none;
+}

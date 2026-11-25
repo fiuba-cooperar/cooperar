@@ -4,8 +4,10 @@ import ar.uba.fi.cooperar.domain.organizations.ActivityType;
 import ar.uba.fi.cooperar.domain.organizations.Organization;
 import ar.uba.fi.cooperar.domain.organizations.OrganizationType;
 import ar.uba.fi.cooperar.domain.organizations.Sector;
+import ar.uba.fi.cooperar.service.organizations.OrganizationSummary;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -30,9 +32,13 @@ public record AdminOrganizationResponse(
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) RegistrationAddressResponse address,
 
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "When it was approved")
-        Instant createdAt) {
+        Instant createdAt,
 
-    static AdminOrganizationResponse from(Organization organization) {
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "The accounts that manage it, oldest first")
+        List<AdminOrganizationUserResponse> users) {
+
+    static AdminOrganizationResponse from(OrganizationSummary summary) {
+        Organization organization = summary.organization();
         return new AdminOrganizationResponse(
                 organization.getId(),
                 organization.getName(),
@@ -43,6 +49,9 @@ public record AdminOrganizationResponse(
                 organization.getSectors(),
                 organization.getActivityTypes(),
                 RegistrationAddressResponse.from(organization.getMainAddress().getAddress()),
-                organization.getCreatedAt());
+                organization.getCreatedAt(),
+                summary.users().stream()
+                        .map(AdminOrganizationUserResponse::from)
+                        .toList());
     }
 }

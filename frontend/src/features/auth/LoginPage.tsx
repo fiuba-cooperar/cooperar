@@ -9,14 +9,14 @@ import {
   Text,
   TextInput,
   Title,
-  VisuallyHidden,
 } from '@mantine/core';
-import { IconAlertCircle } from '@tabler/icons-react';
+import { IconAlertCircle, IconCircleCheck } from '@tabler/icons-react';
 import { useState, type SyntheticEvent } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router';
 import { REGISTER_PATH } from '@/components/layout/publicSections';
 import { LoginError } from './authContext';
 import styles from './LoginPage.module.css';
+import { FORGOT_PASSWORD_PATH, type LoginState } from './passwordResetPaths';
 import { ROLE_HOME } from './roleHome';
 import { useAuth } from './useAuth';
 
@@ -33,7 +33,9 @@ const MISSING_FIELDS_MESSAGE = 'Ingresá tu email y tu contraseña.';
 export function LoginPage() {
   const { status, user, login } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
+  const location = useLocation();
+  const loginState = location.state as LoginState | null;
+  const [email, setEmail] = useState(loginState?.email ?? '');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -71,6 +73,11 @@ export function LoginPage() {
               Entrá con tu email y tu contraseña.
             </Text>
           </Stack>
+          {loginState?.passwordChanged && !error && (
+            <Alert color="brand" icon={<IconCircleCheck aria-hidden="true" />} role="status">
+              Listo, ya podés ingresar con tu contraseña nueva.
+            </Alert>
+          )}
           {error && (
             <Alert
               className={styles.alert}
@@ -108,17 +115,15 @@ export function LoginPage() {
                 setPassword(event.currentTarget.value);
               }}
             />
-            {/* Sits next to the label, as in the mock; becomes a link when password recovery lands (#66). */}
-            <Button
-              variant="transparent"
-              size="compact-sm"
-              p={0}
+            {/* Sits next to the label, as in the mock, and takes the email already typed along. */}
+            <Anchor
+              component={Link}
+              to={FORGOT_PASSWORD_PATH}
+              state={{ email: email.trim() } satisfies LoginState}
               className={styles.forgot}
-              disabled
             >
               ¿Olvidaste tu contraseña?
-              <VisuallyHidden component="span"> (próximamente)</VisuallyHidden>
-            </Button>
+            </Anchor>
           </div>
           <Button
             type="submit"

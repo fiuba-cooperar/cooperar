@@ -133,12 +133,17 @@ describe('authentication', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(/problema de conexión/);
   });
 
-  it('keeps the password recovery link visible but disabled until it exists', async () => {
+  it('takes the email already typed to the password recovery', async () => {
     stubFetchRoutes({});
 
     renderRoute('/login');
+    await userEvent.type(await screen.findByLabelText('Email'), 'ana@coop.local');
+    await userEvent.click(screen.getByRole('link', { name: '¿Olvidaste tu contraseña?' }));
 
-    expect(await screen.findByRole('button', { name: /Olvidaste tu contraseña/ })).toBeDisabled();
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Recuperá tu contraseña' }),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText('Email')).toHaveValue('ana@coop.local');
   });
 
   it('denies a cooperative access to the admin section', async () => {

@@ -43,6 +43,10 @@ public class UserAccount {
     @Column(name = "email_verified_at")
     private Instant emailVerifiedAt;
 
+    // Set here rather than left to the column default, so accounts saved in one transaction keep their order.
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "user_organizations",
@@ -57,6 +61,7 @@ public class UserAccount {
         this.email = normalizeEmail(email);
         this.passwordHash = passwordHash;
         this.role = role;
+        this.createdAt = Instant.now();
     }
 
     public UserAccount(String firstName, String lastName, String email, String passwordHash, Role role) {
@@ -91,6 +96,10 @@ public class UserAccount {
 
     public Role getRole() {
         return role;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
     }
 
     public boolean isEmailVerified() {

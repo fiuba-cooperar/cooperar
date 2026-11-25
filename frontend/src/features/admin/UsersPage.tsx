@@ -1,5 +1,6 @@
 import {
   Alert,
+  Anchor,
   Badge,
   Button,
   Checkbox,
@@ -16,8 +17,9 @@ import {
 } from '@mantine/core';
 import { IconAlertCircle, IconSearch } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { Role, type AdminUserResponse } from '@/api/generated/model';
+import { adminUserPath } from './adminSections';
 import { useUsers } from './api/useUsers';
 import {
   hasFilters,
@@ -28,16 +30,11 @@ import {
   type EmailFilter,
   type UserFilters,
 } from './userFilters';
+import { fullName, ROLE_LABELS, userCount, type UserListState } from './users';
 import styles from './UsersPage.module.css';
 
 /** How long the search waits after the last key before asking the server. */
 const SEARCH_DELAY_MS = 300;
-
-/** The same names the panels use: the observatory, and the accounts of the organizations («entidades»). */
-const ROLE_LABELS: Record<Role, string> = {
-  [Role.COOPERATIVE]: 'Entidad',
-  [Role.ADMIN]: 'Observatorio',
-};
 
 const ALL = 'all';
 
@@ -123,7 +120,7 @@ export function UsersPage() {
             </thead>
             <tbody>
               {data.items.map((user) => (
-                <UserRow key={user.id} user={user} />
+                <UserRow key={user.id} user={user} listSearch={searchParams.toString()} />
               ))}
             </tbody>
           </table>
@@ -245,27 +242,30 @@ function Filters({
       </div>
       {total !== undefined && (
         <Text fz={14} c="dimmed" role="status">
-          {total === 1 ? '1 usuario' : `${String(total)} usuarios`}
+          {userCount(total)}
         </Text>
       )}
     </Stack>
   );
 }
 
-function UserRow({ user }: { user: AdminUserResponse }) {
-  const name = [user.firstName, user.lastName].filter(Boolean).join(' ');
+function UserRow({ user, listSearch }: { user: AdminUserResponse; listSearch: string }) {
+  const name = fullName(user);
+  const state: UserListState = { listSearch };
   return (
     <tr>
       <td>
-        {name ? (
-          <Text fz={14} fw={600}>
-            {name}
-          </Text>
-        ) : (
-          <Text fz={14} c="dimmed">
-            Sin nombre
-          </Text>
-        )}
+        <Anchor
+          component={Link}
+          to={adminUserPath(user.id)}
+          state={state}
+          fz={14}
+          fw={600}
+          // Several accounts may have no name, so the link says whose it is.
+          {...(!name && { c: 'dimmed', 'aria-label': `Sin nombre (${user.email})` })}
+        >
+          {name || 'Sin nombre'}
+        </Anchor>
       </td>
       <td>
         <Text fz={14}>{user.email}</Text>

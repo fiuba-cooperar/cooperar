@@ -21,6 +21,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,11 +57,14 @@ class AdminUserIntegrationTest {
     @Autowired
     private JdbcClient jdbcClient;
 
+    private UserAccount maria;
+    private UserAccount observatory;
+
     @BeforeEach
     void createAccounts() {
-        UserAccount maria = account("María", "Gómez", "maria@usuarios.test", Role.COOPERATIVE, true, 9);
+        maria = account("María", "Gómez", "maria@usuarios.test", Role.COOPERATIVE, true, 9);
         account("José", "Pérez", "jose@usuarios.test", Role.COOPERATIVE, false, 8);
-        account(null, null, "observatorio@usuarios.test", Role.ADMIN, true, 7);
+        observatory = account(null, null, "observatorio@usuarios.test", Role.ADMIN, true, 7);
         account("Lucía", "Díaz", "lucia@usuarios.test", Role.COOPERATIVE, true, 6);
         users.flush();
         maria.getOrganizations().add(organization("Textil Sur", "30-12345678-1", maria));
@@ -156,6 +160,48 @@ class AdminUserIntegrationTest {
     void onlyAdminsListTheAccounts() {
         assertThat(mvc.get().uri(USERS)).hasStatus(HttpStatus.UNAUTHORIZED);
         assertThat(get(USERS, accessToken("maria@usuarios.test", "secret-password")))
+                .hasStatus(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    void showsOneAccountWithTheOrganizationsItManagesByName() {
+        assertThat(get(USERS + "/" + maria.getId(), admin()))
+                .hasStatusOk()
+                .bodyJson()
+                .isLenientlyEqualTo("""
+                        {"id": "%s", "firstName": "María", "lastName": "Gómez", "email": "maria@usuarios.test",
+                         "role": "COOPERATIVE", "emailVerified": true,
+                         "organizations": [{"name": "Gráfica Norte", "slug": "grafica-norte", "type": "COOPERATIVE"},
+                                           {"name": "Textil Sur", "slug": "textil-sur", "type": "COOPERATIVE"}]}
+                        """.formatted(maria.getId()));
+        assertThat(get(USERS + "/" + maria.getId(), admin()))
+                .bodyJson()
+                .extractingPath("$.organizations[*].name")
+                .isEqualTo(List.of("Gráfica Norte", "Textil Sur"));
+    }
+
+    @Test
+    void showsAnAccountWithoutANameNorOrganizations() {
+        assertThat(get(USERS + "/" + observatory.getId(), admin())).bodyJson().isLenientlyEqualTo("""
+                {"firstName": null, "lastName": null, "role": "ADMIN", "organizations": []}
+                """);
+    }
+
+    @Test
+    void neverReturnsThePasswordHashNorAnyTokenOfOneAccount() {
+        assertThat(body(get(USERS + "/" + maria.getId(), admin()))).doesNotContain("password", "$2a$", "$2b$", "token");
+    }
+
+    @Test
+    void answersNotFoundForAnAccountThatDoesNotExist() {
+        assertThat(get(USERS + "/" + UUID.randomUUID(), admin())).hasStatus(HttpStatus.NOT_FOUND);
+        assertThat(get(USERS + "/not-an-id", admin())).hasStatus(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void onlyAdminsSeeAnAccount() {
+        assertThat(mvc.get().uri(USERS + "/" + maria.getId())).hasStatus(HttpStatus.UNAUTHORIZED);
+        assertThat(get(USERS + "/" + maria.getId(), accessToken("maria@usuarios.test", "secret-password")))
                 .hasStatus(HttpStatus.FORBIDDEN);
     }
 

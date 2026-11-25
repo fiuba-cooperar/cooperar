@@ -41,4 +41,25 @@ public interface UserAccountRepository extends JpaRepository<UserAccount, UUID>,
 
         int getCount();
     }
+
+    /** The accounts that manage these organizations, the oldest first, so whoever registered one usually leads. */
+    @Query("""
+            select o.id as organizationId, u.id as id, u.firstName as firstName, u.lastName as lastName,
+                   u.email as email
+            from UserAccount u join u.organizations o
+            where o.id in :organizationIds
+            order by u.createdAt, u.email""")
+    List<OrganizationUser> findOrganizationUsers(Collection<UUID> organizationIds);
+
+    interface OrganizationUser {
+        UUID getOrganizationId();
+
+        UUID getId();
+
+        String getFirstName();
+
+        String getLastName();
+
+        String getEmail();
+    }
 }

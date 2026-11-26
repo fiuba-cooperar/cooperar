@@ -1,6 +1,7 @@
 package ar.uba.fi.cooperar.service.user;
 
 import ar.uba.fi.cooperar.domain.user.PasswordResetToken;
+import ar.uba.fi.cooperar.domain.user.Role;
 import ar.uba.fi.cooperar.domain.user.UserAccount;
 import ar.uba.fi.cooperar.repository.user.EmailVerificationTokenRepository;
 import ar.uba.fi.cooperar.repository.user.PasswordResetTokenRepository;
@@ -11,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
@@ -26,6 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class PasswordResetService {
 
     public static final Duration TOKEN_TTL = Duration.ofHours(1);
+    // Longer than the person's own request: they are not waiting for this email and may read it the next day.
+    public static final Duration ADMIN_TOKEN_TTL = Duration.ofHours(48);
 
     private static final Logger log = LoggerFactory.getLogger(PasswordResetService.class);
 
@@ -68,14 +72,33 @@ public class PasswordResetService {
     public void requestLink(String email, String sender) {
         rateLimiter.acquire(sender, email);
         users.findByEmail(UserAccount.normalizeEmail(email)).ifPresent(account -> {
-            tokens.deleteByUserId(account.getId());
-            String token = OpaqueTokens.generate();
-            tokens.save(new PasswordResetToken(
-                    account.getId(), OpaqueTokens.hash(token), clock.instant().plus(TOKEN_TTL)));
+            String token = newLink(account, TOKEN_TTL);
             events.publishEvent(new PasswordResetEmailRequested(
                     account.getId(), account.getEmail(), account.getFirstName(), token));
             log.info("Account {} asked for a link to choose a new password", account.getId());
         });
+    }
+
+    /**
+     * The observatory's reset: the current password stops working and the account is signed out everywhere right
+     * away, and the account gets a link to choose a new one. The admin never sees nor chooses it.
+     *
+     * @throws UserNotFoundException if there is no such account
+     * @throws ObservatoryAccountResetException if it is an observatory account, which recovers its own password
+     */
+    @Transactional
+    public void resetByAdmin(UUID accountId, UUID adminId) {
+        UserAccount account = users.findById(accountId).orElseThrow(UserNotFoundException::new);
+        if (account.getRole() != Role.COOPERATIVE) {
+            throw new ObservatoryAccountResetException();
+        }
+        // A random password nobody knows, so the account cannot sign in until it chooses a new one.
+        account.changePassword(passwordEncoder.encode(OpaqueTokens.generate()));
+        refreshTokens.revokeAllByUserId(account.getId(), clock.instant());
+        String token = newLink(account, ADMIN_TOKEN_TTL);
+        events.publishEvent(new AdminPasswordResetEmailRequested(
+                account.getId(), account.getEmail(), account.getFirstName(), token));
+        log.info("Admin {} reset the password of account {}", adminId, account.getId());
     }
 
     /** The account a link is for, so the page can say whose password is being chosen before the person types it. */
@@ -104,6 +127,15 @@ public class PasswordResetService {
         refreshTokens.revokeAllByUserId(account.getId(), now);
         events.publishEvent(new PasswordChanged(account.getId(), account.getEmail(), account.getFirstName()));
         log.info("Account {} chose a new password", account.getId());
+    }
+
+    /** Replaces any previous link of the account with a new one and returns its raw token. */
+    private String newLink(UserAccount account, Duration ttl) {
+        tokens.deleteByUserId(account.getId());
+        String token = OpaqueTokens.generate();
+        tokens.save(new PasswordResetToken(
+                account.getId(), OpaqueTokens.hash(token), clock.instant().plus(ttl)));
+        return token;
     }
 
     private UserAccount activeAccount(String token) {

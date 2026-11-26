@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 
 import ar.uba.fi.cooperar.domain.organizations.ReviewOutcome;
 import ar.uba.fi.cooperar.service.organizations.RegistrationReviewed;
+import ar.uba.fi.cooperar.service.user.AdminPasswordResetEmailRequested;
 import ar.uba.fi.cooperar.service.user.PasswordChanged;
 import ar.uba.fi.cooperar.service.user.PasswordResetEmailRequested;
 import ar.uba.fi.cooperar.service.user.VerificationEmailRequested;
@@ -52,6 +53,20 @@ class AccountNotificationsTest {
                 .contains("https://cooperar.example/reset-password?token=abc-123_x")
                 .contains("vence en 1 hora")
                 .contains("tu contraseña no cambia");
+    }
+
+    @Test
+    void sendsTheLinkOfAPasswordResetByTheObservatory() {
+        notifications.onAdminPasswordResetEmailRequested(
+                new AdminPasswordResetEmailRequested(ACCOUNT, "ana@coop.local", "Ana", "abc-123_x"));
+
+        EmailMessage message = sent();
+        assertThat(message.subject()).isEqualTo("El observatorio blanqueó tu contraseña de CooperAR");
+        assertThat(message.body())
+                .startsWith("Hola, Ana:")
+                .contains("la que tenías ya no funciona")
+                .contains("https://cooperar.example/reset-password?token=abc-123_x")
+                .contains("vence en 48 horas");
     }
 
     @Test

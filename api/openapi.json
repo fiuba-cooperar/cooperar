@@ -424,6 +424,28 @@
         "tags" : [ "admin-users" ]
       }
     },
+    "/api/admin/users/{id}/password-reset" : {
+      "post" : {
+        "description" : "The current password stops working, the account is signed out everywhere and it is emailed a link to choose a new one. Answers 404 when the account does not exist and 409 when it is an observatory account.",
+        "operationId" : "resetUserPassword",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "summary" : "Reset the password of an organization account",
+        "tags" : [ "admin-users" ]
+      }
+    },
     "/api/auth/login" : {
       "post" : {
         "description" : "Each address and each email can fail a limited number of times per quarter of an hour; past it the answer is 429 with `Retry-After`.",

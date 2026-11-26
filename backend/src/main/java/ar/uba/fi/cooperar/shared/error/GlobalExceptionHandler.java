@@ -33,6 +33,7 @@ import ar.uba.fi.cooperar.service.user.InvalidCredentialsException;
 import ar.uba.fi.cooperar.service.user.InvalidPasswordResetTokenException;
 import ar.uba.fi.cooperar.service.user.InvalidRefreshTokenException;
 import ar.uba.fi.cooperar.service.user.InvalidVerificationTokenException;
+import ar.uba.fi.cooperar.service.user.ObservatoryAccountResetException;
 import ar.uba.fi.cooperar.service.user.PasswordTooLongException;
 import ar.uba.fi.cooperar.service.user.UserNotFoundException;
 import ar.uba.fi.cooperar.shared.ratelimit.TooManyRequestsException;
@@ -105,7 +106,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         ProductCategoryInUseException.class,
         TooManyPhotosException.class,
         GalleryFullException.class,
-        OwnProductInquiryException.class
+        OwnProductInquiryException.class,
+        ObservatoryAccountResetException.class
     })
     public ProblemDetail handleStateConflict(RuntimeException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());

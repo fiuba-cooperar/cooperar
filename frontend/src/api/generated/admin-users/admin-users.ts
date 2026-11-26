@@ -5,15 +5,18 @@
  * Open observatory of worker-recovered companies and worker cooperatives
  * OpenAPI spec version: v1
  */
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
   DefinedUseQueryResult,
+  MutationFunction,
   QueryClient,
   QueryFunction,
   QueryKey,
   UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from '@tanstack/react-query';
@@ -292,3 +295,99 @@ export function useGetUser<TData = Awaited<ReturnType<typeof getUser>>, TError =
 
   return withQueryKey(query, queryOptions.queryKey);
 }
+
+export type resetUserPasswordResponse200 = {
+  data: void;
+  status: 200;
+};
+
+export type resetUserPasswordResponseSuccess = resetUserPasswordResponse200 & {
+  headers: Headers;
+};
+export type resetUserPasswordResponse = resetUserPasswordResponseSuccess;
+
+export const getResetUserPasswordUrl = (id: string) => {
+  return `/api/admin/users/${id}/password-reset`;
+};
+
+/**
+ * The current password stops working, the account is signed out everywhere and it is emailed a link to choose a new one. Answers 404 when the account does not exist and 409 when it is an observatory account.
+ * @summary Reset the password of an organization account
+ */
+export const resetUserPassword = async (
+  id: string,
+  options?: Parameters<typeof apiFetch>[1],
+): Promise<resetUserPasswordResponse> => {
+  return apiFetch<resetUserPasswordResponse>(getResetUserPasswordUrl(id), {
+    ...options,
+    method: 'POST',
+  });
+};
+
+export const getResetUserPasswordMutationKey = () => ['resetUserPassword'] as const;
+
+export const getResetUserPasswordMutationOptions = <
+  TError = unknown,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof resetUserPassword>>,
+    TError,
+    ResetUserPasswordMutationVariables,
+    TContext
+  >;
+  request?: SecondParameter<typeof apiFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof resetUserPassword>>,
+  TError,
+  ResetUserPasswordMutationVariables,
+  TContext
+> => {
+  const mutationKey = getResetUserPasswordMutationKey();
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof resetUserPassword>>,
+    ResetUserPasswordMutationVariables
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return resetUserPassword(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ResetUserPasswordMutationResult = NonNullable<
+  Awaited<ReturnType<typeof resetUserPassword>>
+>;
+
+export type ResetUserPasswordMutationError = unknown;
+export type ResetUserPasswordMutationVariables = { id: string };
+
+/**
+ * @summary Reset the password of an organization account
+ */
+export const useResetUserPassword = <TError = unknown, TContext = unknown>(
+  options?: {
+    mutation?: UseMutationOptions<
+      Awaited<ReturnType<typeof resetUserPassword>>,
+      TError,
+      ResetUserPasswordMutationVariables,
+      TContext
+    >;
+    request?: SecondParameter<typeof apiFetch>;
+  },
+  queryClient?: QueryClient,
+): UseMutationResult<
+  Awaited<ReturnType<typeof resetUserPassword>>,
+  TError,
+  ResetUserPasswordMutationVariables,
+  TContext
+> => {
+  return useMutation(getResetUserPasswordMutationOptions(options), queryClient);
+};

@@ -1,6 +1,7 @@
 package ar.uba.fi.cooperar.service.notifications;
 
 import ar.uba.fi.cooperar.service.organizations.RegistrationReviewed;
+import ar.uba.fi.cooperar.service.user.AdminPasswordResetEmailRequested;
 import ar.uba.fi.cooperar.service.user.EmailVerificationService;
 import ar.uba.fi.cooperar.service.user.PasswordChanged;
 import ar.uba.fi.cooperar.service.user.PasswordResetEmailRequested;
@@ -70,6 +71,25 @@ public class AccountNotifications {
                         "Elegir mi contraseña",
                         link("/reset-password", "token", event.token()),
                         "Si no lo pediste, ignorá este mensaje: tu contraseña no cambia."));
+    }
+
+    @TransactionalEventListener
+    public void onAdminPasswordResetEmailRequested(AdminPasswordResetEmailRequested event) {
+        send(
+                event.accountId(),
+                "admin password reset",
+                compose(
+                        event.email(),
+                        "El observatorio blanqueó tu contraseña de CooperAR",
+                        greeting(event.firstName()),
+                        List.of(
+                                "El observatorio de CooperAR blanqueó la contraseña de tu cuenta: la que tenías ya no funciona y cerramos las sesiones que tenías abiertas.",
+                                "Para volver a ingresar, elegí una contraseña nueva con «Elegir mi contraseña», acá abajo. El enlace sirve una sola vez y vence en %d horas."
+                                        .formatted(PasswordResetService.ADMIN_TOKEN_TTL.toHours())),
+                        null,
+                        "Elegir mi contraseña",
+                        link("/reset-password", "token", event.token()),
+                        "Si no esperabas este mensaje, escribile al observatorio."));
     }
 
     @TransactionalEventListener

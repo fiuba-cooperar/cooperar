@@ -6,6 +6,7 @@ import { DetailList } from '@/features/organizations/components/DetailList';
 import { ORGANIZATION_TYPE_LABELS } from '@/features/organizations/labels';
 import { ADMIN_USERS_PATH } from './adminSections';
 import { useUser } from './api/useUser';
+import { PasswordResetAction } from './components/PasswordResetAction';
 import { fullName, ROLE_LABELS, type UserListState } from './users';
 import styles from './UserDetailPage.module.css';
 
@@ -67,6 +68,8 @@ function UserDetail({ user }: { user: AdminUserDetailResponse }) {
           ]}
         />
       </Paper>
+      {/* An observatory account recovers its own password, so only organization accounts can be reset. */}
+      {user.role === Role.COOPERATIVE && <PasswordResetAction user={user} />}
       {/* An observatory account never manages organizations, so the section would always be empty. */}
       {user.role === Role.COOPERATIVE && (
         <Stack component="section" gap="sm" aria-labelledby="organizations" className={styles.card}>

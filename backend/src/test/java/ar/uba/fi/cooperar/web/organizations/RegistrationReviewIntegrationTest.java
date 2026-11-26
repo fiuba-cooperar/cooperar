@@ -1,22 +1,36 @@
 package ar.uba.fi.cooperar.web.organizations;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.timeout;
 
 import ar.uba.fi.cooperar.IntegrationTest;
 import ar.uba.fi.cooperar.RecordingEmailSender;
+import ar.uba.fi.cooperar.domain.organizations.Address;
+import ar.uba.fi.cooperar.domain.organizations.Province;
 import ar.uba.fi.cooperar.service.notifications.EmailMessage;
+import ar.uba.fi.cooperar.service.organizations.Geocoder;
 import com.jayway.jsonpath.JsonPath;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.PrecisionModel;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
 
@@ -40,6 +54,9 @@ class RegistrationReviewIntegrationTest {
 
     @Autowired
     private JdbcClient jdbc;
+
+    @MockitoBean
+    private Geocoder geocoder;
 
     @AfterEach
     void cleanUp() {
@@ -134,6 +151,37 @@ class RegistrationReviewIntegrationTest {
                 .isNotNull();
         assertThat(lastEmail("ana@coop.local").subject()).isEqualTo("Aprobamos el alta de La Litoraleña");
         assertThat(post(approve(requestId), admin(), null)).hasStatus(HttpStatus.CONFLICT);
+    }
+
+    @Test
+    void approvingPlacesTheOrganizationOnTheMapAtItsGeocodedAddress() {
+        Address registered = new Address(Province.SANTA_FE, "Rosario", "Centro", "Rivadavia 100", null);
+        given(geocoder.locate(registered))
+                .willReturn(Optional.of(new GeometryFactory(new PrecisionModel(), 4326)
+                        .createPoint(new Coordinate(-60.6393, -32.9468))));
+        String requestId = registerAndVerify("ana@coop.local", "30-12345678-1", "La Litoraleña");
+
+        assertThat(post(approve(requestId), admin(), null)).hasStatus(HttpStatus.NO_CONTENT);
+
+        await().atMost(Duration.ofSeconds(10))
+                .untilAsserted(() -> assertThat(mvc.get().uri("/api/map/organizations"))
+                        .bodyJson()
+                        .isLenientlyEqualTo("""
+                                [{"slug": "la-litoralena",
+                                  "places": [{"type": "MAIN", "street": "Rivadavia 100", "latitude": -32.9468,
+                                              "longitude": -60.6393, "approximate": false}]}]
+                                """));
+    }
+
+    @Test
+    void anApprovedOrganizationWhoseAddressCannotBeFoundStaysOffTheMap() {
+        String requestId = registerAndVerify("ana@coop.local", "30-12345678-1", "La Litoraleña");
+
+        assertThat(post(approve(requestId), admin(), null)).hasStatus(HttpStatus.NO_CONTENT);
+
+        Mockito.verify(geocoder, timeout(10_000)).locate(any());
+        assertThat(mvc.get().uri("/api/organizations/la-litoralena")).hasStatusOk();
+        assertThat(mvc.get().uri("/api/map/organizations")).bodyJson().isEqualTo("[]");
     }
 
     @Test

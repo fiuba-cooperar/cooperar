@@ -65,6 +65,10 @@ public class OrganizationAddress {
         this.position = position;
     }
 
+    void locate(Point point) {
+        this.location = point;
+    }
+
     public UUID getId() {
         return id;
     }

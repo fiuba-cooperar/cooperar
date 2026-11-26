@@ -294,6 +294,40 @@ class OrganizationProfileTest {
     }
 
     @Test
+    void placesTheMainAddressAtTheGeocodedPointWhileItHasNone() {
+        Organization organization = organization();
+
+        assertThat(organization.locateMainAddress(ADDRESS, point(-34.6, -58.42)))
+                .isTrue();
+
+        assertThat(organization.getMainAddress().getLocation()).isEqualTo(point(-34.6, -58.42));
+    }
+
+    @Test
+    void keepsThePointTheOrganizationPlacedMeanwhile() {
+        Organization organization = organization();
+        organization.replaceAddresses(List.of(main(Visibility.PUBLIC, point(-34.61, -58.43))));
+
+        assertThat(organization.locateMainAddress(ADDRESS, point(-34.6, -58.42)))
+                .isFalse();
+
+        assertThat(organization.getMainAddress().getLocation()).isEqualTo(point(-34.61, -58.43));
+    }
+
+    @Test
+    void doesNotPlaceAMainAddressThatChangedSinceItWasGeocoded() {
+        Organization organization = organization();
+        Address moved = new Address(Province.CITY_OF_BUENOS_AIRES, "Comuna 5", "Almagro", "Medrano 500", null);
+        organization.replaceAddresses(
+                List.of(new AddressDetails(null, AddressType.MAIN, null, moved, Visibility.PUBLIC, null)));
+
+        assertThat(organization.locateMainAddress(ADDRESS, point(-34.6, -58.42)))
+                .isFalse();
+
+        assertThat(organization.getMainAddress().getLocation()).isNull();
+    }
+
+    @Test
     void revealsAValueOnlyWhenItIsPublic() {
         assertThat(Visibility.PUBLIC.reveal("dato")).isEqualTo("dato");
         assertThat(Visibility.PRIVATE.reveal("dato")).isNull();

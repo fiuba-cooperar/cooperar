@@ -32,6 +32,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
+import org.locationtech.jts.geom.Point;
 
 /**
  * A cooperative or ERT. It is created when the observatory approves its {@link RegistrationRequest}, so every
@@ -279,6 +280,19 @@ public class Organization {
         addresses.clear();
         addresses.addAll(kept);
         refreshSearchKeywords();
+    }
+
+    /**
+     * Places the main address at the point the geocoder found for {@code geocoded}, unless the organization changed
+     * that address or placed it on the map meanwhile. Whether it was placed.
+     */
+    public boolean locateMainAddress(Address geocoded, Point point) {
+        OrganizationAddress main = getMainAddress();
+        if (main.getLocation() != null || !main.getAddress().equals(geocoded)) {
+            return false;
+        }
+        main.locate(point);
+        return true;
     }
 
     public void updateContact(ProfileContact contact) {

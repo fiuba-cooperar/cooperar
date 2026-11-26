@@ -1,4 +1,5 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { saveTokens } from '@/api/session';
 import { expectNoA11yViolations } from '@/test/axe';
@@ -31,6 +32,7 @@ const MARIA = {
 };
 
 const URL = '/api/admin/users/u1';
+const RESET = '/api/admin/users/u1/password-reset';
 
 function signedIn(routes: Parameters<typeof stubFetchRoutes>[0] = {}) {
   saveTokens({ accessToken: 'access-1', refreshToken: 'refresh-1' });
@@ -114,6 +116,71 @@ describe('user detail', () => {
     expect(detail('Rol')).toBe('Observatorio');
     expect(detail('Email confirmado')).toBe('Sí');
     expect(screen.queryByRole('region', { name: 'Entidades' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Blanquear contraseña' })).not.toBeInTheDocument();
+  });
+
+  it('resets the password once the observatory confirms it', async () => {
+    const fetchMock = signedIn({ [`POST ${RESET}`]: { status: 204 } });
+
+    renderRoute('/admin/users/u1');
+    await userEvent.click(await screen.findByRole('button', { name: 'Blanquear contraseña' }));
+
+    const dialog = await screen.findByRole('dialog', {
+      name: '¿Blanquear la contraseña de María Gómez?',
+    });
+    expect(dialog).toHaveTextContent(
+      'La contraseña actual deja de funcionar y se cierran sus sesiones abiertas. Le mandamos a maria@ejemplo.org un enlace para elegir una nueva, que vence en 48 horas.',
+    );
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Blanquear contraseña' }));
+
+    expect(
+      await screen.findByText(
+        'Le mandamos a maria@ejemplo.org el enlace para elegir una contraseña nueva.',
+      ),
+    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+    const calls = fetchMock.mock.calls.filter(([url]) => url === RESET);
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.[1]?.method).toBe('POST');
+  });
+
+  it('does not reset the password when the observatory cancels', async () => {
+    const fetchMock = signedIn();
+
+    renderRoute('/admin/users/u1');
+    await userEvent.click(await screen.findByRole('button', { name: 'Blanquear contraseña' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Cancelar' }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+    expect(fetchMock.mock.calls.filter(([url]) => url === RESET)).toHaveLength(0);
+  });
+
+  it('warns when the password cannot be reset', async () => {
+    signedIn({ [`POST ${RESET}`]: { status: 500 } });
+
+    renderRoute('/admin/users/u1');
+    await userEvent.click(await screen.findByRole('button', { name: 'Blanquear contraseña' }));
+    const dialog = await screen.findByRole('dialog');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Blanquear contraseña' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'No pudimos blanquear la contraseña',
+    );
+  });
+
+  it('names the account by its email when it has no name', async () => {
+    signedIn({ [`GET ${URL}`]: { body: { ...MARIA, firstName: null, lastName: null } } });
+
+    renderRoute('/admin/users/u1');
+    await userEvent.click(await screen.findByRole('button', { name: 'Blanquear contraseña' }));
+
+    expect(
+      await screen.findByRole('dialog', { name: '¿Blanquear la contraseña de maria@ejemplo.org?' }),
+    ).toBeInTheDocument();
   });
 
   it('goes back to the whole list when it was opened from elsewhere', async () => {

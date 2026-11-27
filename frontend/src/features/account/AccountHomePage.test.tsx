@@ -46,6 +46,50 @@ describe('account home', () => {
     );
   });
 
+  it('offers going back to the home only on a page reached from it', async () => {
+    signedIn();
+
+    renderRoute('/account');
+    await userEvent.click(await screen.findByRole('link', { name: 'Dar de alta mi entidad' }));
+
+    const back = await screen.findByRole('link', { name: 'Volver a Inicio' });
+    expect(back).toHaveAttribute('href', '/account');
+    await userEvent.click(back);
+    expect(await screen.findByRole('heading', { level: 1, name: 'Hola, Ana' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Volver a Inicio' })).not.toBeInTheDocument();
+  });
+
+  it('does not offer going back to the home on a page reached from the header', async () => {
+    signedIn();
+
+    renderRoute('/account');
+    await screen.findByRole('heading', { level: 1, name: 'Hola, Ana' });
+    await userEvent.click(
+      within(screen.getByRole('banner')).getByRole('button', { name: 'Notificaciones' }),
+    );
+    await userEvent.click(
+      within(await screen.findByRole('dialog')).getByRole('link', {
+        name: 'Ver todas las notificaciones',
+      }),
+    );
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Notificaciones' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Volver a Inicio' })).not.toBeInTheDocument();
+  });
+
+  it('does not offer going back to the home on a page opened directly', async () => {
+    signedIn();
+
+    renderRoute('/account/notifications');
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Notificaciones' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Volver a Inicio' })).not.toBeInTheDocument();
+  });
+
   it('shows the email when the account has no name', async () => {
     signedIn({ ...ACCOUNT, firstName: undefined, lastName: undefined });
 

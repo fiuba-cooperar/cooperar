@@ -38,6 +38,8 @@ import { CooperativeHomePage } from '@/features/cooperative/CooperativeHomePage'
 import { CooperativeLayout } from '@/features/cooperative/CooperativeLayout';
 import { COOPERATIVE_PATH, COOPERATIVE_SECTIONS } from '@/features/cooperative/cooperativeSections';
 import { CooperativeEntry } from '@/features/cooperative/CooperativeEntry';
+import { InquiriesPage } from '@/features/cooperative/InquiriesPage';
+import { InquiryDetailPage } from '@/features/cooperative/InquiryDetailPage';
 import { ProductFormPage } from '@/features/cooperative/ProductFormPage';
 import { ProductsPage } from '@/features/cooperative/ProductsPage';
 import { ProfilePage } from '@/features/cooperative/ProfilePage';
@@ -113,8 +115,10 @@ export const routes: RouteObject[] = [
           { path: 'products', element: <ProductsPage /> },
           { path: 'products/new', element: <ProductFormPage /> },
           { path: 'products/:id', element: <ProductFormPage /> },
+          { path: 'inquiries', element: <InquiriesPage /> },
+          { path: 'inquiries/:id', element: <InquiryDetailPage /> },
           ...COOPERATIVE_SECTIONS.filter(
-            ({ segment }) => !['', 'profile', 'products'].includes(segment),
+            ({ segment }) => !['', 'profile', 'products', 'inquiries'].includes(segment),
           ).map(({ segment, label }) => ({
             path: segment,
             element: <ComingSoonPage title={label} homePath=".." />,

@@ -10,9 +10,11 @@ import type { NotificationType } from './notificationType';
 export interface NotificationResponse {
   createdAt?: string;
   id?: string;
+  /** The inquiry it is about, to link to it */
+  inquiryId?: string;
   /** What the observatory said, for the types that carry it */
   message?: string;
-  /** The organization an approval created, to link to its panel */
+  /** The organization an approval created, or the one that received an inquiry, to link to its panel */
   organizationId?: string;
   /** Missing while it is unread */
   readAt?: string;

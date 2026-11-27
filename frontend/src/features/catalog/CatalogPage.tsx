@@ -4,7 +4,6 @@ import {
   Button,
   Container,
   Group,
-  Pagination,
   Paper,
   Stack,
   Text,
@@ -18,6 +17,7 @@ import {
   IconSearchOff,
   IconX,
 } from '@tabler/icons-react';
+import { PageNavigation } from '@/components/PageNavigation';
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { ProductSearchSort, type ProductSearchResponse } from '@/api/generated/model';
@@ -178,26 +178,15 @@ function Results({
     <>
       <ProductGrid products={result.items} />
       {pages > 1 && (
-        <Group component="nav" aria-label="Páginas de resultados" justify="center" pt={8}>
-          <Pagination
-            total={pages}
-            value={search.page}
-            size="lg"
-            withEdges
-            getItemProps={(page) => ({ 'aria-label': `Página ${String(page)}` })}
-            getControlProps={(control) =>
-              ({
-                first: { 'aria-label': 'Primera página' },
-                previous: { 'aria-label': 'Página anterior' },
-                next: { 'aria-label': 'Página siguiente' },
-                last: { 'aria-label': 'Última página' },
-              })[control]
-            }
-            onChange={(page) => {
-              onChange({ page });
-            }}
-          />
-        </Group>
+        <PageNavigation
+          label="Páginas de resultados"
+          total={pages}
+          value={search.page}
+          size="lg"
+          onChange={(page) => {
+            onChange({ page });
+          }}
+        />
       )}
     </>
   );
@@ -248,25 +237,21 @@ export function CatalogPage() {
     <>
       <title>Catálogo · CooperAR</title>
       <section className={styles.hero}>
-        <Container {...SECTION} py={36}>
-          <Stack gap={16}>
-            <Stack gap={6}>
-              <Title order={1} fz={36} className={styles.title}>
-                Catálogo
-              </Title>
-              <Text fz={17} maw={720} lh={1.5} className={styles.lead}>
-                Productos y servicios de cooperativas y empresas recuperadas de todo el país.
-              </Text>
-            </Stack>
-            <Stack maw={760}>
+        <Container {...SECTION} py={20}>
+          {/* The page keeps its heading for screen readers and the outline, without taking room on screen. */}
+          <Title order={1} className={styles.visuallyHidden}>
+            Catálogo
+          </Title>
+          <div className={styles.heroRow}>
+            <div className={styles.heroSearch}>
               <SearchBox
                 query={search.query}
                 onSearch={(query) => {
                   update({ query });
                 }}
               />
-            </Stack>
-          </Stack>
+            </div>
+          </div>
         </Container>
       </section>
       <Container {...SECTION} pt={28} pb={56}>

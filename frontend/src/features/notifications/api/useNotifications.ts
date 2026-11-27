@@ -41,6 +41,19 @@ export function useNotifications(filter: Filter) {
   });
 }
 
+/**
+ * The latest notifications, the same ones as the home panel, for the bell of the header. Asked again every couple of
+ * minutes, since they arrive on their own (a new inquiry, for example).
+ */
+export function useLatestNotifications() {
+  const filter: Filter = { unread: false, page: 0, size: LATEST_NOTIFICATIONS };
+  return useQuery({
+    queryKey: getListNotificationsQueryKey({ ...filter }),
+    queryFn: () => fetchPage(filter),
+    refetchInterval: 2 * 60_000,
+  });
+}
+
 /** Every list of notifications, whatever its page or filter, shares this prefix. */
 function useRefreshNotifications() {
   const queryClient = useQueryClient();

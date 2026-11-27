@@ -130,6 +130,48 @@ describe('registration requests', () => {
     ]);
   });
 
+  it('filters by status, offering only the statuses it has requests in, and keeps it in the address', async () => {
+    signedIn([
+      request({ id: 'a1', name: 'Aprobada Uno', status: 'APPROVED' }),
+      request({ id: 'p1', name: 'Pendiente Uno', status: 'PENDING' }),
+      request({ id: 'p2', name: 'Pendiente Dos', status: 'PENDING' }),
+    ]);
+
+    renderRoute('/account/registration-requests');
+
+    expect(await screen.findByRole('radio', { name: 'Todas (3)' })).toBeChecked();
+    expect(screen.queryByRole('radio', { name: /Rechazadas/ })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('radio', { name: 'Pendientes (2)' }));
+
+    const cards = screen.getAllByRole('article');
+    expect(cards.map((card) => within(card).getAllByRole('heading')[0]?.textContent)).toEqual([
+      'Pendiente Uno',
+      'Pendiente Dos',
+    ]);
+    expect(screen.getByRole('radio', { name: 'Pendientes (2)' })).toBeChecked();
+  });
+
+  it('opens with the status of the address, and without a filter when there is a single status', async () => {
+    signedIn([
+      request({ id: 'a1', name: 'Aprobada Uno', status: 'APPROVED' }),
+      request({ id: 'p1', name: 'Pendiente Uno', status: 'PENDING' }),
+    ]);
+
+    renderRoute('/account/registration-requests?status=approved');
+
+    expect(await screen.findByRole('radio', { name: 'Aprobadas (1)' })).toBeChecked();
+    expect(screen.getAllByRole('article')).toHaveLength(1);
+  });
+
+  it('shows no filter when every request has the same status', async () => {
+    signedIn([request({ id: 'p1', name: 'Pendiente Uno', status: 'PENDING' })]);
+
+    renderRoute('/account/registration-requests');
+
+    expect(await screen.findByRole('article')).toBeInTheDocument();
+    expect(screen.queryByRole('radiogroup')).not.toBeInTheDocument();
+  });
+
   it('shows the data and the history of a request on demand, as the observatory sees it', async () => {
     signedIn(REQUESTS);
 

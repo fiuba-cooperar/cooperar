@@ -1,5 +1,6 @@
 import { Alert, Anchor, Badge, Group, Paper, Stack, Text, Title } from '@mantine/core';
-import { IconAlertCircle, IconChevronLeft, IconExternalLink } from '@tabler/icons-react';
+import { IconAlertCircle, IconExternalLink } from '@tabler/icons-react';
+import { BackLink } from '@/components/BackLink';
 import { Link, useLocation, useParams } from 'react-router';
 import { Role, type AdminUserDetailResponse } from '@/api/generated/model';
 import { DetailList } from '@/features/organizations/components/DetailList';
@@ -29,10 +30,7 @@ export function UserDetailPage() {
 
   return (
     <Stack gap={24}>
-      <Link to={listPath(location.state)} className={styles.back}>
-        <IconChevronLeft size={16} stroke={2.4} aria-hidden />
-        Volver a Usuarios
-      </Link>
+      <BackLink to={listPath(location.state)}>Volver a Usuarios</BackLink>
       {isPending && <Text role="status">Cargando el usuario…</Text>}
       {isError && (
         <Alert color="red" icon={<IconAlertCircle aria-hidden />} role="alert">

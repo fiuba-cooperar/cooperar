@@ -1,7 +1,8 @@
-import { Alert, Button, NumberInput, Stack, Text, Textarea, TextInput } from '@mantine/core';
+import { Alert, Button, Group, NumberInput, Stack, Text, Textarea, TextInput } from '@mantine/core';
 import { IconAlertCircle, IconCircleCheck } from '@tabler/icons-react';
 import { useId, useState, type SyntheticEvent } from 'react';
 import { AppModal } from '@/components/AppModal';
+import { CharacterCount } from '@/components/form/CharacterCount';
 import { LabelWithHint } from '@/components/form/LabelWithHint';
 import { PhoneField } from '@/components/form/PhoneField';
 import { joinPhone, phoneProblem, type PhoneParts } from '@/components/form/phone';
@@ -12,8 +13,6 @@ interface InquiryFormState {
   senderName: string;
   senderEmail: string;
   senderPhone: PhoneParts;
-  /** Only set when neither the email nor the phone was given. */
-  contact: string;
   quantity: number | string;
   message: string;
 }
@@ -22,7 +21,6 @@ const EMPTY_FORM: InquiryFormState = {
   senderName: '',
   senderEmail: '',
   senderPhone: { areaCode: '', number: '' },
-  contact: '',
   quantity: '',
   message: '',
 };
@@ -48,12 +46,11 @@ function validate(form: InquiryFormState, isService: boolean): FormErrors<Inquir
   const errors: FormErrors<InquiryFormState> = {};
   if (!form.senderName.trim()) errors.senderName = 'Ingresá tu nombre.';
   const email = form.senderEmail.trim();
-  if (email && !EMAIL_FORMAT.test(email))
+  if (!email) errors.senderEmail = 'Ingresá tu email para que la cooperativa pueda responderte.';
+  else if (!EMAIL_FORMAT.test(email))
     errors.senderEmail = 'Revisá el email, por ejemplo contacto@cooperativa.org.';
   const phone = phoneProblem(form.senderPhone);
   if (phone) errors.senderPhone = phone;
-  if (!email && joinPhone(form.senderPhone) === undefined && !phone)
-    errors.contact = 'Ingresá un email o un teléfono para que la cooperativa pueda responderte.';
   if (
     !isService &&
     form.quantity !== '' &&
@@ -102,7 +99,7 @@ export function InquiryForm({
         productId,
         inquiry: {
           senderName: form.senderName.trim(),
-          ...(form.senderEmail.trim() && { senderEmail: form.senderEmail.trim() }),
+          senderEmail: form.senderEmail.trim(),
           ...(phone && { senderPhone: phone }),
           message: form.message.trim(),
           ...(!isService && typeof form.quantity === 'number' && { quantity: form.quantity }),
@@ -154,6 +151,7 @@ export function InquiryForm({
               />
               <TextInput
                 label="Email"
+                required
                 type="email"
                 autoComplete="email"
                 maxLength={MAX_EMAIL}
@@ -161,11 +159,10 @@ export function InquiryForm({
                 error={errors.senderEmail}
                 onChange={(event) => {
                   update('senderEmail', event.currentTarget.value);
-                  update('contact', '');
                 }}
               />
               <div>
-                <LabelWithHint htmlFor={phoneId} label="Teléfono" hint={PHONE_HINT} />
+                <LabelWithHint htmlFor={phoneId} label="Teléfono (opcional)" hint={PHONE_HINT} />
                 <PhoneField
                   id={phoneId}
                   label="Característica del teléfono"
@@ -175,15 +172,9 @@ export function InquiryForm({
                   error={errors.senderPhone}
                   onChange={(phone) => {
                     update('senderPhone', phone);
-                    update('contact', '');
                   }}
                 />
               </div>
-              {errors.contact && (
-                <Text role="alert" fz={14} c="var(--color-danger)">
-                  {errors.contact}
-                </Text>
-              )}
               {!isService && (
                 <NumberInput
                   label="Cantidad (opcional)"
@@ -209,6 +200,9 @@ export function InquiryForm({
                   update('message', event.currentTarget.value);
                 }}
               />
+              <Group justify="flex-end" mt={-12}>
+                <CharacterCount length={form.message.length} max={MAX_MESSAGE} />
+              </Group>
               {formError && (
                 <Alert role="alert" color="red" icon={<IconAlertCircle aria-hidden />}>
                   {formError}

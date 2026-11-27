@@ -1,4 +1,15 @@
-import { AppShell, Box, Burger, Group, Stack, Text, Tooltip, UnstyledButton } from '@mantine/core';
+import {
+  AppShell,
+  Badge,
+  Box,
+  Burger,
+  Group,
+  Stack,
+  Text,
+  Tooltip,
+  UnstyledButton,
+  VisuallyHidden,
+} from '@mantine/core';
 import { useDisclosure, useLocalStorage } from '@mantine/hooks';
 import { IconLayoutSidebarLeftCollapse, IconLayoutSidebarLeftExpand } from '@tabler/icons-react';
 import { Navigate, NavLink, Outlet, useLocation, useNavigate, useParams } from 'react-router';
@@ -7,7 +18,9 @@ import { SkipLink } from '@/components/layout/SkipLink';
 import { useAuth } from '@/features/auth/useAuth';
 import { ACCOUNT_HOME_PATH } from '@/features/account/accountSections';
 import { AccountMenu } from '@/features/account/components/AccountMenu';
+import { NotificationsBell } from '@/features/notifications/components/NotificationsBell';
 import { AccountNav } from '@/features/account/components/AccountNav';
+import { useNewInquiryCount } from './api/useInquiries';
 import { OrganizationSwitcher } from './components/OrganizationSwitcher';
 import { COOPERATIVE_PATH, COOPERATIVE_SECTIONS, cooperativePanel } from './cooperativeSections';
 import type { CooperativePanelContext } from './useActiveOrganization';
@@ -56,11 +69,16 @@ export function CooperativeLayout() {
             />
             <Brand />
           </Group>
-          <Group gap={12} wrap="nowrap">
+          <Group gap={0} wrap="nowrap">
             <Box visibleFrom="sm">
               <AccountNav />
             </Box>
-            <AccountMenu />
+            {/* The link to the home has its own padding and the bell has room around its icon: these gaps leave the same
+                visible space on both sides of the bell. */}
+            <Group gap={16} wrap="nowrap">
+              <NotificationsBell />
+              <AccountMenu />
+            </Group>
           </Group>
         </Group>
       </AppShell.Header>
@@ -100,6 +118,9 @@ export function CooperativeLayout() {
                     >
                       <Icon size={20} stroke={1.9} aria-hidden />
                       <span className={styles.label}>{label}</span>
+                      {segment === 'inquiries' && (
+                        <NewInquiriesBadge organizationId={organization.id} />
+                      )}
                     </NavLink>
                   </div>
                 </Tooltip>
@@ -136,5 +157,17 @@ export function CooperativeLayout() {
         </div>
       </AppShell.Main>
     </AppShell>
+  );
+}
+
+/** How many inquiries are still new, next to «Consultas»; nothing when there are none. */
+function NewInquiriesBadge({ organizationId }: { organizationId: string }) {
+  const { data: count } = useNewInquiryCount(organizationId);
+  if (!count) return null;
+  return (
+    <Badge size="sm" circle={count < 10} className={styles.badge}>
+      {count}
+      <VisuallyHidden> {count === 1 ? 'nueva' : 'nuevas'}</VisuallyHidden>
+    </Badge>
   );
 }

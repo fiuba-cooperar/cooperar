@@ -20,3 +20,7 @@
 .main:focus {
   outline: none;
 }
+
+.back {
+  margin-bottom: var(--mantine-spacing-md);
+}

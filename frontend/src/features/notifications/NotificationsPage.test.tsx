@@ -54,7 +54,7 @@ describe('notification center', () => {
     expect(await screen.findByText('Rechazaron la solicitud de «Gráfica Norte»')).toBeVisible();
     expect(screen.getByText('El CUIT no coincide')).toBeVisible();
     expect(screen.getByText('Aprobaron la solicitud de «Textil Sur»')).toBeVisible();
-    expect(screen.getByText('19 de octubre de 2026')).toBeVisible();
+    expect(screen.getByText('19 oct')).toBeVisible();
     expect(screen.getByRole('link', { name: 'Ver solicitudes' })).toHaveAttribute(
       'href',
       '/account/registration-requests',
@@ -90,7 +90,7 @@ describe('notification center', () => {
 
     renderRoute('/account/notifications');
     await screen.findByText('Aprobaron la solicitud de «Textil Sur»');
-    await userEvent.click(screen.getByRole('button', { name: '2' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Página 2' }));
 
     await within(document.body).findByText('Aprobaron la solicitud de «Textil Sur»');
     expect(fetchMock).toHaveBeenCalledWith(

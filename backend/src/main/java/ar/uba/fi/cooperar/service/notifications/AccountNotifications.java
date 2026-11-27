@@ -9,29 +9,20 @@ import ar.uba.fi.cooperar.service.user.PasswordResetService;
 import ar.uba.fi.cooperar.service.user.VerificationEmailRequested;
 import java.util.List;
 import java.util.UUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
-import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  * Emails sent to an account about its sign-up and its password. They go out only after the transaction commits, and a delivery failure
  * never undoes what was saved: the person can ask for the link again and sees the review outcome in the panel.
  */
 @Component
-@EnableConfigurationProperties(NotificationProperties.class)
 public class AccountNotifications {
 
-    private static final Logger log = LoggerFactory.getLogger(AccountNotifications.class);
+    private final EmailComposer emails;
 
-    private final EmailSender sender;
-    private final NotificationProperties properties;
-
-    public AccountNotifications(EmailSender sender, NotificationProperties properties) {
-        this.sender = sender;
-        this.properties = properties;
+    AccountNotifications(EmailComposer emails) {
+        this.emails = emails;
     }
 
     @TransactionalEventListener
@@ -156,17 +147,13 @@ public class AccountNotifications {
     }
 
     private String link(String path) {
-        return UriComponentsBuilder.fromUri(properties.publicUrl()).path(path).toUriString();
+        return emails.link(path);
     }
 
     private String link(String path, String parameter, String value) {
-        return UriComponentsBuilder.fromUri(properties.publicUrl())
-                .path(path)
-                .queryParam(parameter, value)
-                .toUriString();
+        return emails.link(path, parameter, value);
     }
 
-    /** The same content as plain text and as HTML. */
     private EmailMessage compose(
             String to,
             String subject,
@@ -176,38 +163,14 @@ public class AccountNotifications {
             String buttonLabel,
             String url,
             String footer) {
-        StringBuilder text = new StringBuilder(greeting).append("\n\n");
-        paragraphs.forEach(paragraph -> text.append(paragraph).append("\n\n"));
-        if (quote != null) {
-            text.append(quote).append("\n\n");
-        }
-        text.append(buttonLabel).append(": ").append(url).append('\n');
-        if (footer != null) {
-            text.append('\n').append(footer).append('\n');
-        }
-        return new EmailMessage(
-                to,
-                subject,
-                text.toString(),
-                EmailLayout.html(
-                        link("/brand/symbol-mocks.png"), greeting, paragraphs, quote, buttonLabel, url, footer));
+        return emails.compose(to, subject, greeting, paragraphs, quote, buttonLabel, url, footer);
     }
 
     private void send(UUID accountId, String kind, EmailMessage message) {
-        try {
-            sender.send(message);
-            log.info("Sent the {} email to account {}", kind, accountId);
-        } catch (RuntimeException e) {
-            // The exception message may contain the address, which must not reach the logs.
-            log.warn(
-                    "Could not send the {} email to account {}: {}",
-                    kind,
-                    accountId,
-                    e.getClass().getName());
-        }
+        emails.send("account", accountId, kind, message);
     }
 
     private static String greeting(String firstName) {
-        return firstName == null ? "Hola:" : "Hola, " + firstName + ":";
+        return EmailComposer.greeting(firstName);
     }
 }

@@ -12,7 +12,8 @@ import {
   Textarea,
   Title,
 } from '@mantine/core';
-import { IconAlertCircle, IconCheck, IconChevronLeft } from '@tabler/icons-react';
+import { IconAlertCircle, IconCheck } from '@tabler/icons-react';
+import { BackLink } from '@/components/BackLink';
 import { useState, type SyntheticEvent } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router';
 import {
@@ -269,10 +270,7 @@ function ProductForm({
   return (
     <Stack gap={24}>
       <Stack gap={6}>
-        <Link to={paths.products} className={styles.back}>
-          <IconChevronLeft size={16} stroke={2.4} aria-hidden />
-          Volver al listado
-        </Link>
+        <BackLink to={paths.products}>Volver al listado</BackLink>
         <Title order={1} fz={32}>
           {product ? 'Editar producto o servicio' : 'Nuevo producto o servicio'}
         </Title>

@@ -37,6 +37,14 @@ class SmtpEmailSenderTest {
         assertThat(mail.getAllRecipients()).extracting(Address::toString).containsExactly("ana@coop.local");
         assertThat(mail.getSubject()).isEqualTo("Asunto");
         assertThat(raw(mail)).contains("Cuerpo").doesNotContain("text/html");
+        assertThat(mail.getReplyTo()).extracting(Address::toString).containsExactly("no-reply@coop.ar");
+    }
+
+    @Test
+    void answersGoToTheReplyToAddressWhenThereIsOne() throws Exception {
+        sender.send(new EmailMessage("ana@coop.local", "Asunto", "Cuerpo").withReplyTo("ventas@coop.ar"));
+
+        assertThat(sent().getReplyTo()).extracting(Address::toString).containsExactly("ventas@coop.ar");
     }
 
     @Test

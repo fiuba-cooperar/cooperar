@@ -1,4 +1,4 @@
-import { IconBox, IconFileText, IconHome, IconUsers } from '@tabler/icons-react';
+import { IconBox, IconFileText, IconHome, IconMessages, IconUsers } from '@tabler/icons-react';
 
 /** Entry of the panel: sends to the panel of one of the account's organizations. */
 export const COOPERATIVE_PATH = '/cooperative';
@@ -16,6 +16,8 @@ export function cooperativePanel(slug: string) {
     newProduct: `${home}/products/new`,
     team: `${home}/team`,
     product: (id: string) => `${home}/products/${id}`,
+    inquiries: `${home}/inquiries`,
+    inquiry: (id: string) => `${home}/inquiries/${id}`,
   };
 }
 
@@ -24,6 +26,7 @@ export const COOPERATIVE_SECTIONS = [
   { segment: '', label: 'Inicio', icon: IconHome },
   { segment: 'profile', label: 'Ficha', icon: IconFileText },
   { segment: 'products', label: 'Productos y servicios', icon: IconBox },
+  { segment: 'inquiries', label: 'Consultas', icon: IconMessages },
   // TODO(#68): replace the "coming soon" page with the team management.
   { segment: 'team', label: 'Usuarios', icon: IconUsers },
 ] as const;

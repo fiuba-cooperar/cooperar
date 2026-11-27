@@ -3,3 +3,9 @@
   padding: 0;
   list-style: none;
 }
+
+.filter {
+  align-self: flex-start;
+  max-width: 100%;
+  overflow-x: auto;
+}

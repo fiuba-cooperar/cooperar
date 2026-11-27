@@ -7,5 +7,7 @@ public enum NotificationType {
     /** The observatory rejected a registration request. */
     REGISTRATION_REJECTED,
     /** The observatory asked for changes in a registration request. */
-    REGISTRATION_CHANGES_REQUESTED
+    REGISTRATION_CHANGES_REQUESTED,
+    /** A visitor sent an inquiry to an organization the account manages. */
+    INQUIRY_RECEIVED
 }

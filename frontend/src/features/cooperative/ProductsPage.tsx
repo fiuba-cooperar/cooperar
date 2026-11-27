@@ -5,7 +5,6 @@ import {
   CloseButton,
   Group,
   Menu,
-  Pagination,
   Paper,
   Select,
   Stack,
@@ -25,6 +24,7 @@ import {
   IconSearch,
   IconTrash,
 } from '@tabler/icons-react';
+import { PageNavigation } from '@/components/PageNavigation';
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import {
@@ -223,24 +223,14 @@ function ProductsList({ organization }: { organization: OrganizationSummary }) {
         </Paper>
       )}
       {pages > 1 && (
-        <Group component="nav" aria-label="Páginas de productos" justify="center">
-          <Pagination
-            total={pages}
-            value={filters.page}
-            withEdges={false}
-            getItemProps={(page) => ({ 'aria-label': `Página ${String(page)}` })}
-            getControlProps={(control) =>
-              control === 'previous'
-                ? { 'aria-label': 'Página anterior' }
-                : control === 'next'
-                  ? { 'aria-label': 'Página siguiente' }
-                  : {}
-            }
-            onChange={(page) => {
-              setSearchParams(writeFilters({ ...filters, page }));
-            }}
-          />
-        </Group>
+        <PageNavigation
+          label="Páginas de productos"
+          total={pages}
+          value={filters.page}
+          onChange={(page) => {
+            setSearchParams(writeFilters({ ...filters, page }));
+          }}
+        />
       )}
       <Text fz={13} c="dimmed">
         Los productos no publicados no se muestran al público. Los precios son solo orientativos.

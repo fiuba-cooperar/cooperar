@@ -42,6 +42,11 @@
   outline: none;
 }
 
+.badge {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
 .groupTitle {
   padding: 0 14px;
   margin-bottom: 6px;
@@ -55,6 +60,7 @@
 /* Collapsed (wide screens only): a column of icons. The texts stay in the page, hidden, so every link keeps its name. */
 @media (min-width: $mantine-breakpoint-sm) {
   .navbar[data-collapsed] .label,
+  .navbar[data-collapsed] .badge,
   .navbar[data-collapsed] .groupTitle {
     position: absolute;
     width: 1px;

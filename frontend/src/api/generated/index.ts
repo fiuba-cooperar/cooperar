@@ -4,6 +4,7 @@ export * from './admin-product-categories/admin-product-categories';
 export * from './admin-registration-requests/admin-registration-requests';
 export * from './admin-users/admin-users';
 export * from './auth/auth';
+export * from './cooperative-inquiries/cooperative-inquiries';
 export * from './cooperative-organization-profile/cooperative-organization-profile';
 export * from './cooperative-products/cooperative-products';
 export * from './geography/geography';

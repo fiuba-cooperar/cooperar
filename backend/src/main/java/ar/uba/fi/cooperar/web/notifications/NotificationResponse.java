@@ -19,8 +19,13 @@ public record NotificationResponse(
         @Schema(description = "The registration request it is about, to link to it")
         UUID registrationRequestId,
 
-        @Schema(description = "The organization an approval created, to link to its panel")
+        @Schema(
+                description =
+                        "The organization an approval created, or the one that received an inquiry, to link to its panel")
         UUID organizationId,
+
+        @Schema(description = "The inquiry it is about, to link to it")
+        UUID inquiryId,
 
         Instant createdAt,
         @Schema(description = "Missing while it is unread") Instant readAt) {
@@ -33,6 +38,7 @@ public record NotificationResponse(
                 notification.getMessage(),
                 notification.getRegistrationRequestId(),
                 notification.getOrganizationId(),
+                notification.getInquiryId(),
                 notification.getCreatedAt(),
                 notification.getReadAt());
     }

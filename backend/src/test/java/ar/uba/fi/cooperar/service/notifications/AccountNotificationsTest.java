@@ -24,8 +24,8 @@ class AccountNotificationsTest {
     private static final UUID REQUEST = UUID.randomUUID();
 
     private final EmailSender sender = mock(EmailSender.class);
-    private final AccountNotifications notifications = new AccountNotifications(
-            sender, new NotificationProperties(URI.create("https://cooperar.example"), "no-reply@cooperar.example"));
+    private final AccountNotifications notifications = new AccountNotifications(new EmailComposer(
+            sender, new NotificationProperties(URI.create("https://cooperar.example"), "no-reply@cooperar.example")));
 
     @Test
     void sendsTheVerificationLinkToTheFrontend() {

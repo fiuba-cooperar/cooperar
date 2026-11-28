@@ -13,10 +13,6 @@ const REQUEST_SUMMARY = {
   reviewMessage: 'Revisá la dirección',
 };
 
-// The whole form renders and gets typed into, which takes longer than the default 5 seconds when the suite runs in
-// parallel.
-const FORM_TIMEOUT = 20_000;
-
 const ACCOUNT = {
   id: 'u1',
   email: 'ana@coop.local',
@@ -92,46 +88,42 @@ describe('correcting a registration', () => {
     expect(screen.getByRole('textbox', { name: 'Tu rol en la entidad' })).toHaveValue('Presidenta');
   });
 
-  it(
-    'sends the corrected registration back to the review',
-    async () => {
-      const fetchMock = signedIn({
-        [`PUT ${REGISTRATION_URL}`]: { body: { ...REGISTRATION, status: 'PENDING' } },
-      });
+  it('sends the corrected registration back to the review', async () => {
+    const fetchMock = signedIn({
+      [`PUT ${REGISTRATION_URL}`]: { body: { ...REGISTRATION, status: 'PENDING' } },
+    });
 
-      renderRoute(PAGE);
-      const street = await screen.findByRole('combobox', { name: 'Calle y número' });
-      await userEvent.clear(street);
-      await userEvent.type(street, 'San Martín 50');
-      await userEvent.click(screen.getByRole('button', { name: 'Reenviar la solicitud' }));
+    renderRoute(PAGE);
+    const street = await screen.findByRole('combobox', { name: 'Calle y número' });
+    await userEvent.clear(street);
+    await userEvent.type(street, 'San Martín 50');
+    await userEvent.click(screen.getByRole('button', { name: 'Reenviar la solicitud' }));
 
-      expect(
-        await screen.findByRole('heading', { level: 1, name: 'Reenviaste la solicitud' }),
-      ).toBeInTheDocument();
-      expect(requestTo(fetchMock, 'PUT')?.body).toBe(
-        JSON.stringify({
-          name: 'La Litoraleña',
-          legalName: 'Cooperativa de Trabajo La Litoraleña Ltda.',
-          type: 'ERT',
-          cuit: '30-12345678-1',
-          activityTypes: ['PRODUCT'],
-          sectors: ['FOOD'],
-          registrantRole: 'Presidenta',
-          address: {
-            province: 'SANTA_FE',
-            district: 'Rosario',
-            locality: 'Centro',
-            street: 'San Martín 50',
-          },
-        }),
-      );
-      expect(screen.getByRole('link', { name: 'Ver mis solicitudes' })).toHaveAttribute(
-        'href',
-        '/account/registration-requests',
-      );
-    },
-    FORM_TIMEOUT,
-  );
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Reenviaste la solicitud' }),
+    ).toBeInTheDocument();
+    expect(requestTo(fetchMock, 'PUT')?.body).toBe(
+      JSON.stringify({
+        name: 'La Litoraleña',
+        legalName: 'Cooperativa de Trabajo La Litoraleña Ltda.',
+        type: 'ERT',
+        cuit: '30-12345678-1',
+        activityTypes: ['PRODUCT'],
+        sectors: ['FOOD'],
+        registrantRole: 'Presidenta',
+        address: {
+          province: 'SANTA_FE',
+          district: 'Rosario',
+          locality: 'Centro',
+          street: 'San Martín 50',
+        },
+      }),
+    );
+    expect(screen.getByRole('link', { name: 'Ver mis solicitudes' })).toHaveAttribute(
+      'href',
+      '/account/registration-requests',
+    );
+  });
 
   it('validates the form before sending it', async () => {
     const fetchMock = signedIn();

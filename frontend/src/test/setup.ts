@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom/vitest';
-import { cleanup } from '@testing-library/react';
+import { cleanup, configure } from '@testing-library/react';
 import { afterEach, vi } from 'vitest';
 
 // jsdom lacks the browser APIs Mantine relies on.
@@ -35,6 +35,10 @@ for (const [property, size] of [
 
 // A Select that opens with a value scrolls the selected option into view.
 Element.prototype.scrollIntoView = () => undefined;
+
+// What `findBy` and `waitFor` wait for appears after a render, which with the whole suite running in parallel can take
+// longer than the default second.
+configure({ asyncUtilTimeout: 3000 });
 
 afterEach(() => {
   cleanup();

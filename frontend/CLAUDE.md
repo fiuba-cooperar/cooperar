@@ -82,7 +82,7 @@ Muchas personas del sector usan la plataforma desde el celular y sin experiencia
 
 - Vitest + Testing Library en `jsdom`. Los tests van junto al código (`Xxx.test.tsx`).
 - **Velocidad.** Montar una página entera con Mantine en jsdom es caro (cada `getByRole` calcula el nombre accesible de todos los candidatos, y cada tecla vuelve a dibujar el formulario), así que:
-  - Las reglas de un componente se prueban con el componente solo o como funciones (por ejemplo, `OpeningHoursField.test.tsx` y `openingHoursForm.test.ts`), y la página solo prueba cómo se conectan (el diálogo, el guardado). Montar la ficha entera para probar un detalle tarda 5–10 veces más.
+  - Las reglas de un componente se prueban con el componente solo o como funciones (por ejemplo, `OpeningHoursField.test.tsx` y `openingHoursForm.test.ts` para los horarios, y `AddressFields.test.tsx` y `addressDraft.test.ts` para las direcciones), y la página solo prueba cómo se conectan (el diálogo, el guardado). Montar la ficha entera para probar un detalle tarda 5–10 veces más.
   - Para completar un campo que no es lo que se prueba se usa `fill` (`test/form`), que pega el valor de una vez; `userEvent.type` queda para los tests del tipeo (contadores, límites, sugerencias).
   - Un archivo de tests corre entero en un solo worker: si crece mucho (la ficha y los productos llegaron a 175 s), se divide por sección, con los datos compartidos en un módulo aparte (`profileTestSupport`, `productsTestSupport`).
   - El límite es de 30 s por test (`testTimeout`, en `vite.config.ts`) y de 3 s para `findBy` y `waitFor` (`asyncUtilTimeout`, en `test/setup.ts`), para que la suite en paralelo no falle por tiempo en una máquina lenta. No se suben por test: un test que no entra es un test para hacer más liviano.

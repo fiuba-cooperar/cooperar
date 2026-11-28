@@ -18,6 +18,10 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     restoreMocks: true,
+    // The pages render whole, with Mantine, in jsdom, and the heaviest tests fill in long forms: alone they take a
+    // few seconds, and several times that with every file running in parallel. The limit is there to catch a test that
+    // hangs, not to measure how fast it is.
+    testTimeout: 30_000,
     unstubGlobals: true,
   },
 });

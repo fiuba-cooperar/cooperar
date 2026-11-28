@@ -41,7 +41,7 @@ function sentBody(fetchMock: ReturnType<typeof stubFetchRoutes>, method: string,
   return typeof body === 'string' ? (JSON.parse(body) as unknown) : undefined;
 }
 
-describe('ProductCategoriesPage', { timeout: 20_000 }, () => {
+describe('ProductCategoriesPage', () => {
   it('lists the categories with their products and only lets delete the empty ones', async () => {
     signedIn();
 

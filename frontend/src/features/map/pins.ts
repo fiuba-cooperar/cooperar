@@ -31,3 +31,27 @@ export function nearestOrganizations(pins: MapPin[], from: GeoPoint) {
     return true;
   });
 }
+
+/** How far from the visitor an organization counts as nearby. */
+export const NEARBY_RADIUS_KM = 5;
+
+/** What the map shows around the visitor: how many organizations are nearby, and how far the nearest one is. */
+export interface Nearby {
+  /** The visitor and the pins within the radius, or the nearest pin when none is that near. */
+  frame: GeoPoint[];
+  /** Organizations with an address within the radius, each counted once. */
+  count: number;
+  /** Distance to the nearest organization; null when there is none on the map. */
+  nearestKm: number | null;
+}
+
+export function nearbyOf(pins: MapPin[], visitor: GeoPoint): Nearby {
+  const nearest = nearestOrganizations(pins, visitor);
+  const within = byDistance(pins, visitor).filter(({ km }) => km <= NEARBY_RADIUS_KM);
+  const framed = within.length > 0 ? within : nearest.slice(0, 1);
+  return {
+    frame: [visitor, ...framed.map(({ item }) => item)],
+    count: nearest.filter(({ km }) => km <= NEARBY_RADIUS_KM).length,
+    nearestKm: nearest[0]?.km ?? null,
+  };
+}

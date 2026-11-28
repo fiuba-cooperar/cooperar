@@ -9,7 +9,13 @@ import {
   Text,
   Title,
 } from '@mantine/core';
-import { IconAlertCircle, IconSearch, IconSearchOff, IconX } from '@tabler/icons-react';
+import {
+  IconAlertCircle,
+  IconSearch,
+  IconMapPinOff,
+  IconSearchOff,
+  IconX,
+} from '@tabler/icons-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router';
 import {
@@ -226,6 +232,48 @@ function Results({
 }
 
 /**
+ * What the map says when it has no pin: the search found nothing, or what it found has no address on the map yet,
+ * which the list does show.
+ */
+function MapEmpty({ found, onClear }: { found: number; onClear: (() => void) | null }) {
+  if (found > 0) {
+    return (
+      <>
+        <IconMapPinOff size={40} stroke={1.8} aria-hidden className={styles.emptyIcon} />
+        <Text fw={700} fz={18}>
+          {found === 1
+            ? 'La entidad encontrada todavía no está ubicada en el mapa'
+            : 'Las entidades encontradas todavía no están ubicadas en el mapa'}
+        </Text>
+        <Text c="dimmed" fz={15} lh={1.5}>
+          Podés verlas en el listado.
+        </Text>
+      </>
+    );
+  }
+  return (
+    <>
+      <IconSearchOff size={40} stroke={1.8} aria-hidden className={styles.emptyIcon} />
+      <Text fw={700} fz={18}>
+        {onClear
+          ? 'No encontramos entidades con esa búsqueda'
+          : 'Todavía no hay entidades en el mapa'}
+      </Text>
+      {onClear && (
+        <>
+          <Text c="dimmed" fz={15} lh={1.5}>
+            Probá con otras palabras o sacá algún filtro.
+          </Text>
+          <Button variant="outline" h={44} onClick={onClear}>
+            Ver todas las entidades
+          </Button>
+        </>
+      )}
+    </>
+  );
+}
+
+/**
  * The public directory (#15): full-text search, filters with their counts, order and pages, all of it kept in the
  * address.
  */
@@ -329,6 +377,23 @@ export function OrganizationSearchPage() {
                 organizations={map.data}
                 isError={map.isError}
                 label="Mapa de las entidades encontradas"
+                searched={filtered}
+                empty={
+                  // The list tells whether the search found nothing; its earlier answer, shown while loading, does not.
+                  data &&
+                  !isPlaceholderData && (
+                    <MapEmpty
+                      found={data.total}
+                      onClear={
+                        filtered
+                          ? () => {
+                              update(NO_FILTERS);
+                            }
+                          : null
+                      }
+                    />
+                  )
+                }
               />
             ) : (
               data && <Results search={search} result={data} onChange={update} />

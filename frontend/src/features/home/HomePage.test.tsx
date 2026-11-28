@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { fireEvent, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { saveTokens } from '@/api/session';
@@ -149,7 +149,7 @@ describe('public site', () => {
     expect(screen.getByText('Próximamente')).toBeInTheDocument();
   });
 
-  it('shows the organizations nearest to the visitor on the map', async () => {
+  it('frames the organizations within 5 km of the visitor, with no list', async () => {
     stubFetchRoutes({
       'GET /api/map/organizations': {
         // How far south of the visitor each one is, in degrees.
@@ -158,23 +158,7 @@ describe('public site', () => {
           { name: 'Cercana', south: 0.01 },
           { name: 'Media', south: 0.1 },
           { name: 'Otra lejana', south: 2 },
-        ].map(({ name, south }) => ({
-          slug: name.toLowerCase().replace(' ', '-'),
-          name,
-          type: 'COOPERATIVE',
-          sectors: ['FOOD'],
-          places: [
-            {
-              type: 'MAIN',
-              province: 'BUENOS_AIRES',
-              district: 'Avellaneda',
-              locality: 'Sarandí',
-              latitude: -34.6 - south,
-              longitude: -58.4,
-              approximate: false,
-            },
-          ],
-        })),
+        ].map(({ name, south }) => mapOrganization(name, south)),
       },
     });
     Object.defineProperty(navigator, 'geolocation', {
@@ -189,11 +173,26 @@ describe('public site', () => {
     renderRoute('/');
     await userEvent.click(await screen.findByRole('button', { name: 'Ver las más cercanas a mí' }));
 
-    expect(await screen.findByText('Cerca tuyo')).toBeVisible();
-    const links = screen.getAllByRole('link', { name: /^(Cercana|Media|Lejana|Otra lejana)$/ });
-    expect(links.map((link) => link.textContent)).toEqual(['Cercana', 'Media', 'Lejana']);
-    expect(links[0]).toHaveAttribute('href', '/organizations/cercana');
+    expect(await screen.findByText('Hay 1 entidad a menos de 5 km de tu ubicación.')).toBeVisible();
+    expect(screen.queryByText('Cerca tuyo')).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Cercana' })).not.toBeInTheDocument();
     Reflect.deleteProperty(navigator, 'geolocation');
+  });
+
+  it('opens a preview of the organization of a pin, as the directory map does', async () => {
+    stubFetchRoutes({ 'GET /api/map/organizations': { body: [mapOrganization('Cercana', 0)] } });
+
+    renderRoute('/');
+    fireEvent.click(await screen.findByTitle('Cercana', {}, { timeout: 5000 }));
+
+    const card = await screen.findByRole('group', { name: 'Entidad elegida: Cercana' });
+    expect(within(card).getByRole('link', { name: 'Ver la ficha' })).toHaveAttribute(
+      'href',
+      '/organizations/cercana',
+    );
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      'Descubrí cooperativas y empresas recuperadas',
+    );
   });
 
   it('takes the register button to its page', async () => {
@@ -227,3 +226,23 @@ describe('public site', () => {
     await expectNoA11yViolations(container);
   });
 });
+
+function mapOrganization(name: string, south: number) {
+  return {
+    slug: name.toLowerCase().replace(' ', '-'),
+    name,
+    type: 'COOPERATIVE',
+    sectors: ['FOOD'],
+    places: [
+      {
+        type: 'MAIN',
+        province: 'BUENOS_AIRES',
+        district: 'Avellaneda',
+        locality: 'Sarandí',
+        latitude: -34.6 - south,
+        longitude: -58.4,
+        approximate: false,
+      },
+    ],
+  };
+}

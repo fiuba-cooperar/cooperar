@@ -32,11 +32,6 @@ interface Props {
   frame: GeoPoint[];
   label: string;
   className?: string | undefined;
-  /**
-   * Whether the mouse wheel zooms the map. On by default; off where the map is a small part of a longer page, so
-   * scrolling the page over it does not get caught.
-   */
-  scrollWheelZoom?: boolean;
 }
 
 /** The pins on a map, grouped while they would overlap; a pin is chosen with a click or the keyboard. */
@@ -49,7 +44,6 @@ export function OrganizationsMap({
   frame,
   label,
   className,
-  scrollWheelZoom = true,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map>(null);
@@ -91,7 +85,7 @@ export function OrganizationsMap({
 
   useEffect(() => {
     if (!containerRef.current) return;
-    const map = L.map(containerRef.current, { scrollWheelZoom: false });
+    const map = L.map(containerRef.current);
     addTiles(map);
     const cluster = L.markerClusterGroup({
       showCoverageOnHover: false,
@@ -116,12 +110,6 @@ export function OrganizationsMap({
       map.remove();
     };
   }, []);
-
-  useEffect(() => {
-    const handler = mapRef.current?.scrollWheelZoom;
-    if (scrollWheelZoom) handler?.enable();
-    else handler?.disable();
-  }, [scrollWheelZoom]);
 
   useEffect(() => {
     const cluster = clusterRef.current;

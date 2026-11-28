@@ -161,6 +161,8 @@ function Filters({
     const query = text.trim();
     if (query === filters.query) return;
     const timer = setTimeout(() => {
+      // The query comes back from the box itself: it must not reset what the person kept typing meanwhile.
+      setLastQuery(query);
       onChange({ query });
     }, SEARCH_DELAY_MS);
     return () => {

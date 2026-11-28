@@ -169,6 +169,8 @@ function InquirySearch({ query, onSearch }: { query: string; onSearch: (query: s
     const typed = text.trim();
     if (typed === query) return;
     const timer = setTimeout(() => {
+      // The query comes back from the box itself: it must not reset what the person kept typing meanwhile.
+      setLastQuery(typed);
       onSearch(typed);
     }, SEARCH_DELAY_MS);
     return () => {

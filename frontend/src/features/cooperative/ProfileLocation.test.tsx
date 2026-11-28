@@ -12,6 +12,8 @@ import {
   sectionNav,
 } from './profileTestSupport';
 
+// Locating an address, the larger map and the notice of a private street are tested with the fields alone
+// (AddressFields), and how each address is sent as a function (addressDraft); here, the addresses of the profile.
 describe('ProfilePage location', () => {
   it('adds a secondary address and saves it with the main one', async () => {
     const saved = {
@@ -168,12 +170,11 @@ describe('ProfilePage location', () => {
     });
     const street = screen.getByRole('combobox', { name: 'Calle y número' });
     await userEvent.clear(street);
-    await userEvent.type(street, 'Mitre 500');
+    await fill(street, 'Mitre 500');
     const visibility = screen.getByRole('radiogroup', {
       name: 'Visibilidad de la calle y el número',
     });
     await userEvent.click(within(visibility).getByRole('radio', { name: 'Privado' }));
-    expect(screen.getByText(/El mapa público marca solo la zona/)).toBeVisible();
     await userEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
 
     expect(
@@ -201,92 +202,5 @@ describe('ProfilePage location', () => {
     expect(within(sectionNav()).getByRole('button', { name: /Ubicación/ })).toHaveTextContent(
       'Punto en el mapa: completo',
     );
-  });
-
-  it('shows the map larger in a dialog, where the pin can still be moved', async () => {
-    signedIn({
-      [`GET ${PROFILE_URL}`]: {
-        body: {
-          ...PROFILE,
-          location: {
-            addresses: [{ ...MAIN_ADDRESS, point: { latitude: -32.95, longitude: -60.64 } }],
-          },
-        },
-      },
-    });
-
-    renderRoute('/cooperative/la-litoralena/profile?section=location');
-    await userEvent.click(await screen.findByRole('button', { name: /Dirección principal/ }));
-    await userEvent.click(await screen.findByRole('button', { name: 'Ver más grande' }));
-
-    const dialog = await screen.findByRole('dialog', { name: 'Punto en el mapa' });
-    expect(
-      await within(dialog).findByRole('region', {
-        name: /Mapa ampliado con el punto de tu entidad\. Podés arrastrar el pin/,
-      }),
-    ).toBeVisible();
-    await userEvent.click(within(dialog).getByRole('button', { name: 'Listo' }));
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    });
-  });
-
-  it('locates a changed address before saving and keeps that point', async () => {
-    const fetchMock = signedIn({
-      [`GET ${PROFILE_URL}`]: {
-        body: {
-          ...PROFILE,
-          location: {
-            addresses: [{ ...MAIN_ADDRESS, point: { latitude: -32.95, longitude: -60.64 } }],
-          },
-        },
-      },
-      [`POST ${PROFILE_URL}/location/geocode`]: {
-        body: { point: { latitude: -32.94, longitude: -60.65 } },
-      },
-      [`PUT ${PROFILE_URL}/location`]: { body: PROFILE },
-    });
-
-    renderRoute('/cooperative/la-litoralena/profile?section=location');
-    await userEvent.click(await screen.findByRole('button', { name: /Dirección principal/ }));
-    expect(screen.queryByRole('button', { name: 'Ubicar en el mapa' })).not.toBeInTheDocument();
-    const street = screen.getByRole('combobox', { name: 'Calle y número' });
-    await userEvent.clear(street);
-    await userEvent.type(street, 'Mitre 500');
-    await userEvent.click(screen.getByRole('button', { name: 'Ubicar en el mapa' }));
-
-    expect(
-      await screen.findByText(/Lo ubicamos a partir de la dirección\. Si no quedó bien/),
-    ).toBeVisible();
-    expect(screen.queryByRole('button', { name: 'Ubicar en el mapa' })).not.toBeInTheDocument();
-    expect(sentBody(fetchMock, 'POST', `${PROFILE_URL}/location/geocode`)).toEqual({
-      province: 'SANTA_FE',
-      district: 'Rosario',
-      locality: 'Centro',
-      street: 'Mitre 500',
-    });
-    await userEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
-    await waitFor(() => {
-      expect(sentBody(fetchMock, 'PUT', `${PROFILE_URL}/location`)).toMatchObject({
-        addresses: [
-          {
-            type: 'MAIN',
-            address: { street: 'Mitre 500' },
-            point: { latitude: -32.94, longitude: -60.65 },
-          },
-        ],
-      });
-    });
-  });
-
-  it('says when the address to locate cannot be found', async () => {
-    signedIn({ [`POST ${PROFILE_URL}/location/geocode`]: { body: {} } });
-
-    renderRoute('/cooperative/la-litoralena/profile?section=location');
-    await userEvent.click(await screen.findByRole('button', { name: /Dirección principal/ }));
-    await userEvent.click(await screen.findByRole('button', { name: 'Ubicar en el mapa' }));
-
-    expect(await screen.findByText(/No encontramos esa dirección/)).toBeVisible();
-    expect(screen.queryByRole('region', { name: /Mapa con el punto/ })).not.toBeInTheDocument();
   });
 });

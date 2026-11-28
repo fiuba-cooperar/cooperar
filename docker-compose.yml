@@ -56,8 +56,19 @@ services:
         condition: service_started
 
   # Catches every email the backend sends; read them at http://localhost:8025. Development only.
+  # With a real SMTP server as relay (MAILPIT_RELAY_* in .env), the "Release" button of a message sends it to a real
+  # inbox, for example to try answering it. Nothing leaves unless released by hand.
   mailpit:
     image: axllent/mailpit:v1.31
+    environment:
+      MP_SMTP_RELAY_HOST: ${MAILPIT_RELAY_HOST:-}
+      MP_SMTP_RELAY_PORT: ${MAILPIT_RELAY_PORT:-587}
+      MP_SMTP_RELAY_STARTTLS: ${MAILPIT_RELAY_STARTTLS:-true}
+      MP_SMTP_RELAY_AUTH: ${MAILPIT_RELAY_AUTH:-plain}
+      MP_SMTP_RELAY_USERNAME: ${MAILPIT_RELAY_USERNAME:-}
+      MP_SMTP_RELAY_PASSWORD: ${MAILPIT_RELAY_PASSWORD:-}
+      # Relays only accept senders they verified, and the backend's local one is not.
+      MP_SMTP_RELAY_OVERRIDE_FROM: ${MAILPIT_RELAY_FROM:-}
     ports:
       - '${MAILPIT_PORT:-8025}:8025'
 

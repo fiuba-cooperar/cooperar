@@ -27,7 +27,7 @@ public class Notification {
     @Column(nullable = false, updatable = false)
     private NotificationType type;
 
-    /** The name of what it is about, like the organization of a registration request. */
+    /** The name of what it is about: the organization of a registration request, or the product of an inquiry. */
     @Column(nullable = false, updatable = false)
     private String subject;
 
@@ -39,6 +39,9 @@ public class Notification {
 
     @Column(name = "organization_id", updatable = false)
     private UUID organizationId;
+
+    @Column(name = "inquiry_id", updatable = false)
+    private UUID inquiryId;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -78,6 +81,15 @@ public class Notification {
         return new Notification(accountId, type, organizationName, message, registrationRequestId, organizationId, at);
     }
 
+    /** A visitor asked the organization about a product; the subject is the product, as named when asked. */
+    public static Notification inquiryReceived(
+            UUID accountId, UUID organizationId, UUID inquiryId, String productName, Instant at) {
+        Notification notification = new Notification(
+                accountId, NotificationType.INQUIRY_RECEIVED, productName, null, null, organizationId, at);
+        notification.inquiryId = inquiryId;
+        return notification;
+    }
+
     /** Marks it read; reading it again keeps the first time. */
     public void markRead(Instant at) {
         if (readAt == null) {
@@ -110,9 +122,17 @@ public class Notification {
         return registrationRequestId;
     }
 
-    /** The organization an approval created; missing for the other types and if it was deleted since. */
+    /**
+     * The organization an approval created, or the one that received an inquiry; missing for the other types and if
+     * it was deleted since.
+     */
     public UUID getOrganizationId() {
         return organizationId;
+    }
+
+    /** The inquiry it is about, for {@link NotificationType#INQUIRY_RECEIVED}. */
+    public UUID getInquiryId() {
+        return inquiryId;
     }
 
     public Instant getCreatedAt() {

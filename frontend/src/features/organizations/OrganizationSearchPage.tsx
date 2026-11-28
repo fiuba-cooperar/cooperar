@@ -1,21 +1,12 @@
-import {
-  Alert,
-  Button,
-  Container,
-  Group,
-  Pagination,
-  Paper,
-  Stack,
-  Text,
-  Title,
-} from '@mantine/core';
+import { Alert, Button, Container, Group, Paper, Stack, Text, Title } from '@mantine/core';
 import {
   IconAlertCircle,
-  IconSearch,
   IconMapPinOff,
+  IconSearch,
   IconSearchOff,
   IconX,
 } from '@tabler/icons-react';
+import { PageNavigation } from '@/components/PageNavigation';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router';
 import {
@@ -206,26 +197,16 @@ function Results({
         ))}
       </Stack>
       {pages > 1 && (
-        <Group component="nav" aria-label="Páginas de resultados" justify="center" pt={8}>
-          <Pagination
-            total={pages}
-            value={search.page}
-            size="lg"
-            withEdges={false}
-            getItemProps={(page) => ({ 'aria-label': `Página ${String(page)}` })}
-            getControlProps={(control) =>
-              control === 'previous'
-                ? { 'aria-label': 'Página anterior' }
-                : control === 'next'
-                  ? { 'aria-label': 'Página siguiente' }
-                  : {}
-            }
-            onChange={(page) => {
-              onChange({ page });
-              window.scrollTo({ top: 0 });
-            }}
-          />
-        </Group>
+        <PageNavigation
+          label="Páginas de resultados"
+          total={pages}
+          value={search.page}
+          size="lg"
+          onChange={(page) => {
+            onChange({ page });
+            window.scrollTo({ top: 0 });
+          }}
+        />
       )}
     </>
   );
@@ -297,23 +278,21 @@ export function OrganizationSearchPage() {
     <>
       <title>Entidades · CooperAR</title>
       <section className={styles.hero}>
-        <Container {...SECTION} py={36}>
-          <Stack gap={16}>
-            <Stack gap={6}>
-              <Title order={1} fz={36} className={styles.title}>
-                Entidades
-              </Title>
-              <Text fz={17} className={styles.lead}>
-                Cooperativas de trabajo y empresas recuperadas de todo el país.
-              </Text>
-            </Stack>
-            <SearchBox
-              query={search.query}
-              onSearch={(query) => {
-                update({ query });
-              }}
-            />
-          </Stack>
+        <Container {...SECTION} py={20}>
+          {/* The page keeps its heading for screen readers and the outline, without taking room on screen. */}
+          <Title order={1} className={styles.visuallyHidden}>
+            Entidades
+          </Title>
+          <div className={styles.heroRow}>
+            <div className={styles.heroSearch}>
+              <SearchBox
+                query={search.query}
+                onSearch={(query) => {
+                  update({ query });
+                }}
+              />
+            </div>
+          </div>
         </Container>
       </section>
       <Container {...SECTION} pt={28} pb={56}>

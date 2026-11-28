@@ -1,11 +1,15 @@
-import { NotificationType, type NotificationResponse } from '@/api/generated/model';
+import {
+  NotificationType,
+  type NotificationResponse,
+  type OrganizationSummary,
+} from '@/api/generated/model';
 import {
   ACCOUNT_REGISTRATION_REQUESTS_PATH,
   registrationRequestPath,
 } from '@/features/account/accountSections';
-import { COOPERATIVE_PATH } from '@/features/cooperative/cooperativeSections';
+import { COOPERATIVE_PATH, cooperativePanel } from '@/features/cooperative/cooperativeSections';
 
-export type NotificationTone = 'green' | 'orange' | 'red';
+export type NotificationTone = 'blue' | 'green' | 'orange' | 'red';
 
 /** How a notification reads and where it leads, which depends on its type. */
 export interface NotificationContent {
@@ -18,10 +22,26 @@ export interface NotificationContent {
   organizationId?: string;
 }
 
-export function notificationContent(notification: NotificationResponse): NotificationContent {
+/** `organizations` are the account's, to link straight to the panel of the one a notification is about. */
+export function notificationContent(
+  notification: NotificationResponse,
+  organizations: readonly Pick<OrganizationSummary, 'id' | 'slug'>[] = [],
+): NotificationContent {
   const subject = notification.subject ?? '';
   const message = notification.message ? { description: notification.message } : {};
   switch (notification.type) {
+    case NotificationType.INQUIRY_RECEIVED: {
+      const organization = organizations.find(({ id }) => id === notification.organizationId);
+      return {
+        title: `Nueva consulta sobre «${subject}»`,
+        tone: 'blue',
+        actionLabel: 'Ver consulta',
+        to:
+          organization && notification.inquiryId
+            ? cooperativePanel(organization.slug).inquiry(notification.inquiryId)
+            : COOPERATIVE_PATH,
+      };
+    }
     case NotificationType.REGISTRATION_APPROVED:
       return {
         title: `Aprobaron la solicitud de «${subject}»`,

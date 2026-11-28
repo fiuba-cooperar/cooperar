@@ -8,7 +8,6 @@ import ar.uba.fi.cooperar.domain.catalog.ProductCategory;
 import ar.uba.fi.cooperar.domain.catalog.ProductDetails;
 import ar.uba.fi.cooperar.domain.catalog.ProductType;
 import ar.uba.fi.cooperar.domain.catalog.SaleMode;
-import ar.uba.fi.cooperar.domain.inquiries.Inquiry;
 import ar.uba.fi.cooperar.domain.inquiries.InquiryStatus;
 import ar.uba.fi.cooperar.domain.organizations.ActivityType;
 import ar.uba.fi.cooperar.domain.organizations.Address;
@@ -126,12 +125,15 @@ class InquiryIntegrationTest {
     }
 
     @Test
-    void theQuantityIsOptional() {
+    void thePhoneAndTheQuantityAreOptional() {
         assertThat(send(shirt, "10.0.0.3", """
-                {"senderName": "Ana", "senderPhone": "(011) 5555-5555", "message": "Precio por mayor?"}
+                {"senderName": "Ana", "senderEmail": "ana@example.com", "message": "Precio por mayor?"}
                 """)).hasStatus(HttpStatus.CREATED);
 
-        assertThat(inquiries.findAll()).extracting(Inquiry::getQuantity).containsExactly((Integer) null);
+        assertThat(inquiries.findAll()).singleElement().satisfies(inquiry -> {
+            assertThat(inquiry.getSenderPhone()).isNull();
+            assertThat(inquiry.getQuantity()).isNull();
+        });
     }
 
     @Test
@@ -154,6 +156,9 @@ class InquiryIntegrationTest {
                 """)).hasStatus(HttpStatus.BAD_REQUEST);
         assertThat(send(shirt, "10.0.0.4", """
                 {"senderName": "Ana", "senderEmail": " ", "senderPhone": "", "message": "Hola"}
+                """)).hasStatus(HttpStatus.BAD_REQUEST);
+        assertThat(send(shirt, "10.0.0.4", """
+                {"senderName": "Ana", "senderPhone": "(011) 5555-5555", "message": "Hola"}
                 """)).hasStatus(HttpStatus.BAD_REQUEST);
 
         assertThat(inquiries.findAll()).isEmpty();

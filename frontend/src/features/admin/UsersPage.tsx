@@ -5,8 +5,6 @@ import {
   Button,
   Checkbox,
   CloseButton,
-  Group,
-  Pagination,
   Paper,
   Select,
   Stack,
@@ -16,6 +14,7 @@ import {
   VisuallyHidden,
 } from '@mantine/core';
 import { IconAlertCircle, IconSearch } from '@tabler/icons-react';
+import { PageNavigation } from '@/components/PageNavigation';
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { Role, type AdminUserResponse } from '@/api/generated/model';
@@ -127,24 +126,14 @@ export function UsersPage() {
         </Paper>
       )}
       {pages > 1 && (
-        <Group component="nav" aria-label="Páginas de usuarios" justify="center">
-          <Pagination
-            total={pages}
-            value={filters.page}
-            withEdges={false}
-            getItemProps={(page) => ({ 'aria-label': `Página ${String(page)}` })}
-            getControlProps={(control) =>
-              control === 'previous'
-                ? { 'aria-label': 'Página anterior' }
-                : control === 'next'
-                  ? { 'aria-label': 'Página siguiente' }
-                  : {}
-            }
-            onChange={(page) => {
-              setSearchParams(writeFilters({ ...filters, page }));
-            }}
-          />
-        </Group>
+        <PageNavigation
+          label="Páginas de usuarios"
+          total={pages}
+          value={filters.page}
+          onChange={(page) => {
+            setSearchParams(writeFilters({ ...filters, page }));
+          }}
+        />
       )}
     </Stack>
   );

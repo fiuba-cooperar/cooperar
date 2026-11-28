@@ -18,6 +18,8 @@ import ar.uba.fi.cooperar.service.catalog.ProductNotFoundException;
 import ar.uba.fi.cooperar.service.catalog.ProductPhotoNotFoundException;
 import ar.uba.fi.cooperar.service.images.ImageStorageException;
 import ar.uba.fi.cooperar.service.images.InvalidImageException;
+import ar.uba.fi.cooperar.service.inquiries.InquiryNotFoundException;
+import ar.uba.fi.cooperar.service.inquiries.OrganizationEmailMissingException;
 import ar.uba.fi.cooperar.service.inquiries.OwnProductInquiryException;
 import ar.uba.fi.cooperar.service.notifications.NotificationNotFoundException;
 import ar.uba.fi.cooperar.service.organizations.CuitAlreadyRegisteredException;
@@ -92,7 +94,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         ProductCategoryNotFoundException.class,
         ProductPhotoNotFoundException.class,
         ProfilePhotoNotFoundException.class,
-        UserNotFoundException.class
+        UserNotFoundException.class,
+        InquiryNotFoundException.class
     })
     public ProblemDetail handleNotFound(RuntimeException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());
@@ -107,7 +110,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         TooManyPhotosException.class,
         GalleryFullException.class,
         OwnProductInquiryException.class,
-        ObservatoryAccountResetException.class
+        ObservatoryAccountResetException.class,
+        OrganizationEmailMissingException.class
     })
     public ProblemDetail handleStateConflict(RuntimeException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());

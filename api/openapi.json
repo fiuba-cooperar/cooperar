@@ -1165,6 +1165,259 @@
         "tags" : [ "cooperative-organization-profile" ]
       }
     },
+    "/api/cooperative/organizations/{organizationId}/inquiries" : {
+      "get" : {
+        "operationId" : "listInquiries",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "organizationId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "description" : "Only the inquiries in this status",
+          "in" : "query",
+          "name" : "status",
+          "required" : false,
+          "schema" : {
+            "$ref" : "#/components/schemas/InquiryStatus"
+          }
+        }, {
+          "description" : "Words that all have to appear in the sender's name, email or phone, the product, the quantity or the message, regardless of case and accents; the counts follow it too",
+          "in" : "query",
+          "name" : "q",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "maxLength" : 200,
+            "minLength" : 0
+          }
+        }, {
+          "description" : "From 0; 0 by default",
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 0,
+            "minimum" : 0
+          }
+        }, {
+          "description" : "15 by default",
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 15,
+            "maximum" : 50,
+            "minimum" : 1
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/InquiryPageResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "The inquiries an organization received, newest first, with how many there are in each status",
+        "tags" : [ "cooperative-inquiries" ]
+      }
+    },
+    "/api/cooperative/organizations/{organizationId}/inquiries/{inquiryId}" : {
+      "get" : {
+        "operationId" : "getInquiry",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "organizationId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "inquiryId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/InquiryResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "An inquiry, with the sender's contact data and the answers sent",
+        "tags" : [ "cooperative-inquiries" ]
+      }
+    },
+    "/api/cooperative/organizations/{organizationId}/inquiries/{inquiryId}/neighbors" : {
+      "get" : {
+        "operationId" : "getInquiryNeighbors",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "organizationId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "inquiryId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "description" : "As in the list",
+          "in" : "query",
+          "name" : "status",
+          "required" : false,
+          "schema" : {
+            "$ref" : "#/components/schemas/InquiryStatus"
+          }
+        }, {
+          "description" : "As in the list",
+          "in" : "query",
+          "name" : "q",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "maxLength" : 200,
+            "minLength" : 0
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/InquiryNeighborsResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "The inquiries before and after this one in the inbox, searched and filtered as the list",
+        "tags" : [ "cooperative-inquiries" ]
+      }
+    },
+    "/api/cooperative/organizations/{organizationId}/inquiries/{inquiryId}/replies" : {
+      "post" : {
+        "description" : "The email goes to the sender from the platform's address, and an answer to it reaches the contact email of the profile. The inquiry becomes RESPONDED, also if it was closed. Answers 409 when the profile has no contact email.",
+        "operationId" : "replyToInquiry",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "organizationId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "inquiryId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/InquiryReplyRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/InquiryResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Answer an inquiry by email",
+        "tags" : [ "cooperative-inquiries" ]
+      }
+    },
+    "/api/cooperative/organizations/{organizationId}/inquiries/{inquiryId}/status" : {
+      "put" : {
+        "description" : "Any status can follow any other, for example RESPONDED after answering by phone.",
+        "operationId" : "changeInquiryStatus",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "organizationId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "in" : "path",
+          "name" : "inquiryId",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/InquiryStatusRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/InquiryResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Change the status of an inquiry",
+        "tags" : [ "cooperative-inquiries" ]
+      }
+    },
     "/api/cooperative/organizations/{organizationId}/products" : {
       "get" : {
         "operationId" : "listManagedProducts",
@@ -3178,6 +3431,55 @@
         "type" : "string",
         "enum" : [ "UP", "DOWN" ]
       },
+      "InquiryNeighborsResponse" : {
+        "type" : "object",
+        "properties" : {
+          "nextId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "The older one; missing for the last"
+          },
+          "previousId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "The newer one; missing for the first"
+          },
+          "total" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "How many inquiries are searched for"
+          }
+        },
+        "required" : [ "total" ]
+      },
+      "InquiryPageResponse" : {
+        "type" : "object",
+        "properties" : {
+          "counts" : {
+            "$ref" : "#/components/schemas/InquiryStatusCounts"
+          },
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/InquirySummaryResponse"
+            }
+          },
+          "page" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "size" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "total" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Inquiries found, on every page"
+          }
+        },
+        "required" : [ "counts", "items", "page", "size", "total" ]
+      },
       "InquiryReceiptResponse" : {
         "type" : "object",
         "properties" : {
@@ -3190,6 +3492,38 @@
             "format" : "date-time"
           }
         }
+      },
+      "InquiryReplyRequest" : {
+        "type" : "object",
+        "properties" : {
+          "message" : {
+            "type" : "string",
+            "maxLength" : 5000,
+            "minLength" : 0
+          }
+        },
+        "required" : [ "message" ]
+      },
+      "InquiryReplyResponse" : {
+        "type" : "object",
+        "properties" : {
+          "authorName" : {
+            "type" : "string",
+            "description" : "The first name of the account that answered, as it was then"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "sentAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        },
+        "required" : [ "id", "message", "sentAt" ]
       },
       "InquiryRequest" : {
         "type" : "object",
@@ -3209,7 +3543,7 @@
           "senderEmail" : {
             "type" : "string",
             "format" : "email",
-            "description" : "Needed if there is no phone",
+            "description" : "Where the organization answers",
             "maxLength" : 200,
             "minLength" : 0
           },
@@ -3220,12 +3554,125 @@
           },
           "senderPhone" : {
             "type" : "string",
-            "description" : "Needed if there is no email",
+            "description" : "Optional",
             "maxLength" : 50,
             "minLength" : 0
           }
         },
-        "required" : [ "message", "senderName" ]
+        "required" : [ "message", "senderEmail", "senderName" ]
+      },
+      "InquiryResponse" : {
+        "type" : "object",
+        "properties" : {
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "productId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "Missing if the product was deleted since"
+          },
+          "productName" : {
+            "type" : "string",
+            "description" : "As named when asked"
+          },
+          "quantity" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "replies" : {
+            "type" : "array",
+            "description" : "The answers sent, the oldest first",
+            "items" : {
+              "$ref" : "#/components/schemas/InquiryReplyResponse"
+            }
+          },
+          "replyTo" : {
+            "type" : "string",
+            "description" : "The contact email of the profile, where answers to a reply arrive; missing while the profile has none, and then it cannot be answered by email"
+          },
+          "senderEmail" : {
+            "type" : "string"
+          },
+          "senderName" : {
+            "type" : "string"
+          },
+          "senderPhone" : {
+            "type" : "string",
+            "description" : "Optional"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/InquiryStatus"
+          }
+        },
+        "required" : [ "createdAt", "id", "message", "productName", "replies", "senderEmail", "senderName", "status" ]
+      },
+      "InquiryStatus" : {
+        "type" : "string",
+        "enum" : [ "NEW", "RESPONDED", "CLOSED" ]
+      },
+      "InquiryStatusCounts" : {
+        "type" : "object",
+        "properties" : {
+          "closedCount" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "newCount" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "Not dealt with yet"
+          },
+          "respondedCount" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "closedCount", "newCount", "respondedCount" ]
+      },
+      "InquiryStatusRequest" : {
+        "type" : "object",
+        "properties" : {
+          "status" : {
+            "$ref" : "#/components/schemas/InquiryStatus"
+          }
+        },
+        "required" : [ "status" ]
+      },
+      "InquirySummaryResponse" : {
+        "type" : "object",
+        "properties" : {
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "id" : {
+            "type" : "string",
+            "format" : "uuid"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "productName" : {
+            "type" : "string",
+            "description" : "As named when asked"
+          },
+          "senderName" : {
+            "type" : "string"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/InquiryStatus"
+          }
+        },
+        "required" : [ "createdAt", "id", "message", "productName", "senderName", "status" ]
       },
       "LocalityResponse" : {
         "type" : "object",
@@ -3373,6 +3820,11 @@
             "type" : "string",
             "format" : "uuid"
           },
+          "inquiryId" : {
+            "type" : "string",
+            "format" : "uuid",
+            "description" : "The inquiry it is about, to link to it"
+          },
           "message" : {
             "type" : "string",
             "description" : "What the observatory said, for the types that carry it"
@@ -3380,7 +3832,7 @@
           "organizationId" : {
             "type" : "string",
             "format" : "uuid",
-            "description" : "The organization an approval created, to link to its panel"
+            "description" : "The organization an approval created, or the one that received an inquiry, to link to its panel"
           },
           "readAt" : {
             "type" : "string",
@@ -3403,7 +3855,7 @@
       },
       "NotificationType" : {
         "type" : "string",
-        "enum" : [ "REGISTRATION_APPROVED", "REGISTRATION_REJECTED", "REGISTRATION_CHANGES_REQUESTED" ]
+        "enum" : [ "REGISTRATION_APPROVED", "REGISTRATION_REJECTED", "REGISTRATION_CHANGES_REQUESTED", "INQUIRY_RECEIVED" ]
       },
       "OpeningDay" : {
         "type" : "string",

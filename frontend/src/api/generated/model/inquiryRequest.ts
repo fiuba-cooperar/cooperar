@@ -19,18 +19,18 @@ export interface InquiryRequest {
    */
   quantity?: number;
   /**
-   * Needed if there is no phone
+   * Where the organization answers
    * @minLength 0
    * @maxLength 200
    */
-  senderEmail?: string;
+  senderEmail: string;
   /**
    * @minLength 0
    * @maxLength 100
    */
   senderName: string;
   /**
-   * Needed if there is no email
+   * Optional
    * @minLength 0
    * @maxLength 50
    */

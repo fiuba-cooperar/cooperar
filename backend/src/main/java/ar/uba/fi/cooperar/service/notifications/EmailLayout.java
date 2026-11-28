@@ -3,7 +3,7 @@ package ar.uba.fi.cooperar.service.notifications;
 import java.util.List;
 import org.springframework.web.util.HtmlUtils;
 
-/** The look shared by the emails: a branded header, the text, an optional quote, and a button to the place to go. */
+/** The look shared by the emails: a branded header, the text in blocks, and a button to the place to go. */
 final class EmailLayout {
 
     private static final String BRAND = "#1b5e9b";
@@ -13,34 +13,18 @@ final class EmailLayout {
     /**
      * @param logoUrl the logo, served by the frontend
      * @param greeting the first line, like "Hola, Ana:"
-     * @param paragraphs the text, one paragraph each
-     * @param quote what the observatory said, shown apart; may be null
+     * @param blocks the text, in order
      * @param buttonLabel what the button says
      * @param url where the button leads
      * @param footer a closing line in small print; may be null
      */
     static String html(
-            String logoUrl,
-            String greeting,
-            List<String> paragraphs,
-            String quote,
-            String buttonLabel,
-            String url,
-            String footer) {
+            String logoUrl, String greeting, List<EmailBlock> blocks, String buttonLabel, String url, String footer) {
         StringBuilder body = new StringBuilder();
         body.append("<p style=\"margin:0 0 16px;font-size:16px;font-weight:600;\">")
                 .append(escape(greeting))
                 .append("</p>");
-        paragraphs.forEach(paragraph -> body.append("<p style=\"margin:0 0 16px;\">")
-                .append(escape(paragraph))
-                .append("</p>"));
-        if (quote != null) {
-            body.append("<blockquote style=\"margin:0 0 20px;padding:12px 16px;background:#eaf3fb;"
-                            + "border-left:4px solid " + BRAND + ";"
-                            + "border-radius:4px;color:#0e3558;\">")
-                    .append(escape(quote).replace("\n", "<br>"))
-                    .append("</blockquote>");
-        }
+        blocks.forEach(block -> body.append(html(block)));
         body.append("<p style=\"margin:24px 0;\"><a href=\"")
                 .append(escape(url))
                 .append("\" style=\"display:inline-block;padding:12px 24px;background:" + BRAND + ";color:#ffffff;"
@@ -76,6 +60,45 @@ final class EmailLayout {
                 </body>
                 </html>
                 """.formatted(BRAND, escape(logoUrl), body);
+    }
+
+    private static String html(EmailBlock block) {
+        return switch (block) {
+            case EmailBlock.Paragraph paragraph -> {
+                StringBuilder html = new StringBuilder("<p style=\"margin:0 0 16px;\">");
+                paragraph.parts().forEach(part -> html.append(html(part)));
+                yield html.append("</p>").toString();
+            }
+            case EmailBlock.Details details -> {
+                StringBuilder html =
+                        new StringBuilder("<table role=\"presentation\" cellspacing=\"0\" cellpadding=\"0\""
+                                + " style=\"margin:0 0 16px;border-collapse:collapse;\">");
+                details.details()
+                        .forEach(detail -> html.append("<tr><td style=\"padding:3px 16px 3px 0;color:#5c6670;"
+                                        + "vertical-align:top;white-space:nowrap;\">")
+                                .append(escape(detail.label()))
+                                .append("</td><td style=\"padding:3px 0;font-weight:600;word-break:break-word;\">")
+                                .append(escape(detail.value()))
+                                .append("</td></tr>"));
+                yield html.append("</table>").toString();
+            }
+            case EmailBlock.Quote quote ->
+                "<blockquote style=\"margin:0 0 20px;padding:12px 16px;background:#eaf3fb;border-left:4px solid "
+                        + BRAND + ";border-radius:4px;color:#0e3558;\">"
+                        + escape(quote.text()).replace("\n", "<br>") + "</blockquote>";
+            case EmailBlock.Highlight highlight ->
+                "<p style=\"margin:0 0 20px;padding:12px 16px;background:#fff6e0;border:1px solid #f2c66d;"
+                        + "border-radius:8px;color:#5c3d00;font-weight:600;\">" + escape(highlight.text()) + "</p>";
+        };
+    }
+
+    private static String html(EmailBlock.Part part) {
+        return switch (part) {
+            case EmailBlock.Text text -> escape(text.text());
+            case EmailBlock.Link link ->
+                "<a href=\"" + escape(link.url()) + "\" style=\"color:" + BRAND + ";font-weight:600;\">"
+                        + escape(link.text()) + "</a>";
+        };
     }
 
     private static String escape(String text) {

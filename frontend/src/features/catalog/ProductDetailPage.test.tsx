@@ -154,9 +154,12 @@ describe('product page', () => {
     await user.type(screen.getByRole('textbox', { name: /Nombre/ }), 'Ana Pérez');
     await user.type(screen.getByRole('textbox', { name: 'Email' }), 'ana@example.com');
     await user.type(screen.getByRole('textbox', { name: 'Característica del teléfono' }), '11');
-    await user.type(screen.getByRole('textbox', { name: 'Teléfono' }), '44445555');
+    await user.type(screen.getByRole('textbox', { name: 'Teléfono (opcional)' }), '44445555');
     await user.type(screen.getByRole('textbox', { name: /Cantidad/ }), '50');
-    await user.type(screen.getByRole('textbox', { name: /Mensaje/ }), 'Hacen remeras con logo?');
+    const message = screen.getByRole('textbox', { name: /Mensaje/ });
+    expect(screen.getByText('0/2000')).toBeInTheDocument();
+    await user.type(message, 'Hacen remeras con logo?');
+    expect(screen.getByText('23/2000')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Enviar consulta' }));
 
     expect(await screen.findByText('Consulta enviada')).toBeInTheDocument();
@@ -171,7 +174,7 @@ describe('product page', () => {
     await expectNoA11yViolations(document.body);
   });
 
-  it('asks for an email or a phone, in the same format as the profile of an organization', async () => {
+  it('asks for an email, and checks it and the optional phone like the profile of an organization', async () => {
     const fetchMock = stubFetchRoutes({
       'GET /api/products/p1': { body: { product: SHIRT, moreFromOrganization: [] } },
     });
@@ -182,8 +185,18 @@ describe('product page', () => {
     await user.type(screen.getByRole('textbox', { name: /Mensaje/ }), 'Hola');
     await user.click(screen.getByRole('button', { name: 'Enviar consulta' }));
     expect(
-      screen.getByText('Ingresá un email o un teléfono para que la cooperativa pueda responderte.'),
+      screen.getByText('Ingresá tu email para que la cooperativa pueda responderte.'),
     ).toBeInTheDocument();
+    expect(fetchMock.mock.calls.some(([, init]) => init?.method === 'POST')).toBe(false);
+
+    // The phone alone is not enough anymore.
+    await user.type(screen.getByRole('textbox', { name: 'Característica del teléfono' }), '11');
+    await user.type(screen.getByRole('textbox', { name: 'Teléfono (opcional)' }), '44445555');
+    await user.click(screen.getByRole('button', { name: 'Enviar consulta' }));
+    expect(
+      screen.getByText('Ingresá tu email para que la cooperativa pueda responderte.'),
+    ).toBeInTheDocument();
+    await user.clear(screen.getByRole('textbox', { name: 'Teléfono (opcional)' }));
 
     await user.type(screen.getByRole('textbox', { name: 'Email' }), 'ana@');
     await user.type(screen.getByRole('textbox', { name: 'Característica del teléfono' }), '11');

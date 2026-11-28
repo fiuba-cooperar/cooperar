@@ -1,15 +1,6 @@
-import {
-  Alert,
-  Button,
-  Group,
-  Pagination,
-  Paper,
-  SegmentedControl,
-  Stack,
-  Text,
-  Title,
-} from '@mantine/core';
+import { Alert, Button, Group, Paper, SegmentedControl, Stack, Text, Title } from '@mantine/core';
 import { IconAlertCircle } from '@tabler/icons-react';
+import { PageNavigation } from '@/components/PageNavigation';
 import { useState } from 'react';
 import { useMarkAllNotificationsRead, useNotifications } from './api/useNotifications';
 import { NotificationList } from './components/NotificationList';
@@ -84,7 +75,14 @@ export function NotificationsPage() {
         </Paper>
       )}
 
-      {pages > 1 && <Pagination withEdges total={pages} value={page} onChange={setPage} />}
+      {pages > 1 && (
+        <PageNavigation
+          label="Páginas de notificaciones"
+          total={pages}
+          value={page}
+          onChange={setPage}
+        />
+      )}
     </Stack>
   );
 }

@@ -1,24 +1,32 @@
 import { ActionIcon, Badge, Button, Group, Stack, Text, ThemeIcon, Tooltip } from '@mantine/core';
-import { IconAlertTriangle, IconCheck, IconCircleCheck, IconCircleX } from '@tabler/icons-react';
+import {
+  IconAlertTriangle,
+  IconCheck,
+  IconCircleCheck,
+  IconCircleX,
+  IconMessage,
+} from '@tabler/icons-react';
 import { Link } from 'react-router';
 import type { NotificationResponse } from '@/api/generated/model';
+import { useAuth } from '@/features/auth/useAuth';
 import { notificationContent, type NotificationTone } from '../notificationContent';
 import { useMarkNotificationRead } from '../api/useNotifications';
+import { NotificationTime } from './NotificationTime';
 
-const ICONS: Record<NotificationTone, typeof IconCircleCheck> = {
+export const NOTIFICATION_ICONS: Record<NotificationTone, typeof IconCircleCheck> = {
+  blue: IconMessage,
   green: IconCircleCheck,
   orange: IconAlertTriangle,
   red: IconCircleX,
 };
 
-const dateFormat = new Intl.DateTimeFormat('es-AR', { dateStyle: 'long' });
-
 /** One notification: what happened, when, where to go about it and, while unread, a way to mark it as read. */
 export function NotificationItem({ notification }: { notification: NotificationResponse }) {
-  const content = notificationContent(notification);
+  const { user } = useAuth();
+  const content = notificationContent(notification, user?.organizations);
   const markRead = useMarkNotificationRead();
   const unread = !notification.readAt;
-  const Icon = ICONS[content.tone];
+  const Icon = NOTIFICATION_ICONS[content.tone];
   const id = notification.id ?? '';
 
   return (
@@ -79,11 +87,7 @@ export function NotificationItem({ notification }: { notification: NotificationR
               </ActionIcon>
             </Tooltip>
           )}
-          {notification.createdAt && (
-            <Text size="xs" c="dimmed" ml="auto">
-              {dateFormat.format(new Date(notification.createdAt))}
-            </Text>
-          )}
+          {notification.createdAt && <NotificationTime at={notification.createdAt} ml="auto" />}
         </Group>
       </Stack>
     </Group>

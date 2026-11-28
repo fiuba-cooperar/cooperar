@@ -1,0 +1,60 @@
+.columns {
+  display: grid;
+  gap: var(--mantine-spacing-md);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 48em) {
+  .columns {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  }
+}
+
+.message {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.contact {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px 12px;
+  margin: 0;
+}
+
+.contact dt {
+  color: var(--mantine-color-dimmed);
+  font-size: var(--mantine-font-size-sm);
+}
+
+.contact dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.replies {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mantine-spacing-sm);
+  margin: 0 0 var(--mantine-spacing-md);
+  padding: 0;
+  list-style: none;
+}
+
+.replies li {
+  padding: 12px 16px;
+  border-left: 3px solid var(--mantine-color-brand-6);
+  border-radius: 4px;
+  background: var(--color-hover);
+}
+
+.sent {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sentIcon {
+  flex-shrink: 0;
+  color: var(--mantine-color-green-7);
+}

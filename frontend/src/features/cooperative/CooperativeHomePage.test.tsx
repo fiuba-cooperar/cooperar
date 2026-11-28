@@ -216,6 +216,7 @@ describe('cooperative panel', () => {
       'Inicio',
       'Ficha',
       'Productos y servicios',
+      'Consultas',
       'Usuarios',
     ]);
     expect(own.getByRole('link', { name: 'Inicio' })).toHaveAttribute('aria-current', 'page');
